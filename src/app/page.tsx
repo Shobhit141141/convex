@@ -745,6 +745,31 @@ export default function Home() {
                               ? "bg-amber-500"
                               : "bg-emerald-500";
 
+                          // Calculate smart horizontal & vertical alignment so popover NEVER overflows or clips
+                          const isNearLeft = tag.xPercent < 35;
+                          const isNearRight = tag.xPercent > 65;
+                          const isNearTop = tag.yPercent < 8;
+
+                          const popoverHorizontal = isNearLeft
+                            ? "left-0 -translate-x-3"
+                            : isNearRight
+                            ? "right-0 translate-x-3"
+                            : "left-1/2 -translate-x-1/2";
+
+                          const popoverVertical = isNearTop
+                            ? "top-full mt-2.5 translate-y-0"
+                            : "-top-2 -translate-y-full";
+
+                          const arrowHorizontal = isNearLeft
+                            ? "left-6"
+                            : isNearRight
+                            ? "right-6"
+                            : "left-1/2 -translate-x-1/2";
+
+                          const arrowVertical = isNearTop
+                            ? "-top-1 border-l border-t border-r-0 border-b-0"
+                            : "-bottom-1 border-r border-b border-l-0 border-t-0";
+
                           return (
                             <div
                               key={tag.id}
@@ -778,36 +803,39 @@ export default function Home() {
                                 {tag.pinNumber}
                               </div>
 
-                              {/* Floating Popover Tooltip */}
+                              {/* Floating Popover Tooltip (Edge-aware, Never Hidden or Clipped) */}
                               {isActive && (
                                 <div
-                                  className="absolute left-1/2 -top-2 transform -translate-x-1/2 -translate-y-full z-30 pointer-events-none w-60 p-2.5 rounded-lg bg-zinc-900/95 border border-zinc-700 shadow-2xl text-left backdrop-blur-sm"
+                                  className={`absolute ${popoverHorizontal} ${popoverVertical} z-40 pointer-events-none w-64 max-w-[280px] p-3 rounded-xl bg-zinc-900/98 border border-zinc-700 shadow-2xl text-left backdrop-blur-md`}
                                 >
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">
+                                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 shrink-0">
                                       #{tag.pinNumber} • {tag.label}
                                     </span>
                                     <span
-                                      className={`text-[9px] font-mono uppercase font-bold px-1 rounded ${
+                                      className={`text-[9px] font-mono uppercase font-bold px-1.5 py-0.5 rounded truncate ${
                                         tag.type === "issue"
-                                          ? "text-rose-400"
+                                          ? "text-rose-400 bg-rose-950/60"
                                           : tag.type === "warning"
-                                          ? "text-amber-400"
-                                          : "text-emerald-400"
+                                          ? "text-amber-400 bg-amber-950/60"
+                                          : "text-emerald-400 bg-emerald-950/60"
                                       }`}
                                     >
                                       {tag.locationLabel}
                                     </span>
                                   </div>
-                                  <div className="text-xs font-semibold text-white leading-tight">
+                                  <div className="text-xs font-semibold text-white leading-snug break-words">
                                     {tag.title}
                                   </div>
                                   {tag.directFix && (
-                                    <div className="text-[10px] text-emerald-400 mt-1 font-mono">
-                                      Fix: {tag.directFix}
+                                    <div className="text-[10px] text-emerald-400 mt-1.5 font-mono leading-relaxed border-t border-zinc-800/80 pt-1.5">
+                                      <strong className="text-emerald-300">Fix: </strong>
+                                      {tag.directFix}
                                     </div>
                                   )}
-                                  <div className="absolute left-1/2 -bottom-1 transform -translate-x-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-r border-b border-zinc-700" />
+                                  <div
+                                    className={`absolute ${arrowHorizontal} ${arrowVertical} w-2.5 h-2.5 bg-zinc-900 rotate-45 border-zinc-700`}
+                                  />
                                 </div>
                               )}
                             </div>
