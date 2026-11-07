@@ -31,7 +31,7 @@ import {
   Crosshair
 } from "lucide-react";
 
-// Circular SVG Progress Ring
+// Circular SVG Progress Ring (Uniform across Hero, Dimensions, Web Vitals, and Criterion Rows)
 function ScoreRing({
   value,
   max = 100,
@@ -54,6 +54,15 @@ function ScoreRing({
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
+  const labelFontClass =
+    size >= 96
+      ? "text-3xl font-extrabold"
+      : size >= 60
+      ? "text-sm font-bold"
+      : size >= 36
+      ? "text-[10px] font-bold font-mono"
+      : "text-[9px] font-bold font-mono";
+
   return (
     <div className="relative flex flex-col items-center justify-center shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
@@ -63,7 +72,7 @@ function ScoreRing({
           r={radius}
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-zinc-800"
+          className="text-zinc-800/90"
           fill="transparent"
         />
         <circle
@@ -80,10 +89,10 @@ function ScoreRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-xl font-bold tracking-tight text-white leading-none">
+        <span className={`${labelFontClass} tracking-tight text-white leading-none`}>
           {label ?? value}
         </span>
-        {sublabel && (
+        {sublabel && size >= 56 && (
           <span className="text-[10px] text-zinc-400 font-mono mt-0.5 leading-none">
             {sublabel}
           </span>
@@ -468,12 +477,13 @@ export default function Home() {
         {/* State 2: Full-Page Visual Audit Studio with Screenshot Tagging */}
         {report && (
           <div className="space-y-8">
-            {/* Header: Score Summary Bar */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4">
-                <div className="space-y-1.5">
+            {/* Header: Prominent Overall Score Hero & Context Bar */}
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-5 shadow-xl">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-zinc-800/80 pb-5">
+                {/* Left: Page Identity & Executive Summary */}
+                <div className="space-y-2.5 max-w-xl">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/60">
+                    <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700/70 font-semibold">
                       {report.pageType}
                     </span>
                     <span className="text-xs text-zinc-400 font-mono truncate max-w-xs sm:max-w-md">
@@ -489,21 +499,89 @@ export default function Home() {
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
-                  <h1 className="text-lg font-semibold tracking-tight text-white">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                     Landing Page Quality & Conversion Report
                   </h1>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    {report.summary}
+                  </p>
                 </div>
 
-                {/* Score Pill */}
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-[11px] text-zinc-400 font-mono uppercase">Overall Score</div>
-                    <div className="text-2xl font-bold text-white tracking-tight">
-                      {report.totalScore} <span className="text-xs font-normal text-zinc-500">/ 100</span>
+                {/* Right: Prominent Overall Score Circular Hero Pod */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-5 p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800/90 shadow-inner shrink-0">
+                  <ScoreRing
+                    value={report.totalScore}
+                    max={100}
+                    size={104}
+                    strokeWidth={8}
+                    colorClass={
+                      report.totalScore >= 80
+                        ? "text-emerald-500"
+                        : report.totalScore >= 60
+                        ? "text-amber-500"
+                        : "text-rose-500"
+                    }
+                    label={String(report.totalScore)}
+                    sublabel="/ 100"
+                  />
+
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                      Overall Conversion Score
                     </div>
-                  </div>
-                  <div className="w-11 h-11 rounded-lg border border-zinc-700 bg-zinc-800 flex items-center justify-center font-bold text-lg text-white shadow-inner">
-                    {report.letterGrade}
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`inline-flex items-center justify-center px-3 py-1 rounded-lg font-bold text-base border shadow-sm ${
+                          report.totalScore >= 80
+                            ? "bg-emerald-950/80 border-emerald-700/80 text-emerald-300"
+                            : report.totalScore >= 60
+                            ? "bg-amber-950/80 border-amber-700/80 text-amber-300"
+                            : "bg-rose-950/80 border-rose-700/80 text-rose-300"
+                        }`}
+                      >
+                        Grade {report.letterGrade}
+                      </span>
+                      <span className="text-xs font-medium text-zinc-200">
+                        {report.totalScore >= 80
+                          ? "High Conversion Readiness"
+                          : report.totalScore >= 65
+                          ? "Solid Foundation • Needs Polish"
+                          : "High Funnel Friction Detected"}
+                      </span>
+                    </div>
+
+                    {/* Dimension Mini Circular Rings */}
+                    <div className="flex items-center gap-4 pt-1 border-t border-zinc-800/80">
+                      {(["persuasion", "execution", "experience"] as const).map((dKey) => {
+                        const d = report.dimensions[dKey];
+                        const shortLabel =
+                          dKey === "persuasion" ? "Persuasion" : dKey === "execution" ? "Execution" : "Experience";
+                        const ringColor =
+                          d.percentage >= 75
+                            ? "text-emerald-500"
+                            : d.percentage >= 50
+                            ? "text-amber-500"
+                            : "text-rose-500";
+                        return (
+                          <div key={dKey} className="flex items-center gap-2">
+                            <ScoreRing
+                              value={d.score}
+                              max={d.maxScore}
+                              size={32}
+                              strokeWidth={3.5}
+                              colorClass={ringColor}
+                              label={`${d.percentage}%`}
+                            />
+                            <div>
+                              <div className="text-[10px] text-zinc-400 leading-none">{shortLabel}</div>
+                              <div className="text-xs font-mono font-semibold text-white leading-tight mt-0.5">
+                                {d.score}<span className="text-zinc-500 font-normal">/{d.maxScore}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1070,6 +1148,7 @@ export default function Home() {
                         : "text-rose-500"
                     }
                     label={String(lighthouse.performanceScore)}
+                    sublabel="/ 100"
                   />
                   <div>
                     <div className="text-xs font-semibold text-white">Performance Score</div>
@@ -1085,122 +1164,197 @@ export default function Home() {
                 </div>
 
                 {/* Metric 2: LCP */}
-                <div className="p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950/60 flex flex-col justify-between space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-semibold text-white">LCP (Load Speed)</span>
-                    <span className="text-[10px] font-mono text-zinc-500">Target &lt; 2.5s</span>
-                  </div>
-                  <MetricBar
-                    value={lighthouse.lcpSeconds}
-                    goodThreshold={2.5}
-                    poorThreshold={4.0}
-                    unit="s"
-                    isLowerBetter={true}
+                <div className="p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950/60 flex items-center gap-3">
+                  <ScoreRing
+                    value={Math.max(100 - Math.round((lighthouse.lcpSeconds / 4.5) * 100), 15)}
+                    max={100}
+                    size={64}
+                    strokeWidth={6}
+                    colorClass={
+                      lighthouse.lcpSeconds <= 2.5
+                        ? "text-emerald-500"
+                        : lighthouse.lcpSeconds <= 4.0
+                        ? "text-amber-500"
+                        : "text-rose-500"
+                    }
+                    label={`${lighthouse.lcpSeconds}s`}
+                    sublabel="LCP"
                   />
-                  <div className="text-[10px] text-zinc-500">Largest Contentful Paint banner hero</div>
+                  <div>
+                    <div className="text-xs font-semibold text-white">LCP (Load Speed)</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                      {lighthouse.lcpSeconds <= 2.5
+                        ? "Fast hero render"
+                        : lighthouse.lcpSeconds <= 4.0
+                        ? "Moderate load time"
+                        : "Slow largest paint"}
+                    </div>
+                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Target &lt; 2.5s</div>
+                  </div>
                 </div>
 
                 {/* Metric 3: CLS */}
-                <div className="p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950/60 flex flex-col justify-between space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-semibold text-white">CLS (Visual Shift)</span>
-                    <span className="text-[10px] font-mono text-zinc-500">Target &lt; 0.1</span>
-                  </div>
-                  <MetricBar
-                    value={lighthouse.cls}
-                    goodThreshold={0.1}
-                    poorThreshold={0.25}
-                    unit=""
-                    isLowerBetter={true}
+                <div className="p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950/60 flex items-center gap-3">
+                  <ScoreRing
+                    value={Math.max(100 - Math.round((lighthouse.cls / 0.3) * 100), 15)}
+                    max={100}
+                    size={64}
+                    strokeWidth={6}
+                    colorClass={
+                      lighthouse.cls <= 0.1
+                        ? "text-emerald-500"
+                        : lighthouse.cls <= 0.25
+                        ? "text-amber-500"
+                        : "text-rose-500"
+                    }
+                    label={String(lighthouse.cls)}
+                    sublabel="CLS"
                   />
-                  <div className="text-[10px] text-zinc-500">Cumulative Layout Shift during render</div>
+                  <div>
+                    <div className="text-xs font-semibold text-white">CLS (Visual Shift)</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                      {lighthouse.cls <= 0.1
+                        ? "Stable page layout"
+                        : lighthouse.cls <= 0.25
+                        ? "Minor layout shift"
+                        : "Unstable layout"}
+                    </div>
+                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Target &lt; 0.10</div>
+                  </div>
                 </div>
 
                 {/* Metric 4: FCP */}
-                <div className="p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950/60 flex flex-col justify-between space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-semibold text-white">FCP (First Paint)</span>
-                    <span className="text-[10px] font-mono text-zinc-500">Target &lt; 1.8s</span>
-                  </div>
-                  <MetricBar
-                    value={lighthouse.fcpSeconds}
-                    goodThreshold={1.8}
-                    poorThreshold={3.0}
-                    unit="s"
-                    isLowerBetter={true}
+                <div className="p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950/60 flex items-center gap-3">
+                  <ScoreRing
+                    value={Math.max(100 - Math.round((lighthouse.fcpSeconds / 3.5) * 100), 15)}
+                    max={100}
+                    size={64}
+                    strokeWidth={6}
+                    colorClass={
+                      lighthouse.fcpSeconds <= 1.8
+                        ? "text-emerald-500"
+                        : lighthouse.fcpSeconds <= 3.0
+                        ? "text-amber-500"
+                        : "text-rose-500"
+                    }
+                    label={`${lighthouse.fcpSeconds}s`}
+                    sublabel="FCP"
                   />
-                  <div className="text-[10px] text-zinc-500">First Contentful Paint DOM start</div>
+                  <div>
+                    <div className="text-xs font-semibold text-white">FCP (First Paint)</div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                      {lighthouse.fcpSeconds <= 1.8
+                        ? "Instant visual feedback"
+                        : lighthouse.fcpSeconds <= 3.0
+                        ? "Acceptable first paint"
+                        : "Delayed first paint"}
+                    </div>
+                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Target &lt; 1.8s</div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Section 3: Dimension Breakdown Summary Cards */}
+            {/* Section 3: Dimension Breakdown Summary Cards (Uniform Circular Gauges) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Dimension A */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-300 font-semibold flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-zinc-400" /> Conversion Persuasion
-                  </span>
-                  <span className="font-mono font-bold text-white">
-                    {report.dimensions.persuasion.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.persuasion.maxScore}</span>
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-zinc-200 rounded-full transition-all duration-500"
-                    style={{ width: `${report.dimensions.persuasion.percentage}%` }}
-                  />
-                </div>
-                <div className="text-[11px] text-zinc-400 leading-tight">
-                  Audience-problem resonance, quantified value proposition, customer proof credibility.
+              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-center gap-4">
+                <ScoreRing
+                  value={report.dimensions.persuasion.score}
+                  max={report.dimensions.persuasion.maxScore}
+                  size={68}
+                  strokeWidth={6}
+                  colorClass={
+                    report.dimensions.persuasion.percentage >= 75
+                      ? "text-emerald-500"
+                      : report.dimensions.persuasion.percentage >= 50
+                      ? "text-amber-500"
+                      : "text-rose-500"
+                  }
+                  label={`${report.dimensions.persuasion.percentage}%`}
+                  sublabel={`${report.dimensions.persuasion.score}/${report.dimensions.persuasion.maxScore}`}
+                />
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-white font-semibold flex items-center gap-1.5 truncate">
+                      <Sparkles className="w-3.5 h-3.5 text-violet-400 shrink-0" /> Conversion Persuasion
+                    </span>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-zinc-200">
+                    {report.dimensions.persuasion.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.persuasion.maxScore} pts</span>
+                  </div>
+                  <div className="text-[11px] text-zinc-400 leading-snug">
+                    Audience-problem resonance, quantified value proposition, customer proof.
+                  </div>
                 </div>
               </div>
 
               {/* Dimension B */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-300 font-semibold flex items-center gap-1.5">
-                    <Target className="w-3.5 h-3.5 text-zinc-400" /> Conversion Execution
-                  </span>
-                  <span className="font-mono font-bold text-white">
-                    {report.dimensions.execution.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.execution.maxScore}</span>
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-zinc-200 rounded-full transition-all duration-500"
-                    style={{ width: `${report.dimensions.execution.percentage}%` }}
-                  />
-                </div>
-                <div className="text-[11px] text-zinc-400 leading-tight">
-                  Above-the-fold CTA prominence, low modal friction, lead capture usability.
+              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-center gap-4">
+                <ScoreRing
+                  value={report.dimensions.execution.score}
+                  max={report.dimensions.execution.maxScore}
+                  size={68}
+                  strokeWidth={6}
+                  colorClass={
+                    report.dimensions.execution.percentage >= 75
+                      ? "text-emerald-500"
+                      : report.dimensions.execution.percentage >= 50
+                      ? "text-amber-500"
+                      : "text-rose-500"
+                  }
+                  label={`${report.dimensions.execution.percentage}%`}
+                  sublabel={`${report.dimensions.execution.score}/${report.dimensions.execution.maxScore}`}
+                />
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-white font-semibold flex items-center gap-1.5 truncate">
+                      <Target className="w-3.5 h-3.5 text-sky-400 shrink-0" /> Conversion Execution
+                    </span>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-zinc-200">
+                    {report.dimensions.execution.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.execution.maxScore} pts</span>
+                  </div>
+                  <div className="text-[11px] text-zinc-400 leading-snug">
+                    Above-the-fold CTA prominence, low modal friction, lead capture usability.
+                  </div>
                 </div>
               </div>
 
               {/* Dimension C */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-300 font-semibold flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-zinc-400" /> Supporting Experience
-                  </span>
-                  <span className="font-mono font-bold text-white">
-                    {report.dimensions.experience.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.experience.maxScore}</span>
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-zinc-200 rounded-full transition-all duration-500"
-                    style={{ width: `${report.dimensions.experience.percentage}%` }}
-                  />
-                </div>
-                <div className="text-[11px] text-zinc-400 leading-tight">
-                  Mobile viewport configuration, LCP rendering speed, and layout stability.
+              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-center gap-4">
+                <ScoreRing
+                  value={report.dimensions.experience.score}
+                  max={report.dimensions.experience.maxScore}
+                  size={68}
+                  strokeWidth={6}
+                  colorClass={
+                    report.dimensions.experience.percentage >= 75
+                      ? "text-emerald-500"
+                      : report.dimensions.experience.percentage >= 50
+                      ? "text-amber-500"
+                      : "text-rose-500"
+                  }
+                  label={`${report.dimensions.experience.percentage}%`}
+                  sublabel={`${report.dimensions.experience.score}/${report.dimensions.experience.maxScore}`}
+                />
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-white font-semibold flex items-center gap-1.5 truncate">
+                      <Layers className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Supporting Experience
+                    </span>
+                  </div>
+                  <div className="text-xs font-mono font-bold text-zinc-200">
+                    {report.dimensions.experience.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.experience.maxScore} pts</span>
+                  </div>
+                  <div className="text-[11px] text-zinc-400 leading-snug">
+                    Mobile viewport configuration, LCP rendering speed, and layout stability.
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Section 4: Score Breakdown (grouped by dimension, aligned grid rows) */}
+            {/* Section 4: Score Breakdown (grouped by dimension, aligned grid rows with Circular Progress) */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 overflow-hidden">
               <div className="p-4 border-b border-zinc-800 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1263,14 +1417,16 @@ export default function Home() {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-24 h-1.5 bg-zinc-800 rounded-full overflow-hidden hidden sm:block">
-                            <div
-                              className={`h-full rounded-full ${pct >= 75 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500"}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-mono text-white tabular-nums">
+                        <div className="flex items-center gap-2.5">
+                          <ScoreRing
+                            value={dimSummary.score}
+                            max={dimSummary.maxScore}
+                            size={30}
+                            strokeWidth={3.5}
+                            colorClass={pct >= 75 ? "text-emerald-500" : pct >= 50 ? "text-amber-500" : "text-rose-500"}
+                            label={`${pct}%`}
+                          />
+                          <span className="text-xs font-mono text-white tabular-nums w-14 text-right">
                             {dimSummary.score}
                             <span className="text-zinc-500"> / {dimSummary.maxScore}</span>
                           </span>
@@ -1283,17 +1439,26 @@ export default function Home() {
                           const method = METHOD_META[criterion.source as keyof typeof METHOD_META] ?? METHOD_META.dom_extraction;
                           const MethodIcon = method.icon;
                           const ratio = criterion.maxPoints > 0 ? criterion.earnedPoints / criterion.maxPoints : 0;
-                          const barColor = criterion.status === "passed" ? "bg-emerald-500" : criterion.status === "partial" ? "bg-amber-500" : "bg-rose-500";
+                          const ringColor =
+                            criterion.status === "passed"
+                              ? "text-emerald-500"
+                              : criterion.status === "partial"
+                              ? "text-amber-500"
+                              : "text-rose-500";
                           const StatusIcon = criterion.status === "passed" ? CheckCircle2 : criterion.status === "partial" ? AlertCircle : XCircle;
                           const statusColor = criterion.status === "passed" ? "text-emerald-400" : criterion.status === "partial" ? "text-amber-400" : "text-rose-400";
-                          const summary = criterion.notes || criterion.scoringRule;
+                          const rawSummary = criterion.notes || criterion.scoringRule;
+                          const summary = rawSummary.replace(
+                            /^AI scored \d+(\.\d+)?\/10\.?\s*(\([^)]*\)\.?\s*)?(Specificity:\s*\w+\.?\s*)?(Friction:\s*\w+\.?\s*)?/i,
+                            ""
+                          );
 
                           return (
                             <div key={criterion.id}>
                               <button
                                 type="button"
                                 onClick={() => toggleCriterion(criterion.id)}
-                                className="w-full text-left px-4 py-3 hover:bg-zinc-900/50 transition-colors grid grid-cols-[18px_1fr_auto_16px] sm:grid-cols-[18px_1fr_150px_120px_16px] items-center gap-3"
+                                className="w-full text-left px-4 py-3 hover:bg-zinc-900/50 transition-colors grid grid-cols-[18px_1fr_auto_16px] sm:grid-cols-[18px_1fr_150px_110px_16px] items-center gap-3"
                               >
                                 <StatusIcon className={`w-4 h-4 ${statusColor}`} />
 
@@ -1308,9 +1473,14 @@ export default function Home() {
                                 </span>
 
                                 <div className="flex items-center gap-2 justify-end">
-                                  <div className="w-12 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.round(ratio * 100)}%` }} />
-                                  </div>
+                                  <ScoreRing
+                                    value={criterion.earnedPoints}
+                                    max={criterion.maxPoints}
+                                    size={28}
+                                    strokeWidth={3}
+                                    colorClass={ringColor}
+                                    label={`${Math.round(ratio * 100)}%`}
+                                  />
                                   <span className="text-xs font-mono tabular-nums text-white w-14 text-right">
                                     {criterion.earnedPoints}
                                     <span className="text-zinc-500">/{criterion.maxPoints}</span>
