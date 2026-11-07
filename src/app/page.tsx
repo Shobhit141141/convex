@@ -1951,7 +1951,7 @@ export default function Home() {
               <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-[10px] font-semibold uppercase shrink-0">
-                    Scoring Rule
+                    Audience-Adaptive Rubric
                   </span>
                   <span className="text-zinc-300 text-[12px]">
                     {report.pageType === "resource" || report.visitorIntent === "education" ? (
