@@ -8,10 +8,11 @@ Convex is an evidence-based Conversion Rate Optimization (CRO) grader that evalu
 
 ## Visual Walkthrough & Product Interface
 
-### 1. Executive Score Hero & Minimal Audience Context Strip
+### 1. Executive Score Hero, Audience Context Strip & Audience-Adaptive Rubric Bar
 ![Executive Score Hero & Context Strip](docs/screenshots/01-report-hero-and-context.png)
-- **Overall Conversion Score Pod**: Displays the final `0–100` score (`79 / 100`), letter grade (`Grade B`), mini dimension gauges (`Persuasion 37/50`, `Execution 27/35`, `Experience 15/15`), and the **`Algo & Formula`** popover trigger showing the master Rubric v3 equation.
-- **Minimal 4-Column Context Strip**: Summarizes **Who This Page Is For** (`HR Manager • HR Director`), **Main Action Button (CTA)** (`"Book a demo"` above the fold), **Visitor Buying Stage** (`Consideration`), and **Sign-Up / Lead Form** (`Working On-Page Form`).
+- **Overall Conversion Score Pod**: Displays the final `0–100` score (`70 / 100`), letter grade (`Grade B`), mini dimension gauges (`Persuasion 31.2/50`, `Execution 24/35`, `Experience 15/15`), and the **`Algo & Formula`** popover trigger showing the master Rubric v3 equation.
+- **Minimal 4-Column Context Strip**: Summarizes **Who This Page Is For** (`Enterprise B2B Buyers`), **Main Action Button (CTA)** (`"Try Free"` visible above the fold), **Visitor Buying Stage** (`Discovery`), and **Sign-Up / Lead Form** (`Working On-Page Form`) with plain-English `(?)` tooltips.
+- **Audience-Adaptive Rubric Strip**: Explains in one crisp line which signals are weighted hardest for the detected buyer persona (e.g., *real customer ROI stats & setup speed* for business buyers vs. *short 2-box forms* for webinar/blog readers) with a 1-click **`See How Audience Changes Score →`** link.
 
 ---
 
