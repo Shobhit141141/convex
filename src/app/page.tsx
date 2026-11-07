@@ -146,6 +146,20 @@ export default function Home() {
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
   const [isScreenshotExpanded, setIsScreenshotExpanded] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState(0);
+
+  React.useEffect(() => {
+    if (!loading) {
+      setLoadingPhase(0);
+      return;
+    }
+    const timer1 = setTimeout(() => setLoadingPhase(1), 2200);
+    const timer2 = setTimeout(() => setLoadingPhase(2), 5200);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [loading]);
 
   const screenshotContainerRef = useRef<HTMLDivElement>(null);
 
@@ -303,10 +317,10 @@ export default function Home() {
                   className="px-4 py-2.5 rounded-lg bg-white text-zinc-950 text-xs font-semibold hover:bg-zinc-200 transition-all disabled:opacity-40 flex items-center gap-1.5 shadow-sm"
                 >
                   {loading ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-zinc-950 animate-pulse" />
                       Analyzing...
-                    </>
+                    </span>
                   ) : (
                     <>
                       Analyze
@@ -344,14 +358,32 @@ export default function Home() {
             </form>
 
             {loading && (
-              <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/40 text-center space-y-3">
-                <Loader2 className="w-5 h-5 animate-spin text-zinc-300 mx-auto" />
-                <div className="space-y-1">
-                  <div className="text-xs font-medium text-zinc-200">
-                    Running Multi-Phase Evaluation Pipeline...
+              <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/60 text-left space-y-4 shadow-xl backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs font-semibold text-white">
+                      Running Multi-Phase Evaluation Pipeline
+                    </span>
                   </div>
-                  <p className="text-[11px] text-zinc-500">
-                    Capturing full-page website render, evaluating persuasion rubric, and tagging issues across all page sections.
+                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700">
+                    Live Processing
+                  </span>
+                </div>
+
+                {/* Animated Horizontal Bar Loader (No Rotating Spinner) */}
+                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden relative">
+                  <div className="h-full w-2/5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 rounded-full animate-bar-loader" />
+                </div>
+
+                <div className="space-y-1.5 pt-0.5">
+                  <div className="text-xs font-medium text-zinc-200">
+                    {loadingPhase === 0 && "Step 1 of 3: Parsing DOM hierarchy, headings, and CTA paths..."}
+                    {loadingPhase === 1 && "Step 2 of 3: Capturing full-page render and verifying dynamic modals..."}
+                    {loadingPhase >= 2 && "Step 3 of 3: Evaluating conversion persuasion rubric and generating hotspot pins..."}
+                  </div>
+                  <p className="text-[11px] text-zinc-500 leading-relaxed">
+                    Analyzing audience-problem fit, inspecting above-the-fold CTA prominence, and calculating Core Web Vitals across page sections.
                   </p>
                 </div>
               </div>
