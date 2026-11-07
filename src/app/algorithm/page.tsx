@@ -930,7 +930,7 @@ export default function AlgorithmPage() {
         </section>
 
         {/* 4. Audience Weighting & "Biggest Disagreement" (Grader vs. Real Leena.ai Data) */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <section id="audience-and-dataset" className="grid grid-cols-1 lg:grid-cols-12 gap-5 scroll-mt-20">
           {/* Left (6 cols): Interactive Audience Switcher */}
           <div className="lg:col-span-6 rounded-2xl border border-zinc-800 bg-zinc-900/35 p-5 space-y-3.5">
             <div>
@@ -974,6 +974,36 @@ export default function AlgorithmPage() {
                 <strong className="text-zinc-200">Why: </strong>
                 {currentAudience.why}
               </p>
+            </div>
+
+            {/* Side-by-Side Signal Weight Comparison Across Audiences */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden text-[11px]">
+              <div className="grid grid-cols-12 px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 font-mono text-[10px] text-zinc-400 uppercase">
+                <span className="col-span-5">Signal Evaluated</span>
+                <span className="col-span-2 text-center">Enterprise</span>
+                <span className="col-span-3 text-center">Practitioner</span>
+                <span className="col-span-2 text-center">Webinar</span>
+              </div>
+              <div className="divide-y divide-zinc-800/70 font-mono">
+                <div className="grid grid-cols-12 px-3 py-1.5 items-center">
+                  <span className="col-span-5 font-sans text-zinc-200">Quantified Case Study &amp; SOC2</span>
+                  <span className="col-span-2 text-center text-emerald-400 font-bold">1.5× High</span>
+                  <span className="col-span-3 text-center text-zinc-300">1.0× Std</span>
+                  <span className="col-span-2 text-center text-zinc-500">0.5× Low</span>
+                </div>
+                <div className="grid grid-cols-12 px-3 py-1.5 items-center">
+                  <span className="col-span-5 font-sans text-zinc-200">Role Workflow Systems (Workday)</span>
+                  <span className="col-span-2 text-center text-zinc-300">1.0× Std</span>
+                  <span className="col-span-3 text-center text-emerald-400 font-bold">1.5× High</span>
+                  <span className="col-span-2 text-center text-zinc-500">0.7× Low</span>
+                </div>
+                <div className="grid grid-cols-12 px-3 py-1.5 items-center">
+                  <span className="col-span-5 font-sans text-zinc-200">Form Simplicity (&le; 3 Fields)</span>
+                  <span className="col-span-2 text-center text-zinc-400">0.8× Tol.</span>
+                  <span className="col-span-3 text-center text-zinc-300">1.0× Std</span>
+                  <span className="col-span-2 text-center text-emerald-400 font-bold">1.6× Strict</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1034,6 +1064,51 @@ export default function AlgorithmPage() {
                 traffic. When adjusted for channel intent, the Homepage converts at{" "}
                 <strong>0.57× expected</strong> vs. HR&apos;s <strong>0.50×</strong>—proving our
                 grader&apos;s 83 vs. 80 ranking is right.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. One-Page Scoring Note Summary (What Changed After Data Check & What We Left Out on Purpose) */}
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/35 p-5 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-white">
+              6. Scoring Note — What Changed After Checking the Data &amp; What We Left Out on Purpose
+            </h2>
+            <p className="text-xs text-zinc-400">
+              How our rubric evolved from v1 to v3 against the Leena AI dataset, and what signals we deliberately excluded.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1.5">
+              <div className="font-mono text-[10px] uppercase text-amber-400 font-semibold">
+                1. Why Rubric v1 &amp; v2 Failed
+              </div>
+              <div className="font-semibold text-white">Binary DOM Checks Compressed Scores</div>
+              <p className="text-zinc-300 leading-relaxed text-[11.5px]">
+                <strong>Rubric v1</strong> gave points merely for having an H1, a button, and logos—scoring both the Homepage and HR page at <strong>94/100</strong>.{" "}
+                <strong>Rubric v2</strong> added audience profiles but over-rewarded the CHRISTUS Webinar page (<strong>93/100</strong> vs. <strong>0.11% CVR</strong>) because it didn&apos;t penalize high-friction HubSpot demo gates on webinar pages.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1.5">
+              <div className="font-mono text-[10px] uppercase text-emerald-400 font-semibold">
+                2. What Changed in Final Rubric v3
+              </div>
+              <div className="font-semibold text-white">50/35/15 Split + Conversion-Readiness Gates</div>
+              <p className="text-zinc-300 leading-relaxed text-[11.5px]">
+                We rebalanced to <strong>Persuasion (50)</strong> + <strong>Execution (35)</strong> + <strong>Experience (15)</strong>, added live Playwright modal/form verification, and introduced <strong>Conversion-Readiness Gates</strong> (capping Execution at 20%–30% if a CTA or lead form is missing/broken), producing a strict <code>83 &gt; 80 &gt; 77</code> separation aligned with traffic-adjusted conversion performance.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1.5">
+              <div className="font-mono text-[10px] uppercase text-sky-400 font-semibold">
+                3. What We Left Out on Purpose
+              </div>
+              <div className="font-semibold text-white">Aesthetic Subjectivity, Keyword Density &amp; Traffic Mix</div>
+              <p className="text-zinc-300 leading-relaxed text-[11.5px]">
+                We deliberately excluded: <strong>(a) Subjective visual taste</strong> (color palettes/fonts don&apos;t predict B2B CVR), <strong>(b) SEO keyword stuffing / word-count bloat</strong> (longer pages often convert worse), and <strong>(c) Ad-channel traffic split</strong> inside the page score—because a grader must measure <em>intrinsic landing page quality</em>, not paid media spend.
               </p>
             </div>
           </div>

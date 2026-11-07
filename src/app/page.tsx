@@ -683,7 +683,7 @@ export default function Home() {
     setExpandedCriteria((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleGrade = async (targetUrl: string = url, forceRefresh = false) => {
+  const handleGrade = async (targetUrl: string = url, forceRefresh = true) => {
     const cleanUrl = targetUrl.trim();
     if (!cleanUrl) return;
 
@@ -1945,6 +1945,43 @@ export default function Home() {
                       : "No inline form verified on page"}
                   </div>
                 </div>
+              </div>
+
+              {/* Audience-Adaptive Weighting Callout (Shows How Grading Changes by Audience) */}
+              <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
+                <div className="flex items-start sm:items-center gap-2.5">
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-[10px] font-semibold uppercase shrink-0">
+                    Audience-Adaptive Rubric
+                  </span>
+                  <p className="text-zinc-300 leading-relaxed text-[11.5px]">
+                    {report.pageType === "resource" || report.visitorIntent === "education" ? (
+                      <>
+                        Detected <strong className="text-white">Educational / Content Visitor</strong>: Prioritizes{" "}
+                        <strong className="text-emerald-300">Promise–Destination Match (8 pts) &amp; Form Simplicity (7 pts)</strong>{" "}
+                        over enterprise compliance badges—because educational visitors bounce when gated by 7-field sales forms.
+                      </>
+                    ) : report.pageType === "functional" ? (
+                      <>
+                        Detected <strong className="text-white">Practitioner / Functional Buyer ({report.targetAudience.roles[0] || "HR/IT Lead"})</strong>: Prioritizes{" "}
+                        <strong className="text-emerald-300">Role-Specific Problem Fit (10 pts) &amp; Workflow Alignment (10 pts)</strong>{" "}
+                        (e.g., named HRIS/ITSM integrations &amp; ticket automation speed) over generic C-suite slogans.
+                      </>
+                    ) : (
+                      <>
+                        Detected <strong className="text-white">Enterprise Buyer ({report.targetAudience.roles.slice(0, 2).join(", ") || "Decision Maker"})</strong>: Prioritizes{" "}
+                        <strong className="text-emerald-300">Quantified Case Study Proof (10 pts) &amp; Speed-to-Value (12 pts)</strong>{" "}
+                        (named customer ROI + deployment timeline) vs. educational pages where low-friction content access is weighted highest.
+                      </>
+                    )}
+                  </p>
+                </div>
+                <Link
+                  href="/algorithm#audience-and-dataset"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-emerald-400 hover:text-emerald-300 shrink-0 transition-colors"
+                >
+                  <span>Audience Weights &amp; Real Data</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
 
               {/* Conversion-Readiness Gate Diagnostic Banner */}
