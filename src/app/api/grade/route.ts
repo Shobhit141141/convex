@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { gradeLandingPage } from "@/features/pipeline/grader-pipeline";
+import { getCachedAuditByUrl, saveAuditReport } from "@/features/storage/audit-history";
 import { z } from "zod";
 
 const GradeRequestSchema = z.object({
   url: z.string().min(3, "URL is required"),
   enablePlaywright: z.boolean().optional().default(true),
-  stream: z.boolean().optional().default(false)
+  stream: z.boolean().optional().default(false),
+  forceRefresh: z.boolean().optional().default(false)
 });
 
 export async function POST(req: NextRequest) {
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { url, enablePlaywright, stream } = parsed.data;
+    const { url, enablePlaywright, stream, forceRefresh } = parsed.data;
 
     if (stream) {
       const encoder = new TextEncoder();
@@ -38,6 +40,32 @@ export async function POST(req: NextRequest) {
           };
 
           try {
+            const startMs = Date.now();
+            if (!forceRefresh) {
+              const cached = await getCachedAuditByUrl(url);
+              if (cached) {
+                send({
+                  type: "progress",
+                  event: {
+                    step: "complete",
+                    percent: 100,
+                    stageLabel: "Loaded from Supabase Audit Cache",
+                    detail: `Restored saved record #${cached.recordId} (${cached.report.totalScore}/100, Grade ${cached.report.letterGrade}) without re-fetching`,
+                    elapsedMs: Date.now() - startMs
+                  }
+                });
+                send({
+                  type: "result",
+                  success: true,
+                  cached: true,
+                  recordId: cached.recordId,
+                  cachedAt: cached.createdAt,
+                  report: cached.report
+                });
+                return;
+              }
+            }
+
             const report = await gradeLandingPage(url, {
               enableLivePlaywright: enablePlaywright,
               pageSpeedApiKey: process.env.PAGESPEED_API_KEY,
@@ -46,7 +74,16 @@ export async function POST(req: NextRequest) {
               }
             });
 
-            send({ type: "result", success: true, report });
+            const saved = await saveAuditReport(report);
+
+            send({
+              type: "result",
+              success: true,
+              cached: false,
+              recordId: saved?.recordId,
+              cachedAt: saved?.createdAt || report.evaluatedAt,
+              report
+            });
           } catch (err: any) {
             send({
               type: "error",
@@ -70,13 +107,31 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (!forceRefresh) {
+      const cached = await getCachedAuditByUrl(url);
+      if (cached) {
+        return NextResponse.json({
+          success: true,
+          cached: true,
+          recordId: cached.recordId,
+          cachedAt: cached.createdAt,
+          report: cached.report
+        });
+      }
+    }
+
     const report = await gradeLandingPage(url, {
       enableLivePlaywright: enablePlaywright,
       pageSpeedApiKey: process.env.PAGESPEED_API_KEY
     });
 
+    const saved = await saveAuditReport(report);
+
     return NextResponse.json({
       success: true,
+      cached: false,
+      recordId: saved?.recordId,
+      cachedAt: saved?.createdAt || report.evaluatedAt,
       report
     });
   } catch (err: any) {

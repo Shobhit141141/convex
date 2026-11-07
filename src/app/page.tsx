@@ -30,9 +30,17 @@ import {
   TrendingUp,
   Crosshair,
   Info,
-  Calculator
+  Calculator,
+  Download,
+  History,
+  Database,
+  RefreshCw,
+  FileText,
+  FileCode,
+  Clock
 } from "lucide-react";
 import { V3CriterionScore } from "@/types/rubric-v3-schema";
+import type { AuditHistoryItem } from "@/features/storage/audit-history";
 
 // Circular SVG Progress Ring (Uniform across Hero, Dimensions, Web Vitals, and Criterion Rows)
 function ScoreRing({
@@ -352,8 +360,219 @@ export default function Home() {
     Array<{ step: string; percent: number; stageLabel: string; detail: string; elapsedMs: number }>
   >([]);
   const [openAlgoId, setOpenAlgoId] = useState<string | null>(null);
+  const [historyItems, setHistoryItems] = useState<AuditHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [cacheMeta, setCacheMeta] = useState<{
+    cached: boolean;
+    recordId?: number;
+    cachedAt?: string;
+  } | null>(null);
 
   const screenshotContainerRef = useRef<HTMLDivElement>(null);
+
+  const fetchHistory = React.useCallback(async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch("/api/history?limit=40");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.history)) {
+        setHistoryItems(data.history);
+      }
+    } catch {
+      // Ignore background history fetch errors
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  const loadAuditRecordById = async (id: number) => {
+    setLoading(true);
+    setError(null);
+    setShowHistoryModal(false);
+    setProgress(50);
+    setProgressEvents([
+      {
+        step: "fetch_dom",
+        percent: 50,
+        stageLabel: "Loading Saved Audit from Supabase",
+        detail: `Fetching stored evaluation record #${id}...`,
+        elapsedMs: 12
+      }
+    ]);
+
+    try {
+      const res = await fetch(`/api/history?id=${id}`);
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.report) {
+        throw new Error(data.error || "Failed to load saved audit record.");
+      }
+      setProgress(100);
+      setUrl(data.report.url);
+      setReport(data.report);
+      setCacheMeta({
+        cached: true,
+        recordId: data.recordId,
+        cachedAt: data.createdAt
+      });
+      if (data.report.screenshotTags && data.report.screenshotTags.length > 0) {
+        setSelectedTagId(data.report.screenshotTags[0].id);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to load saved audit record.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSafeFilenameSlug = (targetUrl: string) => {
+    try {
+      const u = new URL(targetUrl);
+      const host = u.hostname.replace(/^www\./, "").replace(/[^a-z0-9.-]/gi, "-");
+      const path = u.pathname.replace(/^\/+|\/+$/g, "").replace(/[^a-z0-9-_]/gi, "-");
+      return path ? `${host}-${path}` : host;
+    } catch {
+      return "landing-page";
+    }
+  };
+
+  const triggerDownload = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  const exportReportMarkdown = () => {
+    if (!report) return;
+    const slug = getSafeFilenameSlug(report.url);
+    const dateStr = new Date(report.evaluatedAt).toISOString().split("T")[0];
+
+    const lines: string[] = [
+      `# Landing Page Quality & Conversion Report`,
+      ``,
+      `- **Audited URL:** ${report.url}`,
+      `- **Overall Score:** **${report.totalScore} / 100** (Grade **${report.letterGrade}**)`,
+      `- **Page Type:** \`${report.pageType.toUpperCase()}\``,
+      `- **Target Audience (ICP):** ${report.targetAudience.roles.join(", ") || "Enterprise B2B Buyers"} (${report.targetAudience.segments.join(", ") || "Decision Makers"})`,
+      `- **Primary Conversion Action:** ${report.signalsPreview.primaryCtaText ? `"${report.signalsPreview.primaryCtaText}"` : "None detected"} (${report.signalsPreview.hasAboveTheFoldCta ? "Above the fold" : "Below the fold"})`,
+      `- **Visitor Journey Intent:** \`${report.visitorIntent.toUpperCase()}\``,
+      `- **Lead Funnel Engine:** ${report.signalsPreview.leadCaptureEngine ? `Verified (${report.signalsPreview.leadCaptureType})` : "Unverified / External Script"}`,
+      `- **Evaluated At:** ${new Date(report.evaluatedAt).toLocaleString()}`,
+      ``,
+      `## Executive Summary`,
+      `${report.summary}`,
+      ``,
+      `## Dimension Sub-Scores (Rubric v3)`,
+      `| Dimension | Score | Max Points | Percentage | Gate Status |`,
+      `| :--- | :---: | :---: | :---: | :--- |`,
+      `| **A. Conversion Persuasion** | ${report.dimensions.persuasion.score} | ${report.dimensions.persuasion.maxScore} | ${report.dimensions.persuasion.percentage}% | None |`,
+      `| **B. Conversion Execution** | ${report.dimensions.execution.score} | ${report.dimensions.execution.maxScore} | ${report.dimensions.execution.percentage}% | ${report.dimensions.execution.gateApplied ? `Capped (${report.dimensions.execution.gateReason})` : "Passed"} |`,
+      `| **C. Supporting Experience** | ${report.dimensions.experience.score} | ${report.dimensions.experience.maxScore} | ${report.dimensions.experience.percentage}% | None |`,
+      ``,
+      `## Prioritized Actionable CRO Recommendations (${report.recommendations.length})`,
+      ``
+    ];
+
+    report.recommendations.forEach((rec, i) => {
+      lines.push(
+        `### ${i + 1}. [${rec.priority.toUpperCase()}] ${rec.title}`,
+        `- **Page Zone:** ${rec.locationLabel} (\`~${rec.coordinates.yPercent}% Y\`)`,
+        `- **Dimension:** ${rec.dimension.toUpperCase()} (${rec.section})`,
+        `- **Expected Conversion Lift:** ${rec.expectedImpact}`,
+        `- **Identified Friction / Problem:** ${rec.problem}`,
+        `- **Direct Engineering / Copy Fix:** ${rec.directFix}`,
+        `- **Implementation Action:** ${rec.action}`,
+        ``
+      );
+    });
+
+    lines.push(`## Complete 13-Check Score Breakdown & Algorithms`, ``);
+    report.criteria.forEach((c) => {
+      const algo = getCriterionAlgorithm(c);
+      lines.push(
+        `### ${c.name} — ${c.earnedPoints} / ${c.maxPoints} pts (${c.status.toUpperCase()})`,
+        `- **Dimension:** ${c.dimension.toUpperCase()} | **Source:** \`${c.source}\``,
+        `- **Formula:** \`${algo.formula}\``,
+        `- **Calculation:** \`${algo.calculation}\``,
+        `- **Reasoning:** ${algo.reasoning}`,
+        `- **Extracted Evidence:** > ${c.evidence || "N/A"}`,
+        ``
+      );
+    });
+
+    triggerDownload(lines.join("\n"), `convex-audit-${slug}-${dateStr}.md`, "text/markdown;charset=utf-8");
+    setShowExportMenu(false);
+  };
+
+  const exportReportJson = () => {
+    if (!report) return;
+    const slug = getSafeFilenameSlug(report.url);
+    const dateStr = new Date(report.evaluatedAt).toISOString().split("T")[0];
+    const exportPayload = {
+      ...report,
+      screenshotBase64: report.screenshotBase64 ? "[OMITTED_BASE64_IMAGE_FOR_COMPACT_JSON]" : undefined
+    };
+    triggerDownload(
+      JSON.stringify(exportPayload, null, 2),
+      `convex-audit-${slug}-${dateStr}.json`,
+      "application/json;charset=utf-8"
+    );
+    setShowExportMenu(false);
+  };
+
+  const exportRecommendationsCsv = () => {
+    if (!report) return;
+    const slug = getSafeFilenameSlug(report.url);
+    const dateStr = new Date(report.evaluatedAt).toISOString().split("T")[0];
+    const esc = (val: string | number) => `"${String(val ?? "").replace(/"/g, '""')}"`;
+
+    const headers = [
+      "Priority",
+      "Dimension",
+      "Section",
+      "Page Zone",
+      "Canvas Y%",
+      "Title",
+      "Problem",
+      "Direct Fix",
+      "Expected Impact",
+      "Action"
+    ];
+    const rows = report.recommendations.map((r) =>
+      [
+        r.priority.toUpperCase(),
+        r.dimension,
+        r.section,
+        r.locationLabel,
+        `${r.coordinates.yPercent}%`,
+        r.title,
+        r.problem,
+        r.directFix,
+        r.expectedImpact,
+        r.action
+      ]
+        .map(esc)
+        .join(",")
+    );
+
+    triggerDownload(
+      [headers.map(esc).join(","), ...rows].join("\n"),
+      `convex-recommendations-${slug}-${dateStr}.csv`,
+      "text/csv;charset=utf-8"
+    );
+    setShowExportMenu(false);
+  };
 
   const scrollToTag = (yPercent: number) => {
     if (screenshotContainerRef.current) {
@@ -367,7 +586,7 @@ export default function Home() {
     setExpandedCriteria((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleGrade = async (targetUrl: string = url) => {
+  const handleGrade = async (targetUrl: string = url, forceRefresh = false) => {
     const cleanUrl = targetUrl.trim();
     if (!cleanUrl) return;
 
@@ -376,12 +595,13 @@ export default function Home() {
     setSelectedTagId(null);
     setProgress(4);
     setProgressEvents([]);
+    setShowHistoryModal(false);
 
     try {
       const res = await fetch("/api/grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: cleanUrl, enablePlaywright: true, stream: true })
+        body: JSON.stringify({ url: cleanUrl, enablePlaywright: true, stream: true, forceRefresh })
       });
 
       if (!res.ok || !res.body) {
@@ -393,6 +613,9 @@ export default function Home() {
       const decoder = new TextDecoder();
       let buffer = "";
       let finalReport: GraderReport | null = null;
+      let isCached = false;
+      let recId: number | undefined;
+      let cachedTimestamp: string | undefined;
 
       while (true) {
         const { value, done } = await reader.read();
@@ -410,6 +633,9 @@ export default function Home() {
             setProgressEvents((prev) => [...prev, msg.event]);
           } else if (msg.type === "result" && msg.success && msg.report) {
             finalReport = msg.report;
+            isCached = !!msg.cached;
+            recId = msg.recordId;
+            cachedTimestamp = msg.cachedAt;
             setProgress(100);
           } else if (msg.type === "error") {
             throw new Error(msg.error || "Failed to analyze page.");
@@ -421,11 +647,17 @@ export default function Home() {
         throw new Error("Evaluation stream ended without returning a report.");
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 220));
+      await new Promise((resolve) => setTimeout(resolve, 180));
       setReport(finalReport);
+      setCacheMeta({
+        cached: isCached,
+        recordId: recId,
+        cachedAt: cachedTimestamp || finalReport.evaluatedAt
+      });
       if (finalReport.screenshotTags && finalReport.screenshotTags.length > 0) {
         setSelectedTagId(finalReport.screenshotTags[0].id);
       }
+      fetchHistory();
     } catch (err: any) {
       setError(err.message || "Failed to analyze page.");
     } finally {
@@ -441,6 +673,9 @@ export default function Home() {
     setProgress(0);
     setProgressEvents([]);
     setOpenAlgoId(null);
+    setCacheMeta(null);
+    setShowExportMenu(false);
+    fetchHistory();
   };
 
   const getStatusBadge = (status: string) => {
@@ -489,33 +724,236 @@ export default function Home() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-zinc-800">
       {/* Top Editorial Navigation */}
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded bg-white text-zinc-950 flex items-center justify-center font-bold text-xs tracking-tighter shadow-sm">
-              C
-            </div>
-            <span className="font-semibold tracking-tight text-white text-sm">Convex</span>
+            <button
+              type="button"
+              onClick={resetAnalysis}
+              className="flex items-center gap-2.5 text-left hover:opacity-90 transition-opacity"
+            >
+              <div className="w-6 h-6 rounded bg-white text-zinc-950 flex items-center justify-center font-bold text-xs tracking-tighter shadow-sm">
+                C
+              </div>
+              <span className="font-semibold tracking-tight text-white text-sm">Convex</span>
+            </button>
             <span className="text-zinc-600 text-xs">/</span>
-            <span className="text-xs text-zinc-400 font-normal">Conversion Engineering Grader</span>
+            <span className="text-xs text-zinc-400 font-normal hidden sm:inline">
+              Conversion Engineering Grader
+            </span>
           </div>
 
-          {report && (
+          <div className="flex items-center gap-2">
+            {/* Supabase Saved History Button */}
             <button
-              onClick={resetAnalysis}
-              className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors px-2.5 py-1.5 rounded-md hover:bg-zinc-900 border border-transparent hover:border-zinc-800"
+              type="button"
+              onClick={() => {
+                fetchHistory();
+                setShowHistoryModal(true);
+              }}
+              className="text-xs text-zinc-300 hover:text-white flex items-center gap-1.5 transition-colors px-2.5 py-1.5 rounded-md bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Analyze Another Page
+              <History className="w-3.5 h-3.5 text-zinc-400" />
+              <span>History</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300">
+                {historyItems.length}
+              </span>
             </button>
-          )}
+
+            {report && (
+              <>
+                {/* Export Report & Recommendations Dropdown */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowExportMenu((prev) => !prev)}
+                    className="text-xs bg-white text-zinc-950 hover:bg-zinc-200 font-semibold flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-md shadow-sm"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export Report</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+
+                  {showExportMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-64 rounded-xl bg-zinc-950 border border-zinc-700 shadow-2xl z-50 p-1.5 space-y-1 text-xs">
+                      <button
+                        type="button"
+                        onClick={exportReportMarkdown}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-900 flex items-start gap-2.5 transition-colors"
+                      >
+                        <FileText className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-semibold text-white">Full Analysis &amp; Fixes (.md)</div>
+                          <div className="text-[10px] text-zinc-400">
+                            Scores, formulas, evidence &amp; CRO roadmap
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={exportRecommendationsCsv}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-900 flex items-start gap-2.5 transition-colors"
+                      >
+                        <Download className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-semibold text-white">Recommendations CSV (.csv)</div>
+                          <div className="text-[10px] text-zinc-400">
+                            Prioritized issues &amp; direct fixes for trackers
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={exportReportJson}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-900 flex items-start gap-2.5 transition-colors"
+                      >
+                        <FileCode className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-semibold text-white">Structured JSON (.json)</div>
+                          <div className="text-[10px] text-zinc-400">
+                            Complete Rubric v3 machine-readable data
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={resetAnalysis}
+                  className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors px-2.5 py-1.5 rounded-md hover:bg-zinc-900 border border-transparent hover:border-zinc-800"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">New URL</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* Supabase History Modal Drawer */}
+      {showHistoryModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowHistoryModal(false)}
+        >
+          <div
+            className="w-full max-w-3xl max-h-[82vh] rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-emerald-400" />
+                <div>
+                  <h2 className="text-sm font-semibold text-white">
+                    Saved Website Audit History (Supabase)
+                  </h2>
+                  <p className="text-[11px] text-zinc-400">
+                    Click any stored record to view its cached report immediately without re-fetching.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHistoryModal(false)}
+                className="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800"
+              >
+                Close ✕
+              </button>
+            </div>
+
+            <div className="overflow-y-auto divide-y divide-zinc-800/70 p-2">
+              {loadingHistory ? (
+                <div className="p-8 text-center text-xs text-zinc-400 flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading audit records from Supabase...
+                </div>
+              ) : historyItems.length === 0 ? (
+                <div className="p-8 text-center text-xs text-zinc-500">
+                  No website audits saved yet. Run your first URL evaluation to store it in Supabase.
+                </div>
+              ) : (
+                historyItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3 hover:bg-zinc-900/60 rounded-xl transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <ScoreRing
+                        value={item.total_score}
+                        max={100}
+                        size={42}
+                        strokeWidth={4}
+                        colorClass={
+                          item.total_score >= 80
+                            ? "text-emerald-500"
+                            : item.total_score >= 60
+                            ? "text-amber-500"
+                            : "text-rose-500"
+                        }
+                        label={String(item.total_score)}
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-semibold text-white truncate max-w-xs sm:max-w-md">
+                            {item.url}
+                          </span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 uppercase">
+                            Grade {item.letter_grade}
+                          </span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 uppercase">
+                            {item.page_type}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-zinc-500 font-mono flex flex-wrap items-center gap-3 mt-0.5">
+                          <span>Persuasion: {item.persuasion_score}/50</span>
+                          <span>•</span>
+                          <span>Execution: {item.execution_score}/35</span>
+                          <span>•</span>
+                          <span>Experience: {item.experience_score}/15</span>
+                          <span>•</span>
+                          <span>{new Date(item.created_at).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => loadAuditRecordById(item.id)}
+                        className="px-3 py-1.5 rounded-lg bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold transition-colors"
+                      >
+                        Open Saved
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUrl(item.url);
+                          handleGrade(item.url, true);
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs flex items-center gap-1 transition-colors"
+                        title="Force fresh real-time scan"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Re-run
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* State 1: Input URL Screen */}
         {!report && (
-          <div className="max-w-xl mx-auto text-center space-y-6 pt-16 pb-20">
+          <div className="max-w-2xl mx-auto text-center space-y-6 pt-12 pb-20">
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold tracking-tight text-white">
                 Landing Page Evaluator
@@ -528,9 +966,9 @@ export default function Home() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleGrade();
+                handleGrade(url, false);
               }}
-              className="space-y-3"
+              className="space-y-3 max-w-xl mx-auto"
             >
               <div className="flex items-center rounded-xl border border-zinc-800 bg-zinc-900 focus-within:border-zinc-500 transition-all shadow-sm overflow-hidden p-1.5">
                 <input
@@ -567,7 +1005,7 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     setUrl("https://leena.ai/function/hr");
-                    handleGrade("https://leena.ai/function/hr");
+                    handleGrade("https://leena.ai/function/hr", false);
                   }}
                   className="text-zinc-400 hover:text-zinc-200 underline underline-offset-4 decoration-zinc-700 hover:decoration-zinc-400 transition-colors"
                 >
@@ -578,7 +1016,7 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     setUrl("https://leena.ai");
-                    handleGrade("https://leena.ai");
+                    handleGrade("https://leena.ai", false);
                   }}
                   className="text-zinc-400 hover:text-zinc-200 underline underline-offset-4 decoration-zinc-700 hover:decoration-zinc-400 transition-colors"
                 >
@@ -588,7 +1026,7 @@ export default function Home() {
             </form>
 
             {loading && (
-              <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/80 text-left space-y-4 shadow-2xl backdrop-blur-md">
+              <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/80 text-left space-y-4 shadow-2xl backdrop-blur-md max-w-xl mx-auto">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <span className="relative flex h-2.5 w-2.5">
@@ -630,7 +1068,7 @@ export default function Home() {
                   {progressEvents.length === 0 ? (
                     <div className="text-[11px] text-zinc-400 flex items-center gap-2 py-1">
                       <Loader2 className="w-3 h-3 animate-spin text-zinc-400 shrink-0" />
-                      <span>Initializing server stream & requesting target URL...</span>
+                      <span>Checking Supabase URL cache & initializing pipeline...</span>
                     </div>
                   ) : (
                     progressEvents.map((ev, idx) => {
@@ -665,11 +1103,95 @@ export default function Home() {
             )}
 
             {error && (
-              <div className="p-4 rounded-xl border border-rose-900/60 bg-rose-950/30 text-rose-300 text-xs text-left flex items-start gap-2.5">
+              <div className="p-4 rounded-xl border border-rose-900/60 bg-rose-950/30 text-rose-300 text-xs text-left flex items-start gap-2.5 max-w-xl mx-auto">
                 <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 <div>
                   <div className="font-semibold text-rose-200 mb-0.5">Evaluation Error</div>
                   <div>{error}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Saved Website Audit History on Homepage */}
+            {!loading && historyItems.length > 0 && (
+              <div className="pt-6 text-left space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <Database className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-xs font-semibold text-zinc-200">
+                      Saved Website Audits ({historyItems.length})
+                    </span>
+                    <span className="text-[10px] font-mono text-zinc-500">
+                      Instant load from Supabase — no re-fetch required
+                    </span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-zinc-800/90 bg-zinc-900/30 divide-y divide-zinc-800/70 overflow-hidden">
+                  {historyItems.slice(0, 8).map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => loadAuditRecordById(item.id)}
+                      className="p-3 hover:bg-zinc-900/70 transition-colors cursor-pointer flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <ScoreRing
+                          value={item.total_score}
+                          max={100}
+                          size={36}
+                          strokeWidth={3.5}
+                          colorClass={
+                            item.total_score >= 80
+                              ? "text-emerald-500"
+                              : item.total_score >= 60
+                              ? "text-amber-500"
+                              : "text-rose-500"
+                          }
+                          label={String(item.total_score)}
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-medium text-white truncate max-w-[240px] sm:max-w-sm">
+                              {item.url}
+                            </span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
+                              Grade {item.letter_grade}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-zinc-500 font-mono flex items-center gap-2 mt-0.5">
+                            <span className="uppercase">{item.page_type}</span>
+                            <span>•</span>
+                            <span>
+                              P:{item.persuasion_score} E:{item.execution_score} X:{item.experience_score}
+                            </span>
+                            <span>•</span>
+                            <span>{new Date(item.created_at).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => loadAuditRecordById(item.id)}
+                          className="px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-[11px] font-medium transition-colors"
+                        >
+                          Open
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUrl(item.url);
+                            handleGrade(item.url, true);
+                          }}
+                          className="p-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                          title="Re-run fresh real-time evaluation"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -679,6 +1201,55 @@ export default function Home() {
         {/* State 2: Full-Page Visual Audit Studio with Screenshot Tagging */}
         {report && (
           <div className="space-y-8">
+            {/* Supabase Record Status, URL History & Export Bar */}
+            <div className="rounded-xl border border-zinc-800/90 bg-zinc-900/50 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 border border-zinc-800 text-[11px] font-mono text-zinc-200">
+                  <Database className="w-3.5 h-3.5 text-emerald-400" />
+                  {cacheMeta?.cached
+                    ? `Loaded from Supabase Cache${cacheMeta.recordId ? ` (#${cacheMeta.recordId})` : ""}`
+                    : `Saved to Supabase History${cacheMeta?.recordId ? ` (#${cacheMeta.recordId})` : ""}`}
+                </span>
+                {cacheMeta?.cachedAt && (
+                  <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-zinc-500" />
+                    Recorded {new Date(cacheMeta.cachedAt).toLocaleString()}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleGrade(report.url, true)}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-300 hover:text-white transition-colors"
+                  title="Force a fresh live crawl & evaluation and save a new history snapshot"
+                >
+                  <RefreshCw className="w-3 h-3 text-emerald-400" />
+                  Re-run Live Audit
+                </button>
+
+                <button
+                  type="button"
+                  onClick={exportReportMarkdown}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-200 hover:text-white transition-colors"
+                >
+                  <FileText className="w-3 h-3 text-emerald-400" />
+                  Export .MD
+                </button>
+
+                <button
+                  type="button"
+                  onClick={exportRecommendationsCsv}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-200 hover:text-white transition-colors"
+                >
+                  <Download className="w-3 h-3 text-amber-400" />
+                  Export Fixes .CSV
+                </button>
+              </div>
+            </div>
+
             {/* Header: Prominent Overall Score Hero & Context Bar */}
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-5 shadow-xl">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-zinc-800/80 pb-5">
