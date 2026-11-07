@@ -918,6 +918,109 @@ export default function Home() {
 
   const tags = filteredAnnotations;
 
+  // Build crisp, non-technical "In a Nutshell" 10-second plain-English digest
+  const plainDigest = React.useMemo(() => {
+    if (!report) return null;
+
+    const buyer =
+      report.targetAudience.roles.length > 0
+        ? report.targetAudience.roles.slice(0, 2).join(" & ")
+        : "business buyers";
+    const cta = report.signalsPreview.primaryCtaText
+      ? `"${report.signalsPreview.primaryCtaText}"`
+      : "a main action button";
+
+    const workingWell: string[] = [];
+    const hurtingSales: string[] = [];
+
+    // Check key signals in simple everyday language
+    const cProblem = report.criteria.find((c) => c.id === "persuasion_problem_fit");
+    const cValue = report.criteria.find((c) => c.id === "persuasion_value_prop");
+    const cProof = report.criteria.find((c) => c.id === "persuasion_credibility");
+    const cAlign = report.criteria.find((c) => c.id === "persuasion_audience_align");
+    const cCta = report.criteria.find((c) => c.id === "exec_cta_prominence");
+    const cForm = report.criteria.find((c) => c.id === "exec_lead_capture");
+    const cFriction = report.criteria.find((c) => c.id === "exec_funnel_friction");
+
+    if (cProblem?.status === "passed" || cAlign?.status === "passed") {
+      workingWell.push(`Speaks clearly to ${buyer} about their real day-to-day problems.`);
+    } else {
+      hurtingSales.push(`Headline copy feels generic instead of naming a specific problem for ${buyer}.`);
+    }
+
+    if (cValue?.status === "passed") {
+      workingWell.push("Headline promises a clear, measurable result and shows how fast visitors get value.");
+    } else {
+      hurtingSales.push("Headline doesn't state how fast visitors get results or what exact outcome to expect.");
+    }
+
+    if (report.signalsPreview.hasAboveTheFoldCta && cCta?.status === "passed") {
+      workingWell.push(`Main button (${cta}) is easy to spot right at the top of the page.`);
+    } else {
+      hurtingSales.push(`Main button (${cta}) is either hard to spot at the top or doesn't say what happens next.`);
+    }
+
+    if (cProof?.status === "passed") {
+      workingWell.push("Backs up claims with real customer proof and measurable results.");
+    } else {
+      hurtingSales.push("Shows company logos without real customer quotes or before/after numbers to prove ROI.");
+    }
+
+    if (report.signalsPreview.leadCaptureEngine && cForm?.status === "passed") {
+      workingWell.push("Clicking the main button opens a working sign-up form right on the page.");
+    } else {
+      hurtingSales.push("No quick sign-up form opens on the page when clicking the main button.");
+    }
+
+    if (cFriction && cFriction.status !== "passed") {
+      hurtingSales.push("Sign-up form asks for too many details upfront, causing people to abandon it.");
+    } else if (cFriction?.status === "passed") {
+      workingWell.push("Sign-up step is short and easy to finish.");
+    }
+
+    if (lighthouse.lcpSeconds <= 2.5 && lighthouse.cls <= 0.1) {
+      workingWell.push(`Loads quickly (${lighthouse.lcpSeconds}s) and stays steady on mobile phones.`);
+    } else if (lighthouse.lcpSeconds > 2.5) {
+      hurtingSales.push(`Page takes ${lighthouse.lcpSeconds}s to load main content (visitors leave after ~2.5s).`);
+    }
+
+    // Ensure at least 3 crisp items in each list
+    if (workingWell.length === 0) {
+      workingWell.push(`Page is live and targeted at ${buyer}.`);
+    }
+    if (hurtingSales.length === 0) {
+      hurtingSales.push("Minor copy polish on the hero button and proof section can lift conversions further.");
+    }
+
+    // Crisp 1-line quick wins linked directly to the 1-to-1 visual pins
+    const fixPins = unifiedAnnotations.filter((a) => a.kind === "fix").slice(0, 3);
+    const quickWins = fixPins.map((fp) => ({
+      pinNumber: fp.pinNumber,
+      pinId: fp.id,
+      yPercent: fp.yPercent,
+      shortAction: fp.directFix,
+      lift: fp.expectedImpact
+    }));
+
+    // Build a 1-2 sentence Plain-English Verdict
+    const topIssue =
+      hurtingSales[0]?.replace(/\.$/, "").toLowerCase() ||
+      "some visitors may hesitate before clicking the main button";
+    const verdict =
+      report.totalScore >= 80
+        ? `This page is in great shape (${report.totalScore}/100) — it speaks clearly to ${buyer}, loads fast, and makes it easy to click ${cta}. To push conversions even higher, focus on fixing the small friction points below.`
+        : report.totalScore >= 65
+        ? `This page has a solid foundation (${report.totalScore}/100) and clearly targets ${buyer}, but you are likely losing sign-ups because ${topIssue}. Fixing the 3 quick wins below is the fastest way to get more leads.`
+        : `This page is currently losing potential buyers (${report.totalScore}/100) because ${topIssue}. Prioritize the 3 quick wins below to make the offer clearer and easier to act on.`;
+
+    return {
+      verdict,
+      workingWell: workingWell.slice(0, 3),
+      hurtingSales: hurtingSales.slice(0, 3),
+      quickWins
+    };
+  }, [report, lighthouse, unifiedAnnotations]);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-zinc-800">
       {/* Top Editorial Navigation */}
@@ -1874,6 +1977,100 @@ export default function Home() {
                 </div>
               )}
             </div>
+
+            {/* Crisp Plain-English "In a Nutshell" Summary Card */}
+            {plainDigest && (
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/45 p-5 sm:p-6 space-y-4 shadow-lg">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80 pb-3.5">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <h2 className="text-sm font-semibold text-white tracking-tight">
+                      In a Nutshell — 10-Second Plain-English Summary
+                    </h2>
+                    <SimpleHelpTooltip
+                      title="Plain-English Summary"
+                      plainEnglish="A jargon-free summary of your entire page audit: what's working, what's costing you sign-ups, and the top 3 changes to make first."
+                      align="left"
+                    />
+                  </div>
+                  <span className="text-[11px] font-mono text-zinc-400 bg-zinc-950 border border-zinc-800 px-2.5 py-0.5 rounded-md">
+                    Simple Takeaway • Score {report.totalScore}/100 (Grade {report.letterGrade})
+                  </span>
+                </div>
+
+                {/* Plain-English Verdict */}
+                <div className="p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800/90 text-xs sm:text-[13px] text-zinc-200 leading-relaxed">
+                  <span className="font-semibold text-emerald-400 mr-1.5">Bottom Line:</span>
+                  {plainDigest.verdict}
+                </div>
+
+                {/* 3 Simple Columns: Working Well | Hurting Sign-Ups | Top 3 Quick Wins */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                  {/* Col 1: What's Working Well */}
+                  <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span>What&apos;s Working Well</span>
+                    </div>
+                    <ul className="space-y-2 text-xs text-zinc-300 leading-relaxed">
+                      {plainDigest.workingWell.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-emerald-400 font-bold mt-0.5">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Col 2: What's Hurting Sign-Ups */}
+                  <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>What&apos;s Hurting Sign-Ups</span>
+                    </div>
+                    <ul className="space-y-2 text-xs text-zinc-300 leading-relaxed">
+                      {plainDigest.hurtingSales.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-amber-400 font-bold mt-0.5">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Col 3: Top 3 Quick Wins (Do This First) */}
+                  <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                      <Wrench className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Top 3 Quick Wins (Do First)</span>
+                    </div>
+                    <ol className="space-y-2 text-xs text-zinc-200 leading-relaxed">
+                      {plainDigest.quickWins.map((win, i) => (
+                        <li key={win.pinId} className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 min-w-0">
+                            <span className="w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-mono font-bold text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                              {i + 1}
+                            </span>
+                            <span className="text-[11.5px] text-zinc-300 leading-snug">{win.shortAction}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedTagId(win.pinId);
+                              scrollToTag(win.yPercent);
+                            }}
+                            className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                            title="Jump to this pin on the screenshot"
+                          >
+                            Pin #{win.pinNumber}
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Core Feature: Interactive Visual Audit Studio (Full-Page Canvas + Actionable Direct Issues) */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 space-y-4">
