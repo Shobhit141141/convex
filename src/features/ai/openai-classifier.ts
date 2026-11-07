@@ -1,9 +1,10 @@
 import OpenAI from "openai";
 import { AIClassifierClient } from "./classifier";
 
-const CLASSIFICATION_SYSTEM_PROMPT = `You are a landing page classifier. Given page signals (URL, title, meta description, headings, CTAs, body excerpt), classify the page.
+const CLASSIFICATION_SYSTEM_PROMPT = `You are an expert landing page analyst and conversion rate optimization (CRO) evaluator.
+Given extracted webpage signals (URL, title, meta description, headings, CTAs, body excerpt), your job is to produce a rigorous, evidence-backed semantic interpretation and classification of the page.
 
-Respond with ONLY a valid JSON object matching this exact schema:
+You must respond with ONLY a valid JSON object matching this exact schema:
 
 {
   "pageType": "homepage" | "product" | "functional" | "campaign" | "resource" | "case_study" | "unknown",
@@ -27,29 +28,48 @@ Respond with ONLY a valid JSON object matching this exact schema:
       "source": "dom" | "ai" | "metadata",
       "excerpt": string
     }
-  ]
+  ],
+  "businessProblem": {
+    "identified": boolean,
+    "statement": string (optional),
+    "specificity": "high" | "moderate" | "vague" | "none",
+    "evidenceExcerpt": string (optional)
+  },
+  "valueProposition": {
+    "statement": string,
+    "speedToValueMetric": string (optional),
+    "quantifiableRoi": string (optional),
+    "evidenceExcerpt": string (optional)
+  },
+  "messagingQuality": {
+    "clarityScore": number (0 to 10),
+    "isLowJargon": boolean,
+    "summary": string
+  },
+  "ctaAnalysis": {
+    "primaryText": string (optional),
+    "action": string (optional),
+    "relevanceToAudience": string (optional),
+    "frictionLevel": "low" | "medium" | "high"
+  }
 }
 
-Page type definitions (use these precisely):
-- "homepage": The root/main page of a company website. Introduces the company, its overall platform, and multiple products or capabilities. URL is typically "/" or the bare domain. Addresses multiple audiences (e.g. CIO, CHRO, CFO). Intent is discovery.
-- "product": A page for a specific product, pricing, or feature comparison. Focuses on one product's details, not the whole company.
-- "functional": A page addressing a specific business function or department (e.g. HR, IT, Finance). Shows how the product solves problems for that function.
-- "campaign": A focused landing page for a specific marketing campaign with a single conversion goal.
-- "resource": A webinar, whitepaper, report, or educational content page. Primary goal is content consumption.
-- "case_study": A customer story showing implementation and outcomes.
-- "unknown": Use when evidence is insufficient to classify.
+Page Type Taxonomy:
+- "homepage": Company's root page (path "/" or root domain). Introduces the overall company platform and cross-departmental capabilities. Addresses multiple executive roles (e.g. CIO, CHRO, CFO). Intent: discovery.
+- "product": Focuses on a single specific software product, platform tier, or pricing plan. Intent: high_intent.
+- "functional": Focuses on a single operational department or business function (e.g., HR, IT Service Desk, Finance). Shows role-tailored automation and workflows. Intent: consideration.
+- "campaign": Dedicated, highly focused paid advertising landing page with a single conversion funnel.
+- "resource": Educational webinar, whitepaper, guide, or case recording. Primary goal is content consumption. Intent: education.
+- "case_study": Customer proof story highlighting implementation outcomes and ROI metrics. Intent: consideration.
+- "unknown": Evidence is insufficient to reliably classify.
 
-Critical distinction: A company's root page that presents its overall platform across multiple departments is a "homepage", NOT a "product" page, even if it describes product capabilities.
-
-Rules:
-- pageType must be one of the 7 enum values exactly.
-- visitorIntent must be one of the 5 enum values exactly.
-- confidence must be a number between 0 and 1.
-- evidence must have at least one entry with source "ai".
-- Do not invent target audiences or conversion objectives — derive them from the provided signals.
-- If evidence is insufficient, set pageType to "unknown" and confidence below 0.3.
-- primaryCTA should be null if no CTA is provided, not fabricated.
-- Return raw JSON only, no markdown fences, no explanation.`;
+Strict Rules:
+1. Every excerpt and citation MUST come directly from the provided text signals. DO NOT invent, hallucinate, or extrapolate facts, metrics, or logos that do not exist in the prompt.
+2. If the page does not explicitly identify an acute business problem, set businessProblem.identified = false and specificity = "none".
+3. If no CTA exists in the input, set primaryCTA to null, do not invent one.
+4. "homepage" vs "product": If the URL is root ("/") and introduces the company broadly, it is ALWAYS "homepage", even if it mentions product capabilities.
+5. Provide at least 2 distinct evidence items with verbatim excerpts.
+6. Output raw JSON only. No markdown fences (\`\`\`json), no preamble, no postscript.`;
 
 function buildUserPrompt(input: {
   url: string;
@@ -74,26 +94,37 @@ function buildUserPrompt(input: {
   return parts.join("\n");
 }
 
-export class OpenAIClassifierClient implements AIClassifierClient {
+export class OpenAIClassifier implements AIClassifierClient {
   private client: OpenAI;
   private model: string;
+  private timeoutMs: number;
 
-  constructor(apiKey: string, model = "gpt-4o-mini") {
-    this.client = new OpenAI({ apiKey });
+  constructor(apiKey?: string, model = "gpt-5-mini", timeoutMs = 20000) {
+    const resolvedKey = apiKey || process.env.OPENAI_API_KEY;
+    if (!resolvedKey) {
+      throw new Error("OpenAI API key missing. Set OPENAI_API_KEY environment variable.");
+    }
+    this.client = new OpenAI({ apiKey: resolvedKey, timeout: timeoutMs });
     this.model = model;
+    this.timeoutMs = timeoutMs;
   }
 
   async classify(prompt: string): Promise<unknown> {
-    const response = await this.client.chat.completions.create({
+    const isGpt5 = this.model.includes("gpt-5");
+    const params: any = {
       model: this.model,
-      temperature: 0,
-      max_tokens: 800,
+      max_completion_tokens: 4000,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: CLASSIFICATION_SYSTEM_PROMPT },
         { role: "user", content: prompt }
       ]
-    });
+    };
+    if (!isGpt5) {
+      params.temperature = 0;
+    }
+
+    const response = await this.client.chat.completions.create(params);
 
     const content = response.choices[0]?.message?.content;
     if (!content) throw new Error("Empty response from OpenAI");
@@ -102,10 +133,17 @@ export class OpenAIClassifierClient implements AIClassifierClient {
   }
 }
 
-export function createOpenAIClassifier(apiKey?: string, model?: string): OpenAIClassifierClient | undefined {
+// Backwards compatibility alias
+export const OpenAIClassifierClient = OpenAIClassifier;
+
+export function createOpenAIClassifier(apiKey?: string, model?: string): OpenAIClassifier | undefined {
   const key = apiKey || process.env.OPENAI_API_KEY;
   if (!key) return undefined;
-  return new OpenAIClassifierClient(key, model);
+  try {
+    return new OpenAIClassifier(key, model);
+  } catch {
+    return undefined;
+  }
 }
 
-export { buildUserPrompt };
+export { buildUserPrompt, CLASSIFICATION_SYSTEM_PROMPT };

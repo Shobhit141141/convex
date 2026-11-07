@@ -40,12 +40,35 @@ export async function classifyPage(
     try {
       const prompt = buildUserPrompt(input);
       const rawAiResponse = await aiClient.classify(prompt);
+
+      // Pre-parse normalization for common LLM structural quirks:
+      if (rawAiResponse && typeof rawAiResponse === "object") {
+        const obj = rawAiResponse as Record<string, unknown>;
+        if (Array.isArray(obj.evidence)) {
+          obj.evidence = obj.evidence.map((e: unknown) => {
+            if (e && typeof e === "object") {
+              const src = (e as Record<string, unknown>).source;
+              const normalizedSrc = ["dom", "ai", "metadata"].includes(String(src).toLowerCase())
+                ? String(src).toLowerCase()
+                : "ai";
+              return { ...e, source: normalizedSrc };
+            }
+            return e;
+          });
+        }
+        if (obj.primaryCTA === null) {
+          delete obj.primaryCTA;
+        }
+      }
+
       const parsed = PageClassificationSchema.safeParse(rawAiResponse);
       if (parsed.success) {
         return parsed.data;
+      } else {
+        console.warn("[classifyPage] AI response failed schema validation. Falling back to deterministic:", parsed.error.issues);
       }
-    } catch {
-      // Fall through to deterministic classifier
+    } catch (err) {
+      console.warn("[classifyPage] AI client call failed. Falling back to deterministic:", err);
     }
   }
 

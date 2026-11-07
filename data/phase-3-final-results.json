@@ -1,0 +1,906 @@
+[
+  {
+    "pageId": "hr_functional",
+    "name": "HR Functional Page",
+    "url": "https://leena.ai/function/hr",
+    "actualCvr": 0.005768,
+    "sessions": 1907,
+    "classification": {
+      "pageType": "functional",
+      "targetAudience": {
+        "segments": [
+          "HR leadership",
+          "People Ops"
+        ],
+        "roles": [
+          "HR leadership",
+          "People Ops"
+        ],
+        "industries": []
+      },
+      "conversionObjectives": {
+        "primary": "Book a demo",
+        "secondary": [
+          "Book a personalised demo",
+          "See what's live. See what's possible."
+        ]
+      },
+      "primaryCTA": {
+        "text": "Book a demo",
+        "action": "→ #"
+      },
+      "visitorIntent": "consideration",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "source": "metadata",
+          "excerpt": "Agentic AI for HR Operations. Automates 70%+ of HR tickets - benefits, letters, policy, records. Pre-integrated with Workday, ServiceNow & more. Live in 45 days."
+        },
+        {
+          "source": "dom",
+          "excerpt": "Most HR requests shouldn't reach a human. Now they don't."
+        },
+        {
+          "source": "dom",
+          "excerpt": "Harrison closes Tier-1 HR requests - leave, letters, benefits, payroll - in seconds, not days. Built for HR leadership and People Ops."
+        }
+      ],
+      "businessProblem": {
+        "identified": true,
+        "statement": "Too many HR requests reach humans causing delays; Tier-1 HR requests should be closed faster and automated.",
+        "specificity": "high",
+        "evidenceExcerpt": "Most HR requests shouldn't reach a human. Now they don't."
+      },
+      "valueProposition": {
+        "statement": "Agentic AI for HR Operations that automates 70%+ of HR tickets and closes Tier-1 HR requests in seconds, with integrations and fast time-to-live.",
+        "speedToValueMetric": "Live in 45 days",
+        "quantifiableRoi": "Automates 70%+ of HR tickets",
+        "evidenceExcerpt": "Agentic AI for HR Operations. Automates 70%+ of HR tickets - benefits, letters, policy, records. Pre-integrated with Workday, ServiceNow & more. Live in 45 days."
+      },
+      "messagingQuality": {
+        "clarityScore": 8,
+        "isLowJargon": true,
+        "summary": "Messaging is clear and benefit-focused: automates a high percentage of HR tickets, names specific use cases (leave, letters, benefits, payroll), and promises fast time-to-value. Language is accessible and targeted at HR/People Ops."
+      },
+      "ctaAnalysis": {
+        "primaryText": "Book a demo",
+        "action": "→ #",
+        "relevanceToAudience": "CTA aligns with target audience: 'Built for HR leadership and People Ops.'",
+        "frictionLevel": "low"
+      }
+    },
+    "v1Score": 94,
+    "v2Score": 93,
+    "v3Result": {
+      "url": "https://leena.ai/function/hr",
+      "totalScore": 80,
+      "dimensions": {
+        "persuasion": {
+          "dimension": "persuasion",
+          "score": 39,
+          "maxScore": 50,
+          "percentage": 78,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "persuasion_problem_fit",
+              "name": "Audience-Problem Fit & Specificity",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 8,
+              "evidence": "Most HR requests shouldn't reach a human. Now they don't.",
+              "scoringRule": "AI scored 8/10. Specificity: high. The page clearly identifies a specific problem related to HR operations, emphasizing the inefficiency of traditional processes.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_value_prop",
+              "name": "Value Proposition Strength & Speed-to-Value",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 12,
+              "earnedPoints": 9.6,
+              "evidence": "Automates 70%+ of HR tickets - benefits, letters, policy, records.",
+              "scoringRule": "AI scored 8/10 (quantified=true, speedToValue=true). The value proposition is strong, highlighting both the speed of resolution and the significant automation of HR tasks.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_credibility",
+              "name": "Outcome Credibility & Verifiable Proof",
+              "dimension": "persuasion",
+              "status": "partial",
+              "maxPoints": 10,
+              "earnedPoints": 6,
+              "evidence": "Live in 45 days.",
+              "scoringRule": "AI scored 6/10 (3rd-party validation: false). While the claims are specific and suggest a clear outcome, they lack third-party validation or customer testimonials.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_audience_alignment",
+              "name": "Audience-Message Alignment",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 9,
+              "evidence": "Built for HR leadership and People Ops.",
+              "scoringRule": "AI scored 9/10 (roleSpecific=true). The messaging is well-aligned with the target audience, using specific language that resonates with HR professionals.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_offer_attractiveness",
+              "name": "Offer Attractiveness & Problem Match",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 8,
+              "earnedPoints": 6.4,
+              "evidence": "Book a demo.",
+              "scoringRule": "AI scored 8/10. Friction: medium. The CTA is relevant and encourages engagement, though there may be some perceived friction in committing to a demo.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            }
+          ]
+        },
+        "execution": {
+          "dimension": "execution",
+          "score": 25.5,
+          "maxScore": 35,
+          "percentage": 73,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "exec_cta_effectiveness",
+              "name": "CTA Prominence & Clarity of Next Step",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 8,
+              "evidence": "Book a demo",
+              "scoringRule": "Above fold: true (+5), action-oriented: true (+3), next-step clarity: false (+2).",
+              "confidence": 0.95,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_promise_destination",
+              "name": "Promise-Destination Consistency",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 8,
+              "earnedPoints": 7,
+              "evidence": "CTA: \"Book a demo\" -> Intent: consideration",
+              "scoringRule": "CTA matches page conversion objective.",
+              "confidence": 0.85,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_lead_capture_usability",
+              "name": "Lead Capture Usability & Verification",
+              "dimension": "execution",
+              "status": "partial",
+              "maxPoints": 10,
+              "earnedPoints": 3.5,
+              "evidence": "Script tag present: HubSpot Modal Lead Capture. Not verified interactive.",
+              "scoringRule": "Script presence only: Awarded conservative partial credit (3.5/10). Live form rendering unverified.",
+              "confidence": 0.7,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_friction_load",
+              "name": "Conversion Friction & Funnel Simplicity",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 7,
+              "earnedPoints": 7,
+              "evidence": "Friction is low: estimated 0 fields or standard modal lead flow.",
+              "scoringRule": "Low friction: <=4 fields, clear forward path.",
+              "confidence": 0.8,
+              "source": "dom_extraction"
+            }
+          ]
+        },
+        "experience": {
+          "dimension": "experience",
+          "score": 15,
+          "maxScore": 15,
+          "percentage": 100,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "exp_lcp_speed",
+              "name": "Largest Contentful Paint (LCP)",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 5,
+              "earnedPoints": 5,
+              "evidence": "LCP: 2.20s (Good <= 2.5s)",
+              "scoringRule": "<=2.5s -> 5 pts, <=4.0s -> 2.5 pts, >4.0s -> 0 pts",
+              "confidence": 0.95,
+              "source": "pagespeed"
+            },
+            {
+              "id": "exp_cls_stability",
+              "name": "Cumulative Layout Shift (CLS)",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 4,
+              "earnedPoints": 4,
+              "evidence": "CLS: 0.030 (Good <= 0.100)",
+              "scoringRule": "<=0.10 -> 4 pts, <=0.25 -> 2 pts, >0.25 -> 0 pts",
+              "confidence": 0.95,
+              "source": "pagespeed"
+            },
+            {
+              "id": "exp_mobile_viewport",
+              "name": "Mobile Viewport Meta Configuration",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 3,
+              "earnedPoints": 3,
+              "evidence": "meta[name='viewport'] configured",
+              "scoringRule": "Present -> 3 pts, Absent -> 0 pts",
+              "confidence": 1,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exp_text_readability",
+              "name": "Text Readability & Content Structure",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 3,
+              "earnedPoints": 3,
+              "evidence": "H1 present: true. Word count: 1042",
+              "scoringRule": "Clear H1 + reasonable word count (>=100 words) -> 3 pts, H1 only -> 1.5 pts",
+              "confidence": 0.9,
+              "source": "dom_extraction"
+            }
+          ]
+        }
+      },
+      "rubricVersion": "v3",
+      "pageType": "functional",
+      "targetAudience": {
+        "segments": [
+          "HR leadership",
+          "People Ops"
+        ],
+        "roles": [
+          "HR leadership",
+          "People Ops"
+        ],
+        "industries": []
+      },
+      "visitorIntent": "consideration",
+      "evaluatedAt": "2026-11-07T10:04:59.855Z",
+      "gatesTriggered": [],
+      "persuasionWeaknesses": [],
+      "conversionBlockers": [
+        "Notice: Lead capture relies on external script without verified inline form."
+      ],
+      "playwrightVerified": false
+    },
+    "trafficAnalysis": {
+      "pageId": "hr_functional",
+      "name": "HR Functional Page",
+      "actualCvr": 0.005768,
+      "sessions": 1907,
+      "formFills": 11,
+      "trafficSources": {
+        "paid_search": 0.58,
+        "organic_search": 0.17,
+        "direct": 0.14,
+        "paid_social": 0.07,
+        "email": 0.03,
+        "others": 0.01
+      },
+      "trafficIntentIndex": 0.865,
+      "expectedCvrByIntent": 0.01253,
+      "conversionEfficiency": 0.46,
+      "diagnosis": "High conversion rate is accelerated by commercial search intent (58% Paid Search). Visitors arrive with active purchase motivation."
+    }
+  },
+  {
+    "pageId": "homepage",
+    "name": "Homepage",
+    "url": "https://leena.ai/",
+    "actualCvr": 0.005615,
+    "sessions": 18343,
+    "classification": {
+      "pageType": "homepage",
+      "targetAudience": {
+        "segments": [
+          "Enterprise"
+        ],
+        "roles": [
+          "HR Leadership",
+          "IT Leadership",
+          "Finance Leadership"
+        ],
+        "industries": []
+      },
+      "conversionObjectives": {
+        "primary": "Enterprise platform discovery and demo booking",
+        "secondary": [
+          "Explore product capabilities",
+          "Validate enterprise trust and compliance"
+        ]
+      },
+      "primaryCTA": {
+        "text": "Book a demo",
+        "action": "Book a sales demo"
+      },
+      "visitorIntent": "discovery",
+      "confidence": 0.94,
+      "evidence": [
+        {
+          "source": "metadata",
+          "excerpt": "Title: \"Agentic AI for the Enterprise Back Office | Leena AI\""
+        },
+        {
+          "source": "metadata",
+          "excerpt": "Meta Description: \"Enterprise AI Platform with Pre-built AI Colleagues for HR, IT and Finance that go live in 45 days. 70%+ tickets auto-resolved, 4-10× ROI. Trusted by 500+ enterprises.\""
+        },
+        {
+          "source": "dom",
+          "excerpt": "H1: \"Enterprise AI, live in 45 days\"",
+          "selector": "h1"
+        },
+        {
+          "source": "dom",
+          "excerpt": "Primary CTA: \"Book a demo\" (Action: Book a sales demo)",
+          "selector": "button, a"
+        },
+        {
+          "source": "metadata",
+          "excerpt": "URL path is root domain, presenting overall company platform and cross-functional offering."
+        }
+      ]
+    },
+    "v1Score": 94,
+    "v2Score": 96,
+    "v3Result": {
+      "url": "https://leena.ai/",
+      "totalScore": 83,
+      "dimensions": {
+        "persuasion": {
+          "dimension": "persuasion",
+          "score": 42.2,
+          "maxScore": 50,
+          "percentage": 84,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "persuasion_problem_fit",
+              "name": "Audience-Problem Fit & Specificity",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 8,
+              "evidence": "Most Agentic AI projects die within 14 months.",
+              "scoringRule": "AI scored 8/10. Specificity: moderate. The page implies a clear problem with traditional AI implementations in enterprises, suggesting that their solution is more effective and timely.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_value_prop",
+              "name": "Value Proposition Strength & Speed-to-Value",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 12,
+              "earnedPoints": 10.8,
+              "evidence": "Enterprise AI Platform with Pre-built AI Colleagues for HR, IT and Finance that go live in 45 days.",
+              "scoringRule": "AI scored 9/10 (quantified=true, speedToValue=true). The value proposition is strong, highlighting both a rapid implementation timeline and significant ROI, which are compelling for potential customers.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_credibility",
+              "name": "Outcome Credibility & Verifiable Proof",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 8,
+              "evidence": "Trusted by 500+ enterprises.",
+              "scoringRule": "AI scored 8/10 (3rd-party validation: false). The claims are backed by metrics and customer examples, enhancing credibility, though there is no third-party validation.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_audience_alignment",
+              "name": "Audience-Message Alignment",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 9,
+              "evidence": "A platform that earns the room from CIO to CHRO to CFO.",
+              "scoringRule": "AI scored 9/10 (roleSpecific=true). The messaging is well-aligned with the target audience, using specific language that resonates with decision-makers in enterprise environments.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_offer_attractiveness",
+              "name": "Offer Attractiveness & Problem Match",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 8,
+              "earnedPoints": 6.4,
+              "evidence": "Book a demo",
+              "scoringRule": "AI scored 8/10. Friction: medium. The CTA is relevant and encourages engagement, though there may be some perceived friction in committing to a demo.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            }
+          ]
+        },
+        "execution": {
+          "dimension": "execution",
+          "score": 25.5,
+          "maxScore": 35,
+          "percentage": 73,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "exec_cta_effectiveness",
+              "name": "CTA Prominence & Clarity of Next Step",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 8,
+              "evidence": "Book a demo",
+              "scoringRule": "Above fold: true (+5), action-oriented: true (+3), next-step clarity: false (+2).",
+              "confidence": 0.95,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_promise_destination",
+              "name": "Promise-Destination Consistency",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 8,
+              "earnedPoints": 7,
+              "evidence": "CTA: \"Book a demo\" -> Intent: discovery",
+              "scoringRule": "CTA matches page conversion objective.",
+              "confidence": 0.85,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_lead_capture_usability",
+              "name": "Lead Capture Usability & Verification",
+              "dimension": "execution",
+              "status": "partial",
+              "maxPoints": 10,
+              "earnedPoints": 3.5,
+              "evidence": "Script tag present: HubSpot Modal Lead Capture. Not verified interactive.",
+              "scoringRule": "Script presence only: Awarded conservative partial credit (3.5/10). Live form rendering unverified.",
+              "confidence": 0.7,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_friction_load",
+              "name": "Conversion Friction & Funnel Simplicity",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 7,
+              "earnedPoints": 7,
+              "evidence": "Friction is low: estimated 0 fields or standard modal lead flow.",
+              "scoringRule": "Low friction: <=4 fields, clear forward path.",
+              "confidence": 0.8,
+              "source": "dom_extraction"
+            }
+          ]
+        },
+        "experience": {
+          "dimension": "experience",
+          "score": 15,
+          "maxScore": 15,
+          "percentage": 100,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "exp_lcp_speed",
+              "name": "Largest Contentful Paint (LCP)",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 5,
+              "earnedPoints": 5,
+              "evidence": "LCP: 2.10s (Good <= 2.5s)",
+              "scoringRule": "<=2.5s -> 5 pts, <=4.0s -> 2.5 pts, >4.0s -> 0 pts",
+              "confidence": 0.95,
+              "source": "pagespeed"
+            },
+            {
+              "id": "exp_cls_stability",
+              "name": "Cumulative Layout Shift (CLS)",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 4,
+              "earnedPoints": 4,
+              "evidence": "CLS: 0.040 (Good <= 0.100)",
+              "scoringRule": "<=0.10 -> 4 pts, <=0.25 -> 2 pts, >0.25 -> 0 pts",
+              "confidence": 0.95,
+              "source": "pagespeed"
+            },
+            {
+              "id": "exp_mobile_viewport",
+              "name": "Mobile Viewport Meta Configuration",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 3,
+              "earnedPoints": 3,
+              "evidence": "meta[name='viewport'] configured",
+              "scoringRule": "Present -> 3 pts, Absent -> 0 pts",
+              "confidence": 1,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exp_text_readability",
+              "name": "Text Readability & Content Structure",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 3,
+              "earnedPoints": 3,
+              "evidence": "H1 present: true. Word count: 1480",
+              "scoringRule": "Clear H1 + reasonable word count (>=100 words) -> 3 pts, H1 only -> 1.5 pts",
+              "confidence": 0.9,
+              "source": "dom_extraction"
+            }
+          ]
+        }
+      },
+      "rubricVersion": "v3",
+      "pageType": "homepage",
+      "targetAudience": {
+        "segments": [
+          "Enterprise"
+        ],
+        "roles": [
+          "HR Leadership",
+          "IT Leadership",
+          "Finance Leadership"
+        ],
+        "industries": []
+      },
+      "visitorIntent": "discovery",
+      "evaluatedAt": "2026-11-07T10:06:35.357Z",
+      "gatesTriggered": [],
+      "persuasionWeaknesses": [],
+      "conversionBlockers": [
+        "Notice: Lead capture relies on external script without verified inline form."
+      ],
+      "playwrightVerified": false
+    },
+    "trafficAnalysis": {
+      "pageId": "homepage",
+      "name": "Homepage",
+      "actualCvr": 0.005615,
+      "sessions": 18343,
+      "formFills": 103,
+      "trafficSources": {
+        "direct": 0.38,
+        "organic_search": 0.34,
+        "paid_search": 0.15,
+        "paid_social": 0.07,
+        "email": 0.04,
+        "others": 0.02
+      },
+      "trafficIntentIndex": 0.77,
+      "expectedCvrByIntent": 0.01065,
+      "conversionEfficiency": 0.53,
+      "diagnosis": "Conversion rate is supported by healthy direct and organic brand navigation traffic."
+    }
+  },
+  {
+    "pageId": "christus_webinar",
+    "name": "CHRISTUS Health Webinar",
+    "url": "https://leena.ai/resources/webinars/christus-health-hr-ai-rollout-webinar",
+    "actualCvr": 0.001129,
+    "sessions": 12402,
+    "classification": {
+      "pageType": "resource",
+      "targetAudience": {
+        "segments": [
+          "healthcare HR leaders",
+          "enterprise HR teams"
+        ],
+        "roles": [
+          "HR leaders",
+          "HR managers",
+          "HR operations"
+        ],
+        "industries": [
+          "healthcare",
+          "hospitals"
+        ]
+      },
+      "conversionObjectives": {
+        "primary": "Watch the webinar",
+        "secondary": [
+          "Book a demo"
+        ]
+      },
+      "primaryCTA": {
+        "text": "Watch now",
+        "action": "#"
+      },
+      "visitorIntent": "education",
+      "confidence": 0.92,
+      "evidence": [
+        {
+          "source": "metadata",
+          "excerpt": "Jessica Hendrix ran the HR AI rollout at CHRISTUS Health. Hear what it took: the security review, the content cleanup, and how they drove adoption. Sept 17."
+        },
+        {
+          "source": "dom",
+          "excerpt": "What It Really Takes to Get 51,000 Employees Using AI"
+        },
+        {
+          "source": "dom",
+          "excerpt": "Join healthcare HR leaders from CHRISTUS Health to discover how 51,000 hospital employees were onboarded to generative AI assistants."
+        },
+        {
+          "source": "dom",
+          "excerpt": "Watch now"
+        }
+      ],
+      "businessProblem": {
+        "identified": true,
+        "statement": "Scaling AI across a large healthcare workforce while addressing security review, content cleanup, and driving adoption.",
+        "specificity": "high",
+        "evidenceExcerpt": "Jessica Hendrix ran the HR AI rollout at CHRISTUS Health. Hear what it took: the security review, the content cleanup, and how they drove adoption. Sept 17."
+      },
+      "valueProposition": {
+        "statement": "A webinar detailing how CHRISTUS Health onboarded 51,000 employees to generative AI assistants, covering security, content readiness, and adoption.",
+        "speedToValueMetric": "51,000 employees onboarded",
+        "quantifiableRoi": null,
+        "evidenceExcerpt": "What It Really Takes to Get 51,000 Employees Using AI"
+      },
+      "messagingQuality": {
+        "clarityScore": 8,
+        "isLowJargon": true,
+        "summary": "Messaging is clear and outcome-focused: a webinar that explains how CHRISTUS Health onboarded 51,000 employees and addresses security, content cleanup, and adoption. Headline and meta description explicitly state the scope and topics."
+      },
+      "ctaAnalysis": {
+        "primaryText": "Watch now",
+        "action": "#",
+        "relevanceToAudience": "Directly relevant to healthcare HR leaders seeking guidance on large-scale AI rollout (onboarding 51,000 employees).",
+        "frictionLevel": "low"
+      }
+    },
+    "v1Score": 67,
+    "v2Score": 78,
+    "v3Result": {
+      "url": "https://leena.ai/resources/webinars/christus-health-hr-ai-rollout-webinar",
+      "totalScore": 77,
+      "dimensions": {
+        "persuasion": {
+          "dimension": "persuasion",
+          "score": 36,
+          "maxScore": 50,
+          "percentage": 72,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "persuasion_problem_fit",
+              "name": "Audience-Problem Fit & Specificity",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 8,
+              "evidence": "how 51,000 hospital employees were onboarded to generative AI assistants.",
+              "scoringRule": "AI scored 8/10. Specificity: moderate. The page clearly addresses the challenge of onboarding a significant number of employees to AI, which is a relevant issue for HR leaders in healthcare.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_value_prop",
+              "name": "Value Proposition Strength & Speed-to-Value",
+              "dimension": "persuasion",
+              "status": "partial",
+              "maxPoints": 12,
+              "earnedPoints": 8.4,
+              "evidence": "how 51,000 hospital employees were onboarded to generative AI assistants.",
+              "scoringRule": "AI scored 7/10 (quantified=true, speedToValue=false). The value proposition is strong due to the specific outcome of onboarding 51,000 employees, but it lacks a clear indication of speed to value.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_credibility",
+              "name": "Outcome Credibility & Verifiable Proof",
+              "dimension": "persuasion",
+              "status": "partial",
+              "maxPoints": 10,
+              "earnedPoints": 6,
+              "evidence": "how 51,000 hospital employees were onboarded to generative AI assistants.",
+              "scoringRule": "AI scored 6/10 (3rd-party validation: false). The claim is based on a customer example, which adds credibility, but there is no third-party validation or verifiable metrics provided.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_audience_alignment",
+              "name": "Audience-Message Alignment",
+              "dimension": "persuasion",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 8,
+              "evidence": "Join healthcare HR leaders from CHRISTUS Health",
+              "scoringRule": "AI scored 8/10 (roleSpecific=true). The messaging is well-aligned with the target audience of HR leaders in healthcare, using specific language relevant to their roles.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            },
+            {
+              "id": "persuasion_offer_attractiveness",
+              "name": "Offer Attractiveness & Problem Match",
+              "dimension": "persuasion",
+              "status": "partial",
+              "maxPoints": 8,
+              "earnedPoints": 5.6,
+              "evidence": "Watch now, Book a demo",
+              "scoringRule": "AI scored 7/10. Friction: medium. The CTAs are relevant to the audience's interest in learning about AI implementation, but there may be some friction in the form of commitment required for a demo.",
+              "confidence": 0.9,
+              "source": "ai_semantic"
+            }
+          ]
+        },
+        "execution": {
+          "dimension": "execution",
+          "score": 25.5,
+          "maxScore": 35,
+          "percentage": 73,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "exec_cta_effectiveness",
+              "name": "CTA Prominence & Clarity of Next Step",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 10,
+              "earnedPoints": 8,
+              "evidence": "Watch now",
+              "scoringRule": "Above fold: true (+5), action-oriented: true (+3), next-step clarity: false (+2).",
+              "confidence": 0.95,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_promise_destination",
+              "name": "Promise-Destination Consistency",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 8,
+              "earnedPoints": 7,
+              "evidence": "CTA: \"Watch now\" -> Intent: education",
+              "scoringRule": "Consistent: Resource page provides direct content access or registration.",
+              "confidence": 0.85,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_lead_capture_usability",
+              "name": "Lead Capture Usability & Verification",
+              "dimension": "execution",
+              "status": "partial",
+              "maxPoints": 10,
+              "earnedPoints": 3.5,
+              "evidence": "Script tag present: HubSpot Modal Lead Capture. Not verified interactive.",
+              "scoringRule": "Script presence only: Awarded conservative partial credit (3.5/10). Live form rendering unverified.",
+              "confidence": 0.7,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exec_friction_load",
+              "name": "Conversion Friction & Funnel Simplicity",
+              "dimension": "execution",
+              "status": "passed",
+              "maxPoints": 7,
+              "earnedPoints": 7,
+              "evidence": "Friction is low: estimated 0 fields or standard modal lead flow.",
+              "scoringRule": "Low friction: <=4 fields, clear forward path.",
+              "confidence": 0.8,
+              "source": "dom_extraction"
+            }
+          ]
+        },
+        "experience": {
+          "dimension": "experience",
+          "score": 15,
+          "maxScore": 15,
+          "percentage": 100,
+          "gateApplied": false,
+          "criteria": [
+            {
+              "id": "exp_lcp_speed",
+              "name": "Largest Contentful Paint (LCP)",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 5,
+              "earnedPoints": 5,
+              "evidence": "LCP: 2.40s (Good <= 2.5s)",
+              "scoringRule": "<=2.5s -> 5 pts, <=4.0s -> 2.5 pts, >4.0s -> 0 pts",
+              "confidence": 0.95,
+              "source": "pagespeed"
+            },
+            {
+              "id": "exp_cls_stability",
+              "name": "Cumulative Layout Shift (CLS)",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 4,
+              "earnedPoints": 4,
+              "evidence": "CLS: 0.050 (Good <= 0.100)",
+              "scoringRule": "<=0.10 -> 4 pts, <=0.25 -> 2 pts, >0.25 -> 0 pts",
+              "confidence": 0.95,
+              "source": "pagespeed"
+            },
+            {
+              "id": "exp_mobile_viewport",
+              "name": "Mobile Viewport Meta Configuration",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 3,
+              "earnedPoints": 3,
+              "evidence": "meta[name='viewport'] configured",
+              "scoringRule": "Present -> 3 pts, Absent -> 0 pts",
+              "confidence": 1,
+              "source": "dom_extraction"
+            },
+            {
+              "id": "exp_text_readability",
+              "name": "Text Readability & Content Structure",
+              "dimension": "experience",
+              "status": "passed",
+              "maxPoints": 3,
+              "earnedPoints": 3,
+              "evidence": "H1 present: true. Word count: 820",
+              "scoringRule": "Clear H1 + reasonable word count (>=100 words) -> 3 pts, H1 only -> 1.5 pts",
+              "confidence": 0.9,
+              "source": "dom_extraction"
+            }
+          ]
+        }
+      },
+      "rubricVersion": "v3",
+      "pageType": "resource",
+      "targetAudience": {
+        "segments": [
+          "healthcare HR leaders",
+          "enterprise HR teams"
+        ],
+        "roles": [
+          "HR leaders",
+          "HR managers",
+          "HR operations"
+        ],
+        "industries": [
+          "healthcare",
+          "hospitals"
+        ]
+      },
+      "visitorIntent": "education",
+      "evaluatedAt": "2026-11-07T10:08:08.412Z",
+      "gatesTriggered": [],
+      "persuasionWeaknesses": [],
+      "conversionBlockers": [
+        "Notice: Lead capture relies on external script without verified inline form."
+      ],
+      "playwrightVerified": false
+    },
+    "trafficAnalysis": {
+      "pageId": "christus_webinar",
+      "name": "CHRISTUS Health Webinar",
+      "actualCvr": 0.001129,
+      "sessions": 12402,
+      "formFills": 14,
+      "trafficSources": {
+        "paid_social": 0.79,
+        "paid_search": 0.09,
+        "direct": 0.06,
+        "organic_search": 0.04,
+        "email": 0.01,
+        "others": 0.01
+      },
+      "trafficIntentIndex": 0.337,
+      "expectedCvrByIntent": 0.00375,
+      "conversionEfficiency": 0.3,
+      "diagnosis": "Traffic is heavily dominated by Paid Social (79%). Cold push traffic naturally yields low direct form conversion (~0.1%), masking solid underlying page construction."
+    }
+  }
+]
