@@ -93,6 +93,11 @@ export async function verifyConversionInteraction(
     }
     browser = await chromiumModule.chromium.launch(launchOptions);
   } catch (err: any) {
+    const serverlessScreenshotUrl = !isHtml
+      ? `https://api.microlink.io/?url=${encodeURIComponent(
+          urlOrHtml
+        )}&screenshot=true&meta=false&embed=screenshot.url&screenshot.fullPage=true&viewport.width=1280&viewport.height=900`
+      : undefined;
     return {
       ctaFound: false,
       ctaVisible: false,
@@ -102,8 +107,9 @@ export async function verifyConversionInteraction(
       formFieldCount: 0,
       hubspotDetected: false,
       verificationStatus: "not_tested",
+      screenshotBase64: serverlessScreenshotUrl,
       evidenceNotes: [
-        `Browser executable unavailable (${err?.message?.split("\n")[0] || "launch failed"}). Fallback to DOM evaluation.`
+        `Browser executable unavailable (${err?.message?.split("\n")[0] || "launch failed"}). Fallback to DOM evaluation & remote screenshot capture.`
       ]
     };
   }

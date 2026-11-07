@@ -52,6 +52,14 @@ Convex is an evidence-based Conversion Rate Optimization (CRO) grader that evalu
 
 ---
 
+### 7. Interactive Algorithm & Pipeline Explorer (`/algorithm`)
+![Interactive Algorithm & Pipeline Explorer](docs/screenshots/07-interactive-algorithm-page.jpg)
+- **1. 6-Step Analysis Pipeline**: Click any step (`01 URL Cache` through `06 Score & Pins`) for a 1-sentence summary and the 3 key outputs produced at that stage.
+- **2. Interactive Score Calculator**: Drag the 3 dimension sliders (`Message & Copy Persuasion 0–50`, `Button & Form Execution 0–35`, `Speed & Mobile Experience 0–15`) and toggle the **Conversion-Readiness Gates** (`Has Main Button (CTA)`, `Has Working Form`) to watch the master equation compute the `0–100` score and letter grade (`A–F`) live.
+- **3. Compact 13-Check Reference Table**: Filter all 13 checks by category with a 1-line plain-English explanation, formula, and max points.
+
+---
+
 ## Core Architecture & 6-Stage Pipeline
 
 When a URL is submitted (`POST /api/grade`), Convex streams real-time server milestones (`application/x-ndjson`) across 6 stages:
