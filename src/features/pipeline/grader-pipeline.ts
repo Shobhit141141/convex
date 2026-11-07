@@ -37,6 +37,19 @@ export interface CRORecommendation {
   expectedImpact: string;
 }
 
+export interface ScreenshotTag {
+  id: string;
+  pinNumber: number;
+  title: string;
+  type: "issue" | "warning" | "strength";
+  category: "cta" | "headline" | "social_proof" | "form" | "performance";
+  label: string;
+  xPercent: number;
+  yPercent: number;
+  recommendationId?: string;
+  description: string;
+}
+
 export interface GraderReport {
   url: string;
   totalScore: number; // 0 - 100
@@ -61,6 +74,7 @@ export interface GraderReport {
   recommendations: CRORecommendation[];
   summary: string;
   screenshotBase64?: string;
+  screenshotTags: ScreenshotTag[];
   lighthouse: {
     performanceScore: number;
     lcpSeconds: number;
@@ -196,6 +210,103 @@ function generateRecommendations(
   return recommendations.slice(0, 3);
 }
 
+function generateScreenshotTags(
+  recommendations: CRORecommendation[],
+  v3Result: RubricV3Result,
+  signals: PageSignals,
+  positions?: any
+): ScreenshotTag[] {
+  const tags: ScreenshotTag[] = [];
+  let pin = 1;
+
+  for (const rec of recommendations) {
+    if (rec.id === "rec_credibility") {
+      tags.push({
+        id: `tag_${pin}`,
+        pinNumber: pin++,
+        title: rec.title,
+        type: "issue",
+        category: "social_proof",
+        label: "Proof Gap",
+        xPercent: positions?.socialProof?.xPercent ?? 50,
+        yPercent: positions?.socialProof?.yPercent ?? 65,
+        recommendationId: rec.id,
+        description: rec.problem
+      });
+    } else if (rec.id === "rec_speed_value" || rec.id === "rec_audience_problem") {
+      tags.push({
+        id: `tag_${pin}`,
+        pinNumber: pin++,
+        title: rec.title,
+        type: "warning",
+        category: "headline",
+        label: "Value Prop",
+        xPercent: positions?.headline?.xPercent ?? 25,
+        yPercent: positions?.headline?.yPercent ?? 24,
+        recommendationId: rec.id,
+        description: rec.problem
+      });
+    } else if (rec.id === "rec_cta_clarity" || rec.id === "rec_promise_match") {
+      tags.push({
+        id: `tag_${pin}`,
+        pinNumber: pin++,
+        title: rec.title,
+        type: "issue",
+        category: "cta",
+        label: "CTA Friction",
+        xPercent: positions?.primaryCta?.xPercent ?? 75,
+        yPercent: positions?.primaryCta?.yPercent ?? 15,
+        recommendationId: rec.id,
+        description: rec.problem
+      });
+    } else if (rec.id === "rec_lcp_speed") {
+      tags.push({
+        id: `tag_${pin}`,
+        pinNumber: pin++,
+        title: rec.title,
+        type: "warning",
+        category: "performance",
+        label: "Hero LCP",
+        xPercent: 50,
+        yPercent: 32,
+        recommendationId: rec.id,
+        description: rec.problem
+      });
+    }
+  }
+
+  // Add verified strength pins if slots open
+  if (signals.conversion.hasAboveTheFoldCta && !tags.some(t => t.category === "cta")) {
+    tags.push({
+      id: `tag_${pin}`,
+      pinNumber: pin++,
+      title: `Above-the-fold CTA: "${signals.conversion.primaryCtaText}"`,
+      type: "strength",
+      category: "cta",
+      label: "Verified CTA",
+      xPercent: positions?.primaryCta?.xPercent ?? 78,
+      yPercent: positions?.primaryCta?.yPercent ?? 14,
+      description: "Primary conversion action is clearly visible in initial viewport."
+    });
+  }
+
+  if (signals.clarity.hasClearH1 && !tags.some(t => t.category === "headline")) {
+    tags.push({
+      id: `tag_${pin}`,
+      pinNumber: pin++,
+      title: "Hero Headline & Problem Definition",
+      type: "strength",
+      category: "headline",
+      label: "Hero H1",
+      xPercent: positions?.headline?.xPercent ?? 26,
+      yPercent: positions?.headline?.yPercent ?? 22,
+      description: "Clear H1 anchor statement orienting target visitors."
+    });
+  }
+
+  return tags.slice(0, 4);
+}
+
 export async function gradeLandingPage(
   rawUrl: string,
   options: {
@@ -312,6 +423,12 @@ export async function gradeLandingPage(
   ];
 
   const recommendations = generateRecommendations(v3Result, signals);
+  const screenshotTags = generateScreenshotTags(
+    recommendations,
+    v3Result,
+    signals,
+    verification?.elementPositions
+  );
 
   const summary = `Evaluated ${classification.pageType.toUpperCase()} page targeting ${classification.targetAudience.roles.join(", ") || "enterprise stakeholders"}. Achieved ${v3Result.totalScore}/100 (${letterGrade}) across Persuasion (${v3Result.dimensions.persuasion.score}/${v3Result.dimensions.persuasion.maxScore}), Execution (${v3Result.dimensions.execution.score}/${v3Result.dimensions.execution.maxScore}), and Experience (${v3Result.dimensions.experience.score}/${v3Result.dimensions.experience.maxScore}).`;
 
@@ -330,6 +447,7 @@ export async function gradeLandingPage(
     conversionBlockers: v3Result.conversionBlockers,
     criteria: allCriteria,
     recommendations,
+    screenshotTags,
     summary,
     screenshotBase64: verification?.screenshotBase64,
     lighthouse: {

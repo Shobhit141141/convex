@@ -11,6 +11,13 @@
 
 import fs from "node:fs";
 
+export interface ElementPositions {
+  headline?: { xPercent: number; yPercent: number };
+  primaryCta?: { xPercent: number; yPercent: number };
+  socialProof?: { xPercent: number; yPercent: number };
+  leadCapture?: { xPercent: number; yPercent: number };
+}
+
 export interface ConversionVerificationResult {
   ctaFound: boolean;
   ctaVisible: boolean;
@@ -22,6 +29,7 @@ export interface ConversionVerificationResult {
   verificationStatus: "passed" | "partial" | "failed" | "not_tested";
   evidenceNotes: string[];
   screenshotBase64?: string;
+  elementPositions?: ElementPositions;
 }
 
 export interface VerificationOptions {
@@ -120,6 +128,36 @@ export async function verifyConversionInteraction(
       notes.push("HubSpot tracking or form script detected in DOM");
     }
 
+    const vpWidth = (options.viewport?.width) || 1280;
+    const vpHeight = (options.viewport?.height) || 800;
+    const elementPositions: ElementPositions = {};
+
+    try {
+      const h1El = await page.$("h1");
+      if (h1El) {
+        const box = await h1El.boundingBox();
+        if (box && box.y < vpHeight * 1.2) {
+          elementPositions.headline = {
+            xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 260)) / vpWidth) * 100), 8), 85),
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / vpHeight) * 100), 8), 75)
+          };
+        }
+      }
+    } catch {}
+
+    try {
+      const proofEl = await page.$("[class*='logo'], [class*='proof'], [class*='partner'], [class*='trust'], [class*='client'], [class*='customer']");
+      if (proofEl) {
+        const box = await proofEl.boundingBox();
+        if (box && box.y < vpHeight * 1.5) {
+          elementPositions.socialProof = {
+            xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 300)) / vpWidth) * 100), 12), 85),
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / vpHeight) * 100), 20), 85)
+          };
+        }
+      }
+    } catch {}
+
     // Locate primary CTA
     let ctaHandle = null;
     if (primaryCtaText && primaryCtaText.trim().length > 0) {
@@ -134,6 +172,18 @@ export async function verifyConversionInteraction(
       );
     }
 
+    if (ctaHandle) {
+      try {
+        const box = await ctaHandle.boundingBox();
+        if (box && box.y < vpHeight * 1.2) {
+          elementPositions.primaryCta = {
+            xPercent: Math.min(Math.max(Math.round(((box.x + box.width / 2) / vpWidth) * 100), 10), 92),
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / vpHeight) * 100), 5), 85)
+          };
+        }
+      } catch {}
+    }
+
     if (!ctaHandle) {
       return {
         ctaFound: false,
@@ -145,7 +195,8 @@ export async function verifyConversionInteraction(
         hubspotDetected,
         verificationStatus: "failed",
         evidenceNotes: ["No matching primary CTA button or link found on page"],
-        screenshotBase64
+        screenshotBase64,
+        elementPositions
       };
     }
 
@@ -165,7 +216,8 @@ export async function verifyConversionInteraction(
         hubspotDetected,
         verificationStatus: "failed",
         evidenceNotes: notes,
-        screenshotBase64
+        screenshotBase64,
+        elementPositions
       };
     }
 
@@ -247,7 +299,8 @@ export async function verifyConversionInteraction(
       hubspotDetected,
       verificationStatus,
       evidenceNotes: notes,
-      screenshotBase64
+      screenshotBase64,
+      elementPositions
     };
   } catch (err: any) {
     return {
@@ -260,7 +313,8 @@ export async function verifyConversionInteraction(
       hubspotDetected: false,
       verificationStatus: "failed",
       evidenceNotes: [`Verification error: ${err?.message || "Unknown error"}`],
-      screenshotBase64
+      screenshotBase64,
+      elementPositions: undefined
     };
   } finally {
     if (browser) {
