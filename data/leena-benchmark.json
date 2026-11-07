@@ -1,0 +1,53 @@
+[
+  {
+    "id": "homepage",
+    "url": "https://leena.ai/",
+    "page_type": "Home page",
+    "sessions": 18343,
+    "form_fills": 103,
+    "actual_cvr_pct": 0.5615,
+    "actual_rank": 2,
+    "traffic_sources": {
+      "direct": 0.44,
+      "organic_search": 0.25,
+      "paid_search": 0.15,
+      "paid_social": 0.01,
+      "email": 0.03,
+      "others": 0.12
+    }
+  },
+  {
+    "id": "hr_functional",
+    "url": "https://leena.ai/function/hr",
+    "page_type": "Functional Page",
+    "sessions": 1907,
+    "form_fills": 11,
+    "actual_cvr_pct": 0.5768,
+    "actual_rank": 1,
+    "traffic_sources": {
+      "direct": 0.14,
+      "organic_search": 0.17,
+      "paid_search": 0.58,
+      "paid_social": 0.07,
+      "email": 0.03,
+      "others": 0.01
+    }
+  },
+  {
+    "id": "christus_webinar",
+    "url": "https://leena.ai/resources/webinars/christus-health-hr-ai-rollout-webinar",
+    "page_type": "Resources/ Landing Page",
+    "sessions": 12437,
+    "form_fills": 14,
+    "actual_cvr_pct": 0.1126,
+    "actual_rank": 3,
+    "traffic_sources": {
+      "direct": 0.01,
+      "organic_search": 0.0,
+      "paid_search": 0.0,
+      "paid_social": 0.79,
+      "email": 0.18,
+      "others": 0.02
+    }
+  }
+]
