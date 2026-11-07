@@ -1,5 +1,7 @@
 # Convex — Audience-Aware Landing Page Conversion Grader
 
+**Live Production App:** [https://convex-rosy.vercel.app](https://convex-rosy.vercel.app) • **Interactive Algorithm Guide:** [https://convex-rosy.vercel.app/algorithm](https://convex-rosy.vercel.app/algorithm)
+
 Convex is an evidence-based Conversion Rate Optimization (CRO) grader that evaluates any landing page across **Conversion Persuasion**, **Conversion Execution**, and **Supporting Experience**. It combines deterministic DOM extraction, AI semantic copy analysis, live headless browser verification, and interactive full-page screenshot hotspot pinning.
 
 ---
