@@ -1980,11 +1980,13 @@ export default function Home() {
 
             {/* Crisp Plain-English "In a Nutshell" Summary Card (Subtle Green Glowy Gradient) */}
             {plainDigest && (
-              <div className="relative overflow-hidden rounded-2xl border border-emerald-500/35 bg-gradient-to-br from-emerald-950/45 via-emerald-950/15 to-zinc-950/95 p-5 sm:p-6 space-y-4 shadow-[0_0_52px_-10px_rgba(16,185,129,0.28)] ring-1 ring-emerald-400/15">
-                {/* Ambient radial green glow orbs + luminous top edge */}
-                <div className="pointer-events-none absolute -top-24 -left-20 w-72 h-72 rounded-full bg-emerald-500/15 blur-3xl" />
-                <div className="pointer-events-none absolute -bottom-24 -right-20 w-72 h-72 rounded-full bg-emerald-400/10 blur-3xl" />
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent" />
+              <div className="relative rounded-2xl border border-emerald-500/35 bg-gradient-to-br from-emerald-950/45 via-emerald-950/15 to-zinc-950/95 p-5 sm:p-6 space-y-4 shadow-[0_0_52px_-10px_rgba(16,185,129,0.28)] ring-1 ring-emerald-400/15">
+                {/* Ambient radial green glow orbs + luminous top edge (isolated overflow wrapper so tooltips never clip) */}
+                <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+                  <div className="absolute -top-24 -left-20 w-72 h-72 rounded-full bg-emerald-500/15 blur-3xl" />
+                  <div className="absolute -bottom-24 -right-20 w-72 h-72 rounded-full bg-emerald-400/10 blur-3xl" />
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent" />
+                </div>
 
                 <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/20 pb-3.5">
                   <div className="flex items-center gap-2">
