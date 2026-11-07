@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { GraderReport, CRORecommendation, ScreenshotTag } from "@/features/pipeline/grader-pipeline";
 import {
   ArrowRight,
@@ -23,8 +23,12 @@ import {
   Check,
   Maximize2,
   MapPin,
-  HelpCircle,
-  Info
+  ArrowDownCircle,
+  SlidersHorizontal,
+  Flame,
+  Wrench,
+  TrendingUp,
+  Crosshair
 } from "lucide-react";
 
 // Circular SVG Progress Ring
@@ -137,10 +141,21 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<GraderReport | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "persuasion" | "execution" | "experience">("all");
+  const [issueFilter, setIssueFilter] = useState<"all" | "high" | "persuasion" | "execution">("all");
   const [expandedCriteria, setExpandedCriteria] = useState<Record<string, boolean>>({});
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
   const [isScreenshotExpanded, setIsScreenshotExpanded] = useState(false);
+
+  const screenshotContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTag = (yPercent: number) => {
+    if (screenshotContainerRef.current) {
+      const container = screenshotContainerRef.current;
+      const targetScroll = (yPercent / 100) * container.scrollHeight - container.clientHeight / 3;
+      container.scrollTo({ top: Math.max(targetScroll, 0), behavior: "smooth" });
+    }
+  };
 
   const toggleCriterion = (id: string) => {
     setExpandedCriteria((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -167,7 +182,6 @@ export default function Home() {
       }
 
       setReport(data.report);
-      // Auto-select first tag if available
       if (data.report.screenshotTags && data.report.screenshotTags.length > 0) {
         setSelectedTagId(data.report.screenshotTags[0].id);
       }
@@ -220,6 +234,13 @@ export default function Home() {
   const tags = report?.screenshotTags || [];
   const activePin = tags.find((t) => t.id === (hoveredTagId || selectedTagId)) || tags[0];
 
+  const filteredRecommendations = (report?.recommendations || []).filter((rec) => {
+    if (issueFilter === "high") return rec.priority === "high";
+    if (issueFilter === "persuasion") return rec.dimension === "persuasion";
+    if (issueFilter === "execution") return rec.dimension === "execution";
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-zinc-800">
       {/* Top Editorial Navigation */}
@@ -256,7 +277,7 @@ export default function Home() {
                 Landing Page Evaluator
               </h1>
               <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">
-                Audience-aware CRO grader. Evaluates conversion persuasion, lead capture execution, and Core Web Vitals with visual hotspot annotations.
+                Audience-aware CRO grader. Evaluates conversion persuasion, execution friction, and Core Web Vitals with interactive full-page hotspot pins.
               </p>
             </div>
 
@@ -330,7 +351,7 @@ export default function Home() {
                     Running Multi-Phase Evaluation Pipeline...
                   </div>
                   <p className="text-[11px] text-zinc-500">
-                    Extracting DOM signals, capturing live browser render, evaluating persuasion rubric, and checking Core Web Vitals.
+                    Capturing full-page website render, evaluating persuasion rubric, and tagging issues across all page sections.
                   </p>
                 </div>
               </div>
@@ -348,7 +369,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* State 2: Visual Evaluation Report with Screenshot Tagging */}
+        {/* State 2: Full-Page Visual Audit Studio with Screenshot Tagging */}
         {report && (
           <div className="space-y-8">
             {/* Header: Score Summary Bar */}
@@ -426,38 +447,61 @@ export default function Home() {
               )}
             </div>
 
-            {/* Core Feature: Interactive Visual Audit Studio (Screenshot + Tagged Hotspots) */}
+            {/* Core Feature: Interactive Visual Audit Studio (Full-Page Canvas + Actionable Direct Issues) */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800/70 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/70 pb-3">
                 <div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-emerald-400" />
                     <h2 className="text-sm font-semibold text-white">
-                      Visual Landing Page Audit & Hotspot Annotations
+                      Full-Page Visual Audit & Section Hotspot Annotations
                     </h2>
                   </div>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    Interactive pins tag conversion issues and verified strengths directly on the rendered page.
+                    Pins are tagged across the entire website height (hero, proof, and deep funnel). Click any card to jump directly to its location.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-rose-500" /> Issue
-                  </span>
-                  <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" /> Warning
-                  </span>
-                  <span className="text-[11px] text-zinc-400 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Strength
-                  </span>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <button
+                    onClick={() => setIssueFilter("all")}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                      issueFilter === "all" ? "bg-zinc-800 text-white border border-zinc-700" : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    All ({report.recommendations.length})
+                  </button>
+                  <button
+                    onClick={() => setIssueFilter("high")}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                      issueFilter === "high" ? "bg-rose-950 text-rose-300 border border-rose-800" : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    High Impact
+                  </button>
+                  <button
+                    onClick={() => setIssueFilter("persuasion")}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                      issueFilter === "persuasion" ? "bg-zinc-800 text-white border border-zinc-700" : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Persuasion
+                  </button>
+                  <button
+                    onClick={() => setIssueFilter("execution")}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                      issueFilter === "execution" ? "bg-zinc-800 text-white border border-zinc-700" : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Execution
+                  </button>
                 </div>
               </div>
 
-              {/* Split Studio: Left = Annotated Screenshot, Right = Linked Recommendations List */}
+              {/* Split Studio: Left = Scrollable Full-Page Canvas, Right = Direct Intuitive Fix Cards */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                {/* Left (7 cols): Visual Annotated Screenshot Frame */}
-                <div className="lg:col-span-7 rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden flex flex-col shadow-lg">
+                {/* Left (6 cols): Scrollable Full-Page Screenshot Canvas */}
+                <div className="lg:col-span-6 rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden flex flex-col shadow-lg sticky top-20">
                   {/* Browser Chrome Toolbar */}
                   <div className="px-3.5 py-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-1.5">
@@ -465,30 +509,38 @@ export default function Home() {
                       <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                       <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
                     </div>
-                    <div className="text-[10px] font-mono text-zinc-400 truncate max-w-[240px] bg-zinc-950 px-2.5 py-0.5 rounded border border-zinc-800">
+                    <div className="text-[10px] font-mono text-zinc-400 truncate max-w-[200px] bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
                       {report.url.replace(/^https?:\/\//, "")}
                     </div>
-                    <button
-                      onClick={() => setIsScreenshotExpanded(true)}
-                      className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
-                      title="Enlarge screenshot"
-                    >
-                      <Maximize2 className="w-3 h-3" />
-                      <span className="hidden sm:inline">Zoom</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-zinc-500 font-mono hidden sm:inline">
+                        Full Page Canvas
+                      </span>
+                      <button
+                        onClick={() => setIsScreenshotExpanded(true)}
+                        className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors bg-zinc-800 hover:bg-zinc-700 px-2 py-0.5 rounded"
+                        title="Enlarge screenshot"
+                      >
+                        <Maximize2 className="w-3 h-3" />
+                        <span>Zoom</span>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Screenshot Canvas with Interactive Tag Pins */}
-                  <div className="relative w-full bg-zinc-950 min-h-[360px] overflow-hidden select-none">
+                  {/* Scrollable Canvas for Full Page Capture */}
+                  <div
+                    ref={screenshotContainerRef}
+                    className="relative w-full bg-zinc-950 max-h-[560px] overflow-y-auto scroll-smooth select-none border-b border-zinc-900"
+                  >
                     {report.screenshotBase64 ? (
                       <div className="relative w-full">
                         <img
                           src={report.screenshotBase64}
-                          alt={`Screenshot of ${report.url}`}
+                          alt={`Full page screenshot of ${report.url}`}
                           className="w-full h-auto object-cover object-top block"
                         />
 
-                        {/* Visual Overlay Pins */}
+                        {/* Visual Overlay Pins Across Entire Page Height */}
                         {tags.map((tag) => {
                           const isSelected = (selectedTagId || tags[0]?.id) === tag.id;
                           const isHovered = hoveredTagId === tag.id;
@@ -516,32 +568,35 @@ export default function Home() {
                                 top: `${tag.yPercent}%`
                               }}
                               className="absolute transform -translate-x-1/2 -translate-y-1/2 z-20 cursor-pointer group"
-                              onClick={() => setSelectedTagId(tag.id)}
+                              onClick={() => {
+                                setSelectedTagId(tag.id);
+                                scrollToTag(tag.yPercent);
+                              }}
                               onMouseEnter={() => setHoveredTagId(tag.id)}
                               onMouseLeave={() => setHoveredTagId(null)}
                             >
-                              {/* Pulsing Ring Effect */}
+                              {/* Pulsing Ping Indicator */}
                               <span
                                 className={`absolute inset-0 rounded-full ${pulseBg} opacity-75 animate-ping duration-1000 ${
-                                  isActive ? "block" : "opacity-40"
+                                  isActive ? "block" : "opacity-30"
                                 }`}
                               />
 
-                              {/* Numbered Pin Badge */}
+                              {/* Numbered Hotspot Pin */}
                               <div
                                 className={`relative w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-xl transition-all duration-300 border-2 ${
                                   isActive
-                                    ? `${pinBg} border-white scale-110 shadow-2xl ring-4 ring-white/30`
-                                    : `${pinBg} border-zinc-900 hover:scale-105 opacity-90`
+                                    ? `${pinBg} border-white scale-115 shadow-2xl ring-4 ring-white/30`
+                                    : `${pinBg} border-zinc-900 hover:scale-110 opacity-90`
                                 }`}
                               >
                                 {tag.pinNumber}
                               </div>
 
-                              {/* Floating Tooltip Callout (visible when active) */}
+                              {/* Floating Popover Tooltip */}
                               {isActive && (
                                 <div
-                                  className="absolute left-1/2 -top-2 transform -translate-x-1/2 -translate-y-full z-30 pointer-events-none w-56 p-2 rounded-lg bg-zinc-900/95 border border-zinc-700 shadow-2xl text-left backdrop-blur-sm"
+                                  className="absolute left-1/2 -top-2 transform -translate-x-1/2 -translate-y-full z-30 pointer-events-none w-60 p-2.5 rounded-lg bg-zinc-900/95 border border-zinc-700 shadow-2xl text-left backdrop-blur-sm"
                                 >
                                   <div className="flex items-center justify-between mb-1">
                                     <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">
@@ -556,16 +611,17 @@ export default function Home() {
                                           : "text-emerald-400"
                                       }`}
                                     >
-                                      {tag.type}
+                                      {tag.locationLabel}
                                     </span>
                                   </div>
                                   <div className="text-xs font-semibold text-white leading-tight">
                                     {tag.title}
                                   </div>
-                                  <div className="text-[10px] text-zinc-400 mt-1 line-clamp-2">
-                                    {tag.description}
-                                  </div>
-                                  {/* Triangle arrow */}
+                                  {tag.directFix && (
+                                    <div className="text-[10px] text-emerald-400 mt-1 font-mono">
+                                      Fix: {tag.directFix}
+                                    </div>
+                                  )}
                                   <div className="absolute left-1/2 -bottom-1 transform -translate-x-1/2 w-2 h-2 bg-zinc-900 rotate-45 border-r border-b border-zinc-700" />
                                 </div>
                               )}
@@ -577,26 +633,35 @@ export default function Home() {
                       <div className="p-12 text-center text-zinc-500 space-y-2">
                         <ImageIcon className="w-8 h-8 mx-auto text-zinc-700" />
                         <div className="text-xs text-zinc-400">Website Capture Processing</div>
-                        <p className="text-[11px] text-zinc-600 max-w-xs mx-auto">
-                          DOM and interaction verification ran directly on the page structure.
-                        </p>
                       </div>
                     )}
                   </div>
+
+                  {/* Canvas Footer Bar */}
+                  <div className="p-2 bg-zinc-900/90 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-400 px-3">
+                    <span className="flex items-center gap-1.5">
+                      <ArrowDownCircle className="w-3.5 h-3.5 text-zinc-400" />
+                      Scroll canvas to view lower-page annotations
+                    </span>
+                    <span className="font-mono text-zinc-500 text-[10px]">
+                      {tags.length} Active Pins Tagged
+                    </span>
+                  </div>
                 </div>
 
-                {/* Right (5 cols): Synchronized Issues & Recommendations Cards */}
-                <div className="lg:col-span-5 space-y-3">
-                  <div className="text-xs font-semibold text-zinc-300 flex items-center justify-between px-1">
-                    <span>Identified Issues & Opportunities</span>
-                    <span className="text-[10px] text-zinc-500 font-mono">
-                      Click card to locate on canvas
+                {/* Right (6 cols): Direct, Intuitive Issues & Concrete Fix Cards */}
+                <div className="lg:col-span-6 space-y-3">
+                  <div className="flex items-center justify-between px-1 text-xs">
+                    <span className="font-semibold text-zinc-200">
+                      Actionable CRO Fixes ({filteredRecommendations.length})
+                    </span>
+                    <span className="text-[11px] text-zinc-500 font-mono">
+                      Click any card to auto-locate
                     </span>
                   </div>
 
-                  <div className="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
-                    {/* Synchronized Recommendation Cards linked to Pins */}
-                    {report.recommendations.map((rec, index) => {
+                  <div className="space-y-3">
+                    {filteredRecommendations.map((rec, index) => {
                       const linkedTag = tags.find((t) => t.recommendationId === rec.id) || tags[index];
                       const isSelected = selectedTagId === linkedTag?.id;
                       const isHovered = hoveredTagId === linkedTag?.id;
@@ -605,20 +670,26 @@ export default function Home() {
                       return (
                         <div
                           key={rec.id}
-                          onClick={() => linkedTag && setSelectedTagId(linkedTag.id)}
+                          onClick={() => {
+                            if (linkedTag) {
+                              setSelectedTagId(linkedTag.id);
+                              scrollToTag(linkedTag.yPercent);
+                            }
+                          }}
                           onMouseEnter={() => linkedTag && setHoveredTagId(linkedTag.id)}
                           onMouseLeave={() => setHoveredTagId(null)}
-                          className={`p-3.5 rounded-xl border transition-all cursor-pointer text-xs space-y-2 ${
+                          className={`p-4 rounded-xl border transition-all cursor-pointer text-xs space-y-3 ${
                             isActive
-                              ? "border-emerald-500/80 bg-zinc-900/90 shadow-md ring-1 ring-emerald-500/30"
-                              : "border-zinc-800/80 bg-zinc-950/60 hover:border-zinc-700 hover:bg-zinc-900/40"
+                              ? "border-emerald-500 bg-zinc-900/90 shadow-lg ring-1 ring-emerald-500/30"
+                              : "border-zinc-800/90 bg-zinc-950/70 hover:border-zinc-700 hover:bg-zinc-900/40"
                           }`}
                         >
-                          <div className="flex items-center justify-between">
+                          {/* Card Header: Location Tag + Priority */}
+                          <div className="flex items-center justify-between gap-2 border-b border-zinc-800/60 pb-2">
                             <div className="flex items-center gap-2">
                               {linkedTag && (
                                 <span
-                                  className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
                                     linkedTag.type === "issue"
                                       ? "bg-rose-500 text-white"
                                       : linkedTag.type === "warning"
@@ -629,76 +700,70 @@ export default function Home() {
                                   {linkedTag.pinNumber}
                                 </span>
                               )}
-                              <span className="font-semibold text-white leading-snug">
-                                {rec.title}
+                              <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-zinc-500" />
+                                {rec.locationLabel}
                               </span>
                             </div>
 
-                            <span
-                              className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold ${
-                                rec.priority === "high"
-                                  ? "bg-rose-950 text-rose-400 border border-rose-800"
-                                  : "bg-amber-950 text-amber-400 border border-amber-800"
-                              }`}
-                            >
-                              {rec.priority}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
+                                  rec.priority === "high"
+                                    ? "bg-rose-950 text-rose-300 border border-rose-800"
+                                    : "bg-amber-950 text-amber-300 border border-amber-800"
+                                }`}
+                              >
+                                {rec.priority}
+                              </span>
+                            </div>
                           </div>
 
-                          <p className="text-[11px] text-zinc-400 leading-relaxed">
-                            <span className="text-zinc-500 font-medium">Problem: </span>
-                            {rec.problem}
-                          </p>
+                          {/* Issue Title & Problem */}
+                          <div className="space-y-1">
+                            <h3 className="text-sm font-semibold text-white leading-snug">
+                              {rec.title}
+                            </h3>
+                            <p className="text-[11px] text-zinc-400 leading-relaxed">
+                              {rec.problem}
+                            </p>
+                          </div>
 
-                          <div className="pt-2 border-t border-zinc-800/60 text-[11px] space-y-1">
-                            <div className="text-zinc-300">
-                              <span className="text-zinc-500 font-medium">Prescribed Action: </span>
-                              {rec.action}
+                          {/* Concrete Direct Fix Callout Box */}
+                          <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] space-y-1.5">
+                            <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
+                              <Wrench className="w-3.5 h-3.5 shrink-0" />
+                              <span>Direct Fix:</span>
                             </div>
-                            <div className="text-emerald-400 text-[10px] font-medium flex items-center gap-1 pt-0.5">
-                              <Check className="w-3 h-3 shrink-0" />
-                              <span>{rec.expectedImpact}</span>
+                            <p className="text-zinc-200 pl-5 leading-relaxed font-mono text-[10.5px]">
+                              {rec.directFix}
+                            </p>
+                          </div>
+
+                          {/* Card Footer: Lift & Auto-Scroll Button */}
+                          <div className="flex items-center justify-between pt-1 text-[11px]">
+                            <div className="text-emerald-400 font-medium flex items-center gap-1 text-[10.5px]">
+                              <TrendingUp className="w-3 h-3 shrink-0" />
+                              <span>Expected Lift: {rec.expectedImpact}</span>
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (linkedTag) {
+                                  setSelectedTagId(linkedTag.id);
+                                  scrollToTag(linkedTag.yPercent);
+                                }
+                              }}
+                              className="text-[10px] font-mono text-zinc-400 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors"
+                            >
+                              <Crosshair className="w-3 h-3" /> Locate Pin
+                            </button>
                           </div>
                         </div>
                       );
                     })}
-
-                    {/* Extra Verified Strength Cards */}
-                    {tags
-                      .filter((t) => t.type === "strength")
-                      .map((strTag) => {
-                        const isSelected = selectedTagId === strTag.id;
-                        const isHovered = hoveredTagId === strTag.id;
-                        const isActive = isSelected || isHovered;
-
-                        return (
-                          <div
-                            key={strTag.id}
-                            onClick={() => setSelectedTagId(strTag.id)}
-                            onMouseEnter={() => setHoveredTagId(strTag.id)}
-                            onMouseLeave={() => setHoveredTagId(null)}
-                            className={`p-3 rounded-xl border transition-all cursor-pointer text-xs space-y-1.5 ${
-                              isActive
-                                ? "border-emerald-500/80 bg-zinc-900/90 shadow-md ring-1 ring-emerald-500/30"
-                                : "border-zinc-800/80 bg-zinc-950/40 hover:border-zinc-700 hover:bg-zinc-900/30"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[10px]">
-                                  {strTag.pinNumber}
-                                </span>
-                                <span className="font-semibold text-white">{strTag.title}</span>
-                              </div>
-                              <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                                Verified
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-zinc-400 pl-7">{strTag.description}</p>
-                          </div>
-                        );
-                      })}
                   </div>
                 </div>
               </div>
@@ -707,7 +772,7 @@ export default function Home() {
             {/* Modal for Zoomed Screenshot */}
             {isScreenshotExpanded && report.screenshotBase64 && (
               <div
-                className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+                className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
                 onClick={() => setIsScreenshotExpanded(false)}
               >
                 <div
@@ -715,7 +780,7 @@ export default function Home() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="p-3 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between text-xs text-zinc-300">
-                    <span className="font-mono text-zinc-400">{report.url} — High Resolution Capture</span>
+                    <span className="font-mono text-zinc-400">{report.url} — Full Page High-Res Capture</span>
                     <button
                       onClick={() => setIsScreenshotExpanded(false)}
                       className="text-zinc-400 hover:text-white px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 transition-colors"
@@ -723,7 +788,7 @@ export default function Home() {
                       Close ✕
                     </button>
                   </div>
-                  <div className="overflow-y-auto p-3 bg-zinc-950">
+                  <div className="overflow-y-auto p-3 bg-zinc-950 max-h-[85vh]">
                     <img
                       src={report.screenshotBase64}
                       alt="Full website screenshot"

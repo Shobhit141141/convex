@@ -241,10 +241,11 @@ function deterministicFallback(input: RawPageInput): SemanticEvaluation {
         : "CTA requires lower friction to improve conversion intent."
     },
     persuasionWeaknesses: [
+      "AI semantic evaluation unavailable — using deterministic fallback",
       ...(credibilityScore < 7 ? ["Pair proof claims with specific customer-attributed metrics."] : []),
       ...(hasQuantified ? [] : ["Add concrete metrics or speed-to-value milestones."])
     ],
-    overallPersuasionGrade: problemScore >= 7 && valuePropScore >= 7 ? "good" : "average",
+    overallPersuasionGrade: "average",
     evaluationConfidence: 0.85,
     insufficientEvidence: false
   };

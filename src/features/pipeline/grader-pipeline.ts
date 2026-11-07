@@ -31,10 +31,14 @@ export interface CRORecommendation {
   id: string;
   dimension: "persuasion" | "execution" | "experience";
   priority: "high" | "medium" | "low";
+  section: "hero" | "social_proof" | "features" | "conversion_path" | "footer";
   title: string;
+  locationLabel: string;
   problem: string;
   action: string;
+  directFix: string;
   expectedImpact: string;
+  coordinates: { xPercent: number; yPercent: number };
 }
 
 export interface ScreenshotTag {
@@ -42,11 +46,13 @@ export interface ScreenshotTag {
   pinNumber: number;
   title: string;
   type: "issue" | "warning" | "strength";
-  category: "cta" | "headline" | "social_proof" | "form" | "performance";
+  category: "cta" | "headline" | "social_proof" | "features" | "footer" | "performance";
   label: string;
+  locationLabel: string;
   xPercent: number;
   yPercent: number;
   recommendationId?: string;
+  directFix?: string;
   description: string;
 }
 
@@ -106,9 +112,16 @@ function calculateLetterGrade(score: number): "A+" | "A" | "B" | "C" | "D" | "F"
 
 function generateRecommendations(
   result: RubricV3Result,
-  signals: PageSignals
+  signals: PageSignals,
+  positions?: any
 ): CRORecommendation[] {
   const recommendations: CRORecommendation[] = [];
+
+  const allCriteria = [
+    ...result.dimensions.persuasion.criteria,
+    ...result.dimensions.execution.criteria,
+    ...result.dimensions.experience.criteria
+  ];
 
   // Check Gates
   if (result.gatesTriggered.some(g => g.includes("Missing Primary CTA"))) {
@@ -116,10 +129,17 @@ function generateRecommendations(
       id: "rec_missing_cta",
       dimension: "execution",
       priority: "high",
+      section: "hero",
+      locationLabel: "Hero Action Zone (Top 5%)",
       title: "Add a High-Contrast Primary Call-to-Action",
       problem: "No primary conversion action was detected above the fold or in main body sections.",
       action: "Place a clear, single-intent CTA button above the fold (e.g. 'Book a demo' or 'Start free trial') in a prominent accent color.",
-      expectedImpact: "Unblocks conversion readiness and prevents complete visitor bounce."
+      directFix: "Inject an action-oriented button into the hero container with prominent contrast against the background.",
+      expectedImpact: "Unblocks conversion readiness and prevents complete visitor bounce.",
+      coordinates: {
+        xPercent: positions?.primaryCta?.xPercent ?? 50,
+        yPercent: positions?.primaryCta?.yPercent ?? 10
+      }
     });
   }
 
@@ -128,86 +148,102 @@ function generateRecommendations(
       id: "rec_broken_form",
       dimension: "execution",
       priority: "high",
+      section: "conversion_path",
+      locationLabel: "Lead Form Funnel (Action Area)",
       title: "Fix or Implement Interactive Lead Capture",
       problem: "Lead generation is required for the conversion objective, but no interactive form or modal was verified.",
       action: "Verify that your HubSpot / custom form script renders reliably without JavaScript errors on CTA button click.",
-      expectedImpact: "Directly rescues up to 25 execution points and stops silent lead drop-off."
+      directFix: "Ensure form script attaches to DOM and modal trigger handler opens lead capture within 200ms.",
+      expectedImpact: "Directly rescues up to 25 execution points and stops silent lead drop-off.",
+      coordinates: {
+        xPercent: positions?.leadCapture?.xPercent ?? 50,
+        yPercent: positions?.leadCapture?.yPercent ?? 40
+      }
     });
   }
 
-  // Check Criteria Statuses
-  const allCriteria = [
-    ...result.dimensions.persuasion.criteria,
-    ...result.dimensions.execution.criteria,
-    ...result.dimensions.experience.criteria
-  ];
-
-  const problemFit = allCriteria.find(c => c.id === "persuasion_problem_fit");
-  if (problemFit && problemFit.status !== "passed") {
-    recommendations.push({
-      id: "rec_problem_specificity",
-      dimension: "persuasion",
-      priority: "high",
-      title: "Sharpen Operational Problem Framing",
-      problem: `Audience-problem fit scored ${problemFit.earnedPoints}/${problemFit.maxPoints}. Messaging lacks acute operational pain points.`,
-      action: "Lead your H1 or subheadline with the acute workflow bottleneck your audience experiences daily (e.g. '70% of tickets waste staff time').",
-      expectedImpact: "Builds immediate visitor self-recognition within the first 5 seconds."
-    });
-  }
-
-  const valueProp = allCriteria.find(c => c.id === "persuasion_value_prop");
-  if (valueProp && valueProp.status !== "passed") {
-    recommendations.push({
-      id: "rec_value_prop",
-      dimension: "persuasion",
-      priority: "high",
-      title: "Quantify Value Proposition & Speed-to-Value",
-      problem: "The value proposition statement lacks quantifiable metrics or clear timeframe to value.",
-      action: "Include specific numbers and timeframe in the hero banner (e.g. 'Live in 45 days, 4-10x ROI').",
-      expectedImpact: "Increases consideration intent for risk-averse enterprise evaluators."
-    });
-  }
-
+  // 1. Social Proof & Customer Attributed Metrics (Mid-page ~25-40%)
   const credibility = allCriteria.find(c => c.id === "persuasion_credibility");
-  if (credibility && credibility.status !== "passed") {
+  if (!credibility || credibility.status !== "passed" || (signals.trust.logoCount > 0 && !signals.trust.hasQuantifiedCaseStudy)) {
     recommendations.push({
       id: "rec_credibility",
       dimension: "persuasion",
-      priority: "medium",
-      title: "Add Customer-Attributed Verifiable Proof",
-      problem: "Social proof consists of unverified company claims or logo walls without customer metrics.",
-      action: "Pair customer logos with a named customer quote citing concrete hours saved or ticket deflection rates.",
-      expectedImpact: "Substantiates ROI claims and lowers procurement skepticism."
+      priority: "high",
+      section: "social_proof",
+      locationLabel: "Social Proof Band (Mid-page ~28%)",
+      title: "Replace Passive Logo Wall with Customer-Attributed ROI Metrics",
+      problem: "Static company logos lack verifiable customer quotes. Enterprise buyers discount logo walls as unverified claims unless paired with concrete ROI metrics.",
+      action: "Pair customer logos with concrete deflection metrics and named quotes (e.g. '70%+ tickets deflected at Coca-Cola').",
+      directFix: "Embed 1-2 customer metric cards directly beneath the logo carousel highlighting hours saved and time-to-value.",
+      expectedImpact: "+18% to +24% enterprise trust & consideration intent",
+      coordinates: {
+        xPercent: positions?.socialProof?.xPercent ?? 50,
+        yPercent: positions?.socialProof?.yPercent ?? 28
+      }
     });
   }
 
+  // 2. CTA Friction & Next-Step Clarity (Top Hero / Nav ~4-10%)
   const promiseDest = allCriteria.find(c => c.id === "exec_promise_destination");
-  if (promiseDest && promiseDest.status !== "passed") {
+  if (!promiseDest || promiseDest.status !== "passed" || !signals.conversion.clarityOfNextStep) {
     recommendations.push({
-      id: "rec_promise_match",
+      id: "rec_cta_commitment",
       dimension: "execution",
       priority: "high",
-      title: "Align CTA Copy with Destination Funnel",
-      problem: "CTA wording creates cognitive friction with the actual destination (e.g. 'Watch now' gating a sales demo).",
-      action: "If gating webinar content, state 'Register for Recording' or provide direct 1-click video access.",
-      expectedImpact: "Reduces immediate modal abandon rate from high-friction surprises."
+      section: "conversion_path",
+      locationLabel: "Primary CTA & Nav Header (Top ~5%)",
+      title: "Eliminate Next-Step Friction on Primary Conversion Action",
+      problem: `CTA button "${signals.conversion.primaryCtaText || 'Submit'}" demands high commitment without setting expectations for what happens upon click.`,
+      action: "Add reassuring microcopy directly below or inside the CTA button (e.g. 'Takes 30 seconds • No credit card required').",
+      directFix: "Include immediate expectation setting: 'Interactive Walkthrough • 2 min response' to decrease modal click hesitation.",
+      expectedImpact: "+14% to +19% primary CTA click-through rate",
+      coordinates: {
+        xPercent: positions?.primaryCta?.xPercent ?? 85,
+        yPercent: positions?.primaryCta?.yPercent ?? 4
+      }
     });
   }
 
-  const lcp = allCriteria.find(c => c.id === "exp_lcp_speed");
-  if (lcp && lcp.status === "failed") {
+  // 3. Value Proposition & Timeframe (Hero Banner ~8-15%)
+  const valueProp = allCriteria.find(c => c.id === "persuasion_value_prop");
+  if (!valueProp || valueProp.status !== "passed" || !signals.clarity.hasConcreteOutcome) {
     recommendations.push({
-      id: "rec_lcp_speed",
-      dimension: "experience",
+      id: "rec_value_prop",
+      dimension: "persuasion",
       priority: "medium",
-      title: "Optimize Largest Contentful Paint (LCP)",
-      problem: `LCP exceeds 4.0s (${signals.performance.lcpSeconds}s), creating severe initial bounce risk.`,
-      action: "Compress hero banner images to WebP/AVIF and preload hero assets with <link rel='preload'>.",
-      expectedImpact: "Recovers 5 experience points and improves mobile retention."
+      section: "hero",
+      locationLabel: "Hero Value Proposition (Top ~8%)",
+      title: "Quantify Time-to-Value in the Hero Headline",
+      problem: "Visitors cannot determine within 5 seconds how quickly your solution deploys or what exact outcome it guarantees.",
+      action: "Anchor the H1 or subheadline with concrete timeframe and payback metrics (e.g. 'Go Live in 45 Days • 4-10x ROI').",
+      directFix: "Format value proposition as [Desired Outcome] in [Specific Timeframe] without [Primary Friction].",
+      expectedImpact: "+12% to +16% visitor retention beyond above-the-fold",
+      coordinates: {
+        xPercent: positions?.headline?.xPercent ?? 28,
+        yPercent: positions?.headline?.yPercent ?? 8
+      }
     });
   }
 
-  return recommendations.slice(0, 3);
+  // 4. Lower-Page Conversion Capture / Sticky Re-engagement (Deep Page ~75-90%)
+  recommendations.push({
+    id: "rec_bottom_funnel",
+    dimension: "execution",
+    priority: "medium",
+    section: "footer",
+    locationLabel: "Bottom Conversion Funnel (Page Base ~85%)",
+    title: "Deploy a Sticky Conversion Bridge for Deep-Scroll Visitors",
+    problem: "Visitors who scroll past feature sections lose access to a visible conversion trigger unless they scroll back to the top.",
+    action: "Introduce a persistent sticky bottom banner or embedded inline inquiry form at the end of feature explanations.",
+    directFix: "Add a compact sticky dock: '[Book a 2-min demo] • Fast setup' that activates after 40% scroll depth.",
+    expectedImpact: "+9% to +15% conversion recovery on long-scroll sessions",
+    coordinates: {
+      xPercent: positions?.bottomFunnel?.xPercent ?? 50,
+      yPercent: positions?.bottomFunnel?.yPercent ?? 88
+    }
+  });
+
+  return recommendations.slice(0, 4);
 }
 
 function generateScreenshotTags(
@@ -220,63 +256,24 @@ function generateScreenshotTags(
   let pin = 1;
 
   for (const rec of recommendations) {
-    if (rec.id === "rec_credibility") {
-      tags.push({
-        id: `tag_${pin}`,
-        pinNumber: pin++,
-        title: rec.title,
-        type: "issue",
-        category: "social_proof",
-        label: "Proof Gap",
-        xPercent: positions?.socialProof?.xPercent ?? 50,
-        yPercent: positions?.socialProof?.yPercent ?? 65,
-        recommendationId: rec.id,
-        description: rec.problem
-      });
-    } else if (rec.id === "rec_speed_value" || rec.id === "rec_audience_problem") {
-      tags.push({
-        id: `tag_${pin}`,
-        pinNumber: pin++,
-        title: rec.title,
-        type: "warning",
-        category: "headline",
-        label: "Value Prop",
-        xPercent: positions?.headline?.xPercent ?? 25,
-        yPercent: positions?.headline?.yPercent ?? 24,
-        recommendationId: rec.id,
-        description: rec.problem
-      });
-    } else if (rec.id === "rec_cta_clarity" || rec.id === "rec_promise_match") {
-      tags.push({
-        id: `tag_${pin}`,
-        pinNumber: pin++,
-        title: rec.title,
-        type: "issue",
-        category: "cta",
-        label: "CTA Friction",
-        xPercent: positions?.primaryCta?.xPercent ?? 75,
-        yPercent: positions?.primaryCta?.yPercent ?? 15,
-        recommendationId: rec.id,
-        description: rec.problem
-      });
-    } else if (rec.id === "rec_lcp_speed") {
-      tags.push({
-        id: `tag_${pin}`,
-        pinNumber: pin++,
-        title: rec.title,
-        type: "warning",
-        category: "performance",
-        label: "Hero LCP",
-        xPercent: 50,
-        yPercent: 32,
-        recommendationId: rec.id,
-        description: rec.problem
-      });
-    }
+    tags.push({
+      id: `tag_${pin}`,
+      pinNumber: pin++,
+      title: rec.title,
+      type: rec.priority === "high" ? "issue" : "warning",
+      category: rec.section === "hero" ? "headline" : rec.section === "social_proof" ? "social_proof" : rec.section === "footer" ? "footer" : "cta",
+      label: rec.section === "social_proof" ? "Proof Gap" : rec.section === "hero" ? "Value Prop" : rec.section === "footer" ? "Scroll Funnel" : "CTA Friction",
+      locationLabel: rec.locationLabel,
+      xPercent: rec.coordinates.xPercent,
+      yPercent: rec.coordinates.yPercent,
+      recommendationId: rec.id,
+      directFix: rec.directFix,
+      description: rec.problem
+    });
   }
 
-  // Add verified strength pins if slots open
-  if (signals.conversion.hasAboveTheFoldCta && !tags.some(t => t.category === "cta")) {
+  // Add verified strength pin
+  if (signals.conversion.hasAboveTheFoldCta) {
     tags.push({
       id: `tag_${pin}`,
       pinNumber: pin++,
@@ -284,27 +281,15 @@ function generateScreenshotTags(
       type: "strength",
       category: "cta",
       label: "Verified CTA",
-      xPercent: positions?.primaryCta?.xPercent ?? 78,
-      yPercent: positions?.primaryCta?.yPercent ?? 14,
-      description: "Primary conversion action is clearly visible in initial viewport."
+      locationLabel: "Navbar & Initial Viewport",
+      xPercent: positions?.primaryCta?.xPercent ?? 86,
+      yPercent: positions?.primaryCta?.yPercent ?? 3,
+      directFix: "High contrast primary action button is clearly visible in the initial load viewport.",
+      description: "Primary conversion action is clearly positioned above the fold."
     });
   }
 
-  if (signals.clarity.hasClearH1 && !tags.some(t => t.category === "headline")) {
-    tags.push({
-      id: `tag_${pin}`,
-      pinNumber: pin++,
-      title: "Hero Headline & Problem Definition",
-      type: "strength",
-      category: "headline",
-      label: "Hero H1",
-      xPercent: positions?.headline?.xPercent ?? 26,
-      yPercent: positions?.headline?.yPercent ?? 22,
-      description: "Clear H1 anchor statement orienting target visitors."
-    });
-  }
-
-  return tags.slice(0, 4);
+  return tags;
 }
 
 export async function gradeLandingPage(
@@ -422,7 +407,11 @@ export async function gradeLandingPage(
     ...v3Result.dimensions.experience.criteria
   ];
 
-  const recommendations = generateRecommendations(v3Result, signals);
+  const recommendations = generateRecommendations(
+    v3Result,
+    signals,
+    verification?.elementPositions
+  );
   const screenshotTags = generateScreenshotTags(
     recommendations,
     v3Result,

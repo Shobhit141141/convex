@@ -15,7 +15,10 @@ export interface ElementPositions {
   headline?: { xPercent: number; yPercent: number };
   primaryCta?: { xPercent: number; yPercent: number };
   socialProof?: { xPercent: number; yPercent: number };
+  caseStudy?: { xPercent: number; yPercent: number };
+  bottomFunnel?: { xPercent: number; yPercent: number };
   leadCapture?: { xPercent: number; yPercent: number };
+  scrollHeight?: number;
 }
 
 export interface ConversionVerificationResult {
@@ -106,10 +109,17 @@ export async function verifyConversionInteraction(
       await page.goto(urlOrHtml, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     }
 
-    // Capture hero screenshot
+    // Capture full-page screenshot across the entire website
+    let scrollHeight = 800;
+    try {
+      scrollHeight = await page.evaluate(() =>
+        Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, 800)
+      );
+    } catch {}
+
     if (captureScreenshot) {
       try {
-        const buffer = await page.screenshot({ type: "jpeg", quality: 75 });
+        const buffer = await page.screenshot({ fullPage: true, type: "jpeg", quality: 65 });
         screenshotBase64 = `data:image/jpeg;base64,${buffer.toString("base64")}`;
       } catch {
         // Screenshot capture non-blocking
@@ -129,17 +139,16 @@ export async function verifyConversionInteraction(
     }
 
     const vpWidth = (options.viewport?.width) || 1280;
-    const vpHeight = (options.viewport?.height) || 800;
-    const elementPositions: ElementPositions = {};
+    const elementPositions: ElementPositions = { scrollHeight };
 
     try {
       const h1El = await page.$("h1");
       if (h1El) {
         const box = await h1El.boundingBox();
-        if (box && box.y < vpHeight * 1.2) {
+        if (box) {
           elementPositions.headline = {
             xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 260)) / vpWidth) * 100), 8), 85),
-            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / vpHeight) * 100), 8), 75)
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 1), 95)
           };
         }
       }
@@ -149,10 +158,36 @@ export async function verifyConversionInteraction(
       const proofEl = await page.$("[class*='logo'], [class*='proof'], [class*='partner'], [class*='trust'], [class*='client'], [class*='customer']");
       if (proofEl) {
         const box = await proofEl.boundingBox();
-        if (box && box.y < vpHeight * 1.5) {
+        if (box) {
           elementPositions.socialProof = {
             xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 300)) / vpWidth) * 100), 12), 85),
-            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / vpHeight) * 100), 20), 85)
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 2), 95)
+          };
+        }
+      }
+    } catch {}
+
+    try {
+      const caseStudyEl = await page.$("[class*='case'], [class*='testimonial'], [class*='quote'], [class*='review'], [class*='metric']");
+      if (caseStudyEl) {
+        const box = await caseStudyEl.boundingBox();
+        if (box) {
+          elementPositions.caseStudy = {
+            xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 300)) / vpWidth) * 100), 12), 85),
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 2), 95)
+          };
+        }
+      }
+    } catch {}
+
+    try {
+      const footerCta = await page.$("footer, [class*='footer'], [class*='bottom'], form, [class*='form']");
+      if (footerCta) {
+        const box = await footerCta.boundingBox();
+        if (box && box.y > 600) {
+          elementPositions.bottomFunnel = {
+            xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 300)) / vpWidth) * 100), 15), 85),
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 10), 98)
           };
         }
       }
@@ -175,10 +210,10 @@ export async function verifyConversionInteraction(
     if (ctaHandle) {
       try {
         const box = await ctaHandle.boundingBox();
-        if (box && box.y < vpHeight * 1.2) {
+        if (box) {
           elementPositions.primaryCta = {
             xPercent: Math.min(Math.max(Math.round(((box.x + box.width / 2) / vpWidth) * 100), 10), 92),
-            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / vpHeight) * 100), 5), 85)
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 1), 95)
           };
         }
       } catch {}
