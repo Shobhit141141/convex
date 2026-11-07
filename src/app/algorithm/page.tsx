@@ -399,8 +399,8 @@ const LEENA_PRESETS = [
 const AUDIENCE_PROFILES = [
   {
     id: "enterprise",
-    label: "Enterprise Buyer (CIO / CHRO)",
-    examplePage: "leena.ai Homepage",
+    label: "Enterprise Buyer (e.g. leena.ai, okta.com)",
+    examplePage: "leena.ai / okta.com",
     whatChanges:
       "Security badges (SOC2/ISO), named enterprise case studies, and ROI metrics carry maximum weight in Check #3 (Outcome Credibility). A 'Book a demo' modal is expected and not penalized as high-friction.",
     weightedSignal: "Outcome Credibility & Security Proof (10 pts) + Enterprise Demo CTA",
@@ -408,7 +408,7 @@ const AUDIENCE_PROFILES = [
   },
   {
     id: "practitioner",
-    label: "Functional Leader (HR / IT Director)",
+    label: "Functional Lead (e.g. /function/hr)",
     examplePage: "leena.ai/function/hr",
     whatChanges:
       "Workflow specificity (Workday/ServiceNow integrations, ticket auto-resolution %) and Speed-to-Value ('Live in 45 days') drive Checks #1, #2, and #4.",
@@ -416,9 +416,18 @@ const AUDIENCE_PROFILES = [
     why: "Functional heads care most about whether the tool plugs into their existing stack and solves daily ticket backlog fast."
   },
   {
+    id: "selfserve",
+    label: "Self-Serve / Dev (e.g. twelvelabs.io, linear.app)",
+    examplePage: "twelvelabs.io / linear.app",
+    whatChanges:
+      "Prioritizes an instant self-serve CTA ('Try Free' / 'Start Building'), interactive playground or code docs, and fast 1-to-2 field signup over enterprise compliance badges.",
+    weightedSignal: "Offer Appeal / Self-Serve Trial (8 pts) & Low-Friction Signup (7 pts)",
+    why: "Developers and PLG users want to test the product or API immediately rather than book a 30-minute sales call."
+  },
+  {
     id: "reader",
-    label: "Educational / Webinar Visitor",
-    examplePage: "leena.ai/christus-health-webinar",
+    label: "Content / Webinar (e.g. christus-webinar)",
+    examplePage: "christus-health-webinar",
     whatChanges:
       "Compliance badges are not required, but Check #7 (Promise–Destination Match) & Check #9 (Form Friction) penalize pages that say 'Watch Webinar' yet force a heavy 7-field enterprise sales form.",
     weightedSignal: "Promise–Destination Match (8 pts) & Form Simplicity (7 pts)",
@@ -979,29 +988,40 @@ export default function AlgorithmPage() {
             {/* Side-by-Side Signal Weight Comparison Across Audiences */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden text-[11px]">
               <div className="grid grid-cols-12 px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 font-mono text-[10px] text-zinc-400 uppercase">
-                <span className="col-span-5">What We Check</span>
-                <span className="col-span-2 text-center">Executive</span>
-                <span className="col-span-3 text-center">HR / IT Lead</span>
+                <span className="col-span-4">What We Check</span>
+                <span className="col-span-2 text-center">Enterprise</span>
+                <span className="col-span-2 text-center">HR/IT Lead</span>
+                <span className="col-span-2 text-center">Self-Serve</span>
                 <span className="col-span-2 text-center">Webinar</span>
               </div>
               <div className="divide-y divide-zinc-800/70 font-mono">
                 <div className="grid grid-cols-12 px-3 py-1.5 items-center">
-                  <span className="col-span-5 font-sans text-zinc-200">ROI Numbers &amp; Security Badges</span>
-                  <span className="col-span-2 text-center text-emerald-400 font-bold">High (1.5×)</span>
-                  <span className="col-span-3 text-center text-zinc-300">Normal</span>
-                  <span className="col-span-2 text-center text-zinc-500">Low (0.5×)</span>
+                  <span className="col-span-4 font-sans text-zinc-200">ROI &amp; SOC2 Proof</span>
+                  <span className="col-span-2 text-center text-emerald-400 font-bold">1.5× High</span>
+                  <span className="col-span-2 text-center text-zinc-300">1.0×</span>
+                  <span className="col-span-2 text-center text-zinc-400">0.7×</span>
+                  <span className="col-span-2 text-center text-zinc-500">0.5× Low</span>
                 </div>
                 <div className="grid grid-cols-12 px-3 py-1.5 items-center">
-                  <span className="col-span-5 font-sans text-zinc-200">Naming Daily Tools (Workday)</span>
-                  <span className="col-span-2 text-center text-zinc-300">Normal</span>
-                  <span className="col-span-3 text-center text-emerald-400 font-bold">High (1.5×)</span>
-                  <span className="col-span-2 text-center text-zinc-500">Low (0.7×)</span>
+                  <span className="col-span-4 font-sans text-zinc-200">Daily Tool Integrations</span>
+                  <span className="col-span-2 text-center text-zinc-300">1.0×</span>
+                  <span className="col-span-2 text-center text-emerald-400 font-bold">1.5× High</span>
+                  <span className="col-span-2 text-center text-zinc-300">1.2×</span>
+                  <span className="col-span-2 text-center text-zinc-500">0.7×</span>
                 </div>
                 <div className="grid grid-cols-12 px-3 py-1.5 items-center">
-                  <span className="col-span-5 font-sans text-zinc-200">Short Sign-Up Form (&le; 3 Boxes)</span>
-                  <span className="col-span-2 text-center text-zinc-400">Flexible</span>
-                  <span className="col-span-3 text-center text-zinc-300">Normal</span>
-                  <span className="col-span-2 text-center text-emerald-400 font-bold">Strict (1.6×)</span>
+                  <span className="col-span-4 font-sans text-zinc-200">Self-Serve (&quot;Try Free&quot;)</span>
+                  <span className="col-span-2 text-center text-zinc-400">0.7×</span>
+                  <span className="col-span-2 text-center text-zinc-300">0.9×</span>
+                  <span className="col-span-2 text-center text-emerald-400 font-bold">1.5× High</span>
+                  <span className="col-span-2 text-center text-zinc-500">0.6×</span>
+                </div>
+                <div className="grid grid-cols-12 px-3 py-1.5 items-center">
+                  <span className="col-span-4 font-sans text-zinc-200">Short Form (&le; 3 Boxes)</span>
+                  <span className="col-span-2 text-center text-zinc-400">0.8×</span>
+                  <span className="col-span-2 text-center text-zinc-300">1.0×</span>
+                  <span className="col-span-2 text-center text-zinc-300">1.3×</span>
+                  <span className="col-span-2 text-center text-emerald-400 font-bold">1.6× Strict</span>
                 </div>
               </div>
             </div>
@@ -1028,26 +1048,26 @@ export default function AlgorithmPage() {
               <div className="divide-y divide-zinc-800/70 font-mono text-[11px]">
                 <div className="grid grid-cols-12 px-3 py-2 items-center">
                   <span className="col-span-5 text-white font-sans font-medium">
-                    leena.ai Homepage
+                    leena.ai Homepage <span className="text-[10px] text-zinc-500 font-mono">(18.3k)</span>
                   </span>
                   <span className="col-span-2 text-right text-zinc-300">0.56%</span>
-                  <span className="col-span-2 text-right text-zinc-500">94</span>
+                  <span className="col-span-2 text-right text-zinc-500">86 (v2: 94)</span>
                   <span className="col-span-3 text-right text-emerald-400 font-bold">83 / 100</span>
                 </div>
                 <div className="grid grid-cols-12 px-3 py-2 items-center">
                   <span className="col-span-5 text-white font-sans font-medium">
-                    leena.ai/function/hr
+                    leena.ai/function/hr <span className="text-[10px] text-zinc-500 font-mono">(1.9k)</span>
                   </span>
                   <span className="col-span-2 text-right text-zinc-300">0.58%</span>
-                  <span className="col-span-2 text-right text-zinc-500">94</span>
+                  <span className="col-span-2 text-right text-zinc-500">94 (v2: 93)</span>
                   <span className="col-span-3 text-right text-emerald-400 font-bold">80 / 100</span>
                 </div>
                 <div className="grid grid-cols-12 px-3 py-2 items-center">
                   <span className="col-span-5 text-white font-sans font-medium">
-                    CHRISTUS Webinar
+                    CHRISTUS Webinar <span className="text-[10px] text-zinc-500 font-mono">(12.4k)</span>
                   </span>
                   <span className="col-span-2 text-right text-rose-400">0.11%</span>
-                  <span className="col-span-2 text-right text-zinc-500">67 (v2: 93)</span>
+                  <span className="col-span-2 text-right text-zinc-500">95 (v2: 93)</span>
                   <span className="col-span-3 text-right text-amber-400 font-bold">77 / 100</span>
                 </div>
               </div>
@@ -1055,12 +1075,14 @@ export default function AlgorithmPage() {
 
             <div className="p-3.5 rounded-xl bg-zinc-950 border border-amber-500/30 space-y-1.5 text-xs">
               <div className="font-semibold text-amber-300">
-                Biggest Disagreement: Homepage (83 pts) vs. HR Page (80 pts) — Who is wrong?
+                Biggest Disagreement: Grader vs. Raw Data — Who is wrong?
               </div>
               <p className="text-zinc-300 leading-relaxed text-[11.5px]">
-                <strong className="text-white">The raw CVR (0.58% vs 0.56%) is misleading because of ad traffic:</strong>{" "}
-                The HR page got <strong>58% high-intent Google Ads</strong> traffic, while the Homepage got{" "}
-                <strong>72% casual browsing</strong> traffic. Once you account for traffic source, the Homepage actually converts better (<strong>0.57× vs 0.50×</strong>)—matching our grader&apos;s 83 vs. 80 score.
+                <strong className="text-white">1. Homepage (83 pts, 0.56%) vs. HR Page (80 pts, 0.58%) — Raw data is skewed by traffic:</strong>{" "}
+                HR got <strong>58% high-intent Google Ads</strong> (11 fills / 1,907 visits), while Homepage got{" "}
+                <strong>69% broad Direct/Organic</strong> (103 fills / 18,343 visits). Adjusted for channel intent, Homepage converts better (<strong>0.57× vs 0.50×</strong>).<br />
+                <strong className="text-white">2. CHRISTUS Webinar (77 pts vs. 0.11%) — Both share blame:</strong>{" "}
+                79% cold Paid Social traffic depressed raw CVR, but our <code>77/100</code> is also slightly too generous for gating a recorded webinar without a 60s preview clip.
               </p>
             </div>
           </div>
