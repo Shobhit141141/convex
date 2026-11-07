@@ -611,17 +611,16 @@ export async function gradeLandingPage(
     signals = extracted.signals;
     rawInput = extracted.rawInput;
 
-    // Fetch live PageSpeed if key provided
-    if (options.pageSpeedApiKey) {
-      try {
-        const ps = await fetchPageSpeedMetrics(rawUrl, options.pageSpeedApiKey);
-        signals.performance.lcpSeconds = ps.lcpSeconds;
-        signals.performance.cls = ps.cls;
-        signals.performance.mobileLighthouseScore = ps.lighthouseScore;
-        signals.performance.source = "pagespeed_api";
-      } catch {
-        // Keep estimated fallback
-      }
+    // Fetch live Google PageSpeed Insights v5 metrics (uses PAGESPEED_API_KEY when set, or public v5 quota with graceful fallback)
+    try {
+      const ps = await fetchPageSpeedMetrics(rawUrl, options.pageSpeedApiKey || process.env.PAGESPEED_API_KEY);
+      signals.performance.lcpSeconds = ps.lcpSeconds;
+      signals.performance.cls = ps.cls;
+      signals.performance.fcpSeconds = ps.fcpSeconds;
+      signals.performance.mobileLighthouseScore = ps.lighthouseScore;
+      signals.performance.source = "pagespeed_api";
+    } catch {
+      // Keep estimated fallback if rate-limited or offline
     }
   }
 

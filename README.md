@@ -56,9 +56,10 @@ Convex is an evidence-based Conversion Rate Optimization (CRO) grader that evalu
 
 ### 7. Interactive Algorithm & Pipeline Explorer (`/algorithm`)
 ![Interactive Algorithm & Pipeline Explorer](docs/screenshots/07-interactive-algorithm-page.jpg)
-- **1. 6-Step Analysis Pipeline**: Click any step (`01 URL Cache` through `06 Score & Pins`) for a 1-sentence summary and the 3 key outputs produced at that stage.
-- **2. Interactive Score Calculator**: Drag the 3 dimension sliders (`Message & Copy Persuasion 0–50`, `Button & Form Execution 0–35`, `Speed & Mobile Experience 0–15`) and toggle the **Conversion-Readiness Gates** (`Has Main Button (CTA)`, `Has Working Form`) to watch the master equation compute the `0–100` score and letter grade (`A–F`) live.
-- **3. Compact 13-Check Reference Table**: Filter all 13 checks by category with a 1-line plain-English explanation, formula, and max points.
+- **1. 6-Step Analysis Pipeline (Walkthrough on `leena.ai/function/hr`)**: Click any step (`STEP 01 URL Cache & Fetch` through `STEP 06 Score & 1-to-1 Pins`) or use `← Prev` / `Next →` to see the exact data extracted from `leena.ai/function/hr` alongside a live visual callout on the page screenshot.
+- **2. Interactive Score Simulator (With Real `leena.ai` Presets)**: Load 1-click presets (`leena.ai/function/hr — 81/100`, `leena.ai Homepage — 76/100`, `CHRISTUS Webinar — 71/100`, or `Broken Form Gate — 54/100`), drag the 3 dimension sliders, and toggle Conversion-Readiness Gates to watch the master equation compute the `0–100` score live.
+- **3. Interactive 13-Check Visual Inspector**: Click any of the 13 Rubric v3 checks (`#1–#13`) to inspect the exact `leena.ai/function/hr` screenshot region, pin location, verbatim extracted quote, formula, and math calculation.
+- **4. Audience Switcher & Grader vs. Real Data Disagreement**: Toggle between 4 buyer personas (`HR Leader`, `IT Director`, `C-Suite`, `Webinar`) and inspect where the automated grader diverges from actual conversion telemetry.
 
 ---
 

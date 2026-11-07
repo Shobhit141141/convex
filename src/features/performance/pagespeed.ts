@@ -24,7 +24,8 @@ export async function fetchPageSpeedMetrics(
   const response = await fetch(endpoint.toString(), {
     headers: {
       Accept: "application/json"
-    }
+    },
+    signal: AbortSignal.timeout(9000)
   });
 
   if (!response.ok) {
