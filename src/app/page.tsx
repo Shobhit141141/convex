@@ -156,10 +156,10 @@ function MetricBar({
   );
 }
 
-// Website Logo / Favicon with fallback
+// Website Logo / Favicon with fallback (circular, borderless)
 function SiteLogo({
   url,
-  size = 20,
+  size = 24,
   className = ""
 }: {
   url: string;
@@ -176,14 +176,17 @@ function SiteLogo({
   }
 
   const faviconUrl = domain
-    ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`
+    ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
     : "";
+
+  const fontSizeClass =
+    size >= 36 ? "text-sm font-bold" : size >= 24 ? "text-[11px] font-semibold" : "text-[9px] font-bold";
 
   if (!domain || hasError) {
     const initial = domain ? domain.charAt(0).toUpperCase() : "W";
     return (
       <div
-        className={`rounded-md bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0 text-[10px] font-bold text-zinc-300 font-mono shadow-sm ${className}`}
+        className={`rounded-full bg-zinc-800 flex items-center justify-center shrink-0 ${fontSizeClass} text-zinc-200 font-mono select-none shadow-sm ${className}`}
         style={{ width: size, height: size }}
         title={domain}
       >
@@ -194,7 +197,7 @@ function SiteLogo({
 
   return (
     <div
-      className={`relative rounded-md overflow-hidden bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 p-0.5 shadow-sm ${className}`}
+      className={`relative rounded-full overflow-hidden bg-zinc-900/60 flex items-center justify-center shrink-0 shadow-sm ${className}`}
       style={{ width: size, height: size }}
       title={domain}
     >
@@ -203,7 +206,7 @@ function SiteLogo({
         alt={`${domain} logo`}
         width={size}
         height={size}
-        className="w-full h-full object-contain rounded-sm"
+        className="w-full h-full object-contain rounded-full"
         onError={() => setHasError(true)}
         loading="lazy"
       />
@@ -1155,7 +1158,7 @@ export default function Home() {
             {report && (
               <>
                 <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300">
-                  <SiteLogo url={report.url} size={15} />
+                  <SiteLogo url={report.url} size={18} />
                   <span className="truncate max-w-[140px]">
                     {(() => {
                       try {
@@ -1317,7 +1320,7 @@ export default function Home() {
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <SiteLogo url={item.url} size={18} />
+                          <SiteLogo url={item.url} size={22} />
                           <span className="text-xs font-mono font-semibold text-white truncate max-w-xs sm:max-w-md">
                             {item.url}
                           </span>
@@ -1459,7 +1462,7 @@ export default function Home() {
             {loading && (
               <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/80 text-left space-y-4 shadow-2xl backdrop-blur-md max-w-xl mx-auto">
                 <div className="flex items-center gap-3 pb-3 border-b border-zinc-800/80">
-                  <SiteLogo url={url} size={28} />
+                  <SiteLogo url={url} size={38} />
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-mono font-semibold text-white truncate">
                       {url}
@@ -1629,7 +1632,7 @@ export default function Home() {
                           />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <SiteLogo url={item.url} size={16} />
+                              <SiteLogo url={item.url} size={20} />
                               <span className="text-xs font-mono font-medium text-white truncate max-w-[220px] sm:max-w-sm">
                                 {item.url}
                               </span>
@@ -1740,7 +1743,7 @@ export default function Home() {
             {loading && (
               <div className="p-5 rounded-2xl border border-emerald-800/60 bg-zinc-900/90 text-left space-y-3.5 shadow-2xl backdrop-blur-md">
                 <div className="flex items-center gap-3 pb-2.5 border-b border-zinc-800/80">
-                  <SiteLogo url={report.url} size={28} />
+                  <SiteLogo url={report.url} size={34} />
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-mono font-semibold text-white truncate">
                       {report.url}
@@ -1832,7 +1835,7 @@ export default function Home() {
                 {/* Left: Page Identity & Executive Summary */}
                 <div className="space-y-2.5 max-w-xl">
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <SiteLogo url={report.url} size={22} />
+                    <SiteLogo url={report.url} size={28} />
                     <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700/70 font-semibold">
                       {report.pageType}
                     </span>
