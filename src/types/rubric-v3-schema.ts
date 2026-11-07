@@ -19,7 +19,8 @@ export const V3CriterionScoreSchema = z.object({
   scoringRule: z.string(),
   confidence: z.number().min(0).max(1),
   source: z.enum(["ai_semantic", "browser_playwright", "dom_extraction", "pagespeed"]),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  checks: z.array(z.object({ label: z.string(), passed: z.boolean() })).optional()
 });
 export type V3CriterionScore = z.infer<typeof V3CriterionScoreSchema>;
 

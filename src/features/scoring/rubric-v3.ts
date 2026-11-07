@@ -49,12 +49,16 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let earned = 0;
     let status: V3CriterionScore["status"] = "failed";
     let rule = "Evaluated via semantic problem identification and specificity.";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
     let evidence = "No problem statement detected.";
 
     if (semanticEval) {
       const { score, specificity, identifiedProblem, evidence: ev, reasoning } = semanticEval.audienceProblemFit;
       evidence = ev || identifiedProblem || "No explicit problem quote.";
-      rule = `AI scored ${score}/10. Specificity: ${specificity}. ${reasoning}`;
+      rule = `Model rating ${score}/10, scaled to ${max} pts`;
+      notes = reasoning;
+      checks = [{ label: `Specificity: ${specificity}`, passed: specificity === "high" }, { label: "Problem identified", passed: !!identifiedProblem }];
       earned = Math.min(max, Math.round((score / 10) * max * 10) / 10);
       status = earned >= 8 ? "passed" : earned >= 4 ? "partial" : "failed";
     } else {
@@ -81,6 +85,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: semanticEval ? semanticEval.evaluationConfidence : 0.6,
       source: semanticEval ? "ai_semantic" : "dom_extraction"
     });
@@ -92,12 +98,16 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let earned = 0;
     let status: V3CriterionScore["status"] = "failed";
     let rule = "Value prop clarity, speed-to-value, and quantified outcome.";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
     let evidence = signals.title;
 
     if (semanticEval) {
       const { score, statement, hasQuantifiedOutcome, hasSpeedToValue, evidence: ev, reasoning } = semanticEval.valuePropositionStrength;
       evidence = ev || statement || signals.title;
-      rule = `AI scored ${score}/10 (quantified=${hasQuantifiedOutcome}, speedToValue=${hasSpeedToValue}). ${reasoning}`;
+      rule = `Model rating ${score}/10, scaled to ${max} pts`;
+      notes = reasoning;
+      checks = [{ label: "Quantified outcome", passed: !!hasQuantifiedOutcome }, { label: "Speed-to-value stated", passed: !!hasSpeedToValue }];
       earned = Math.min(max, Math.round((score / 10) * max * 10) / 10);
       status = earned >= 9 ? "passed" : earned >= 5 ? "partial" : "failed";
     } else {
@@ -119,6 +129,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: semanticEval ? semanticEval.evaluationConfidence : 0.65,
       source: semanticEval ? "ai_semantic" : "dom_extraction"
     });
@@ -130,12 +142,16 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let earned = 0;
     let status: V3CriterionScore["status"] = "failed";
     let rule = "Customer-attributed metrics vs generic company claims.";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
     let evidence = "No customer evidence found.";
 
     if (semanticEval) {
       const { score, claimTypes, hasThirdPartyValidation, evidence: ev, reasoning } = semanticEval.outcomeCredibility;
       evidence = ev || (claimTypes[0]?.text ?? "No verified claims.");
-      rule = `AI scored ${score}/10 (3rd-party validation: ${hasThirdPartyValidation}). ${reasoning}`;
+      rule = `Model rating ${score}/10, scaled to ${max} pts`;
+      notes = reasoning;
+      checks = [{ label: "Third-party validation", passed: !!hasThirdPartyValidation }, { label: "Customer examples or verifiable metrics", passed: claimTypes.some((c: any) => c.type === "customer_example" || c.type === "verifiable_metric") }];
       earned = Math.min(max, Math.round((score / 10) * max * 10) / 10);
       status = earned >= 8 ? "passed" : earned >= 4 ? "partial" : "failed";
     } else {
@@ -166,6 +182,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: semanticEval ? semanticEval.evaluationConfidence : 0.6,
       source: semanticEval ? "ai_semantic" : "dom_extraction"
     });
@@ -177,12 +195,16 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let earned = 0;
     let status: V3CriterionScore["status"] = "failed";
     let rule = "Role-specific workflow language and audience alignment.";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
     let evidence = classification.targetAudience.roles.join(", ") || "General enterprise";
 
     if (semanticEval) {
       const { score, targetRole, hasRoleSpecificLanguage, misalignments, evidence: ev, reasoning } = semanticEval.audienceMessageAlignment;
       evidence = ev || `Role: ${targetRole || "general"}. Misalignments: ${misalignments.join("; ") || "none"}`;
-      rule = `AI scored ${score}/10 (roleSpecific=${hasRoleSpecificLanguage}). ${reasoning}`;
+      rule = `Model rating ${score}/10, scaled to ${max} pts`;
+      notes = reasoning;
+      checks = [{ label: "Role-specific language", passed: !!hasRoleSpecificLanguage }, { label: "No audience misalignment", passed: misalignments.length === 0 }];
       earned = Math.min(max, Math.round((score / 10) * max * 10) / 10);
       status = earned >= 8 ? "passed" : earned >= 4 ? "partial" : "failed";
     } else {
@@ -206,6 +228,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: semanticEval ? semanticEval.evaluationConfidence : 0.65,
       source: semanticEval ? "ai_semantic" : "dom_extraction"
     });
@@ -217,12 +241,16 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let earned = 0;
     let status: V3CriterionScore["status"] = "failed";
     let rule = "CTA relevance to problem solved and perceived friction.";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
     let evidence = signals.conversion.primaryCtaText || "No CTA";
 
     if (semanticEval) {
       const { score, ctaText, ctaRelevanceToAudience, perceivedFriction, evidence: ev, reasoning } = semanticEval.offerAttractiveness;
       evidence = ev || `CTA: "${ctaText}". Relevance: ${ctaRelevanceToAudience} (friction: ${perceivedFriction})`;
-      rule = `AI scored ${score}/10. Friction: ${perceivedFriction}. ${reasoning}`;
+      rule = `Model rating ${score}/10, scaled to ${max} pts`;
+      notes = reasoning;
+      checks = [{ label: `Perceived friction: ${perceivedFriction}`, passed: perceivedFriction === "low" }, { label: `CTA relevance: ${ctaRelevanceToAudience}`, passed: ctaRelevanceToAudience === "high" }];
       earned = Math.min(max, Math.round((score / 10) * max * 10) / 10);
       status = earned >= 6 ? "passed" : earned >= 3 ? "partial" : "failed";
     } else {
@@ -253,6 +281,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: semanticEval ? semanticEval.evaluationConfidence : 0.7,
       source: semanticEval ? "ai_semantic" : "dom_extraction"
     });
@@ -289,6 +319,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let status: V3CriterionScore["status"] = "failed";
     let evidence = signals.conversion.primaryCtaText || "No CTA detected";
     let rule = "";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
 
     if (!hasPrimaryCta) {
       earned = 0;
@@ -302,7 +334,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       if (signals.conversion.clarityOfNextStep) pts += 2;
       earned = pts;
       status = pts >= 8 ? "passed" : pts >= 5 ? "partial" : "failed";
-      rule = `Above fold: ${signals.conversion.hasAboveTheFoldCta} (+5), action-oriented: ${signals.conversion.isActionOrientedCta} (+3), next-step clarity: ${signals.conversion.clarityOfNextStep} (+2).`;
+      rule = "Above the fold +5, action-oriented copy +3, next step explained +2";
+      checks = [{ label: "Above the fold (+5)", passed: signals.conversion.hasAboveTheFoldCta }, { label: "Action-oriented copy (+3)", passed: signals.conversion.isActionOrientedCta }, { label: "Next step explained (+2)", passed: signals.conversion.clarityOfNextStep }];
     }
 
     executionCriteria.push({
@@ -314,6 +347,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: 0.95,
       source: "dom_extraction"
     });
@@ -325,6 +360,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let earned = 0;
     let status: V3CriterionScore["status"] = "failed";
     let rule = "";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
     let evidence = `CTA: "${signals.conversion.primaryCtaText}" -> Intent: ${classification.visitorIntent}`;
 
     const isWebinar = classification.pageType === "resource" || classification.visitorIntent === "education";
@@ -369,6 +406,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: 0.85,
       source: verification?.verificationStatus !== "not_tested" ? "browser_playwright" : "dom_extraction"
     });
@@ -381,6 +420,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let earned = 0;
     let status: V3CriterionScore["status"] = "failed";
     let rule = "";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
     let evidence = "";
     let source: V3CriterionScore["source"] = "dom_extraction";
 
@@ -443,6 +484,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: verification?.verificationStatus !== "not_tested" ? 0.95 : 0.7,
       source
     });
@@ -454,6 +497,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
     let earned = 0;
     let status: V3CriterionScore["status"] = "failed";
     let rule = "";
+    let notes: string | undefined;
+    let checks: { label: string; passed: boolean }[] | undefined;
     let evidence = "";
 
     const fieldCount = verification?.formFieldCount ?? signals.conversion.formFieldCount ?? 4;
@@ -489,6 +534,8 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
       earnedPoints: earned,
       evidence,
       scoringRule: rule,
+      notes,
+      checks,
       confidence: 0.8,
       source: "dom_extraction"
     });

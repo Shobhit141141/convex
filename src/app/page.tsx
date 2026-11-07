@@ -135,6 +135,35 @@ function MetricBar({
   );
 }
 
+// How each criterion is measured (shown in Score Breakdown)
+const METHOD_META = {
+  ai_semantic: {
+    label: "AI copy review",
+    icon: Sparkles,
+    color: "text-violet-400",
+    explain:
+      "An LLM reads the page copy and rates this one aspect on a 0-10 scale against a fixed rubric prompt. Code then scales that rating to the criterion's point value. The LLM never sets the final score."
+  },
+  browser_playwright: {
+    label: "Live browser test",
+    icon: Crosshair,
+    color: "text-sky-400",
+    explain: "A headless browser loads the page, clicks the CTA, and checks whether a working form or modal appears."
+  },
+  dom_extraction: {
+    label: "Page structure check",
+    icon: Layers,
+    color: "text-zinc-300",
+    explain: "Deterministic rules applied to the page HTML (headings, buttons, forms, meta tags)."
+  },
+  pagespeed: {
+    label: "Lighthouse",
+    icon: Activity,
+    color: "text-emerald-400",
+    explain: "Core Web Vitals thresholds from Google Lighthouse / PageSpeed."
+  }
+} as const;
+
 export default function Home() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1171,96 +1200,183 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Section 4: Streamlined Evaluation Breakdown (Tidy Tabs & Accordions) */}
+            {/* Section 4: Score Breakdown (grouped by dimension, aligned grid rows) */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 overflow-hidden">
-              <div className="p-4 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-white">Evaluation Breakdown by Criterion</h2>
-                  <p className="text-xs text-zinc-500">Evidence and scoring mechanics mapped to Rubric v3.</p>
+              <div className="p-4 border-b border-zinc-800 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-white">Score Breakdown</h2>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {report.criteria.length} checks across 3 dimensions. Click a row for evidence and scoring math.
+                    </p>
+                  </div>
+                  <div className="flex gap-1 text-xs">
+                    {(["all", "persuasion", "execution", "experience"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-2.5 py-1 rounded text-xs capitalize transition-colors ${
+                          activeTab === tab
+                            ? "bg-zinc-800 text-white font-medium border border-zinc-700"
+                            : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="flex gap-1 text-xs">
-                  {(["all", "persuasion", "execution", "experience"] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`px-2.5 py-1 rounded text-xs capitalize transition-colors ${
-                        activeTab === tab
-                          ? "bg-zinc-800 text-white font-medium border border-zinc-700"
-                          : "text-zinc-400 hover:text-white hover:bg-zinc-900"
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="divide-y divide-zinc-800/70">
-                {report.criteria
-                  .filter((c) => activeTab === "all" || c.dimension === activeTab)
-                  .map((criterion) => {
-                    const isExpanded = !!expandedCriteria[criterion.id];
+                {/* Method legend */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-500">
+                  <span className="text-zinc-600">How each check is measured:</span>
+                  {(Object.keys(METHOD_META) as Array<keyof typeof METHOD_META>).map((k) => {
+                    const m = METHOD_META[k];
+                    const Icon = m.icon;
                     return (
-                      <div key={criterion.id} className="p-3.5 hover:bg-zinc-900/40 transition-colors">
-                        <div
-                          className="flex items-center justify-between gap-4 cursor-pointer"
-                          onClick={() => toggleCriterion(criterion.id)}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            {getStatusBadge(criterion.status)}
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-white truncate">
-                                  {criterion.name}
-                                </span>
-                                <span className="text-[10px] font-mono text-zinc-500 uppercase">
-                                  [{criterion.source}]
-                                </span>
-                              </div>
-                              <div className="text-[11px] text-zinc-400 truncate max-w-lg hidden sm:block">
-                                {criterion.scoringRule}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 shrink-0">
-                            <div className="text-right text-xs">
-                              <span className="font-semibold text-white">{criterion.earnedPoints}</span>
-                              <span className="text-zinc-500"> / {criterion.maxPoints} pts</span>
-                            </div>
-                            <button
-                              className="text-zinc-500 hover:text-zinc-300 p-1"
-                              aria-label="Toggle details"
-                            >
-                              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Collapsible Evidence Detail */}
-                        {isExpanded && (
-                          <div className="mt-2.5 pt-2.5 border-t border-zinc-800/50 text-xs space-y-2">
-                            <div className="text-zinc-400 text-[11px]">
-                              <strong className="text-zinc-300">Scoring Logic: </strong>
-                              {criterion.scoringRule}
-                            </div>
-                            {criterion.evidence && (
-                              <div className="space-y-1">
-                                <span className="text-zinc-500 font-mono text-[10px] block uppercase">
-                                  Extracted Evidence:
-                                </span>
-                                <blockquote className="p-2.5 rounded bg-zinc-950 border border-zinc-800/80 text-zinc-300 font-mono text-[11px] break-words whitespace-pre-wrap">
-                                  {criterion.evidence}
-                                </blockquote>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      <span key={k} className="inline-flex items-center gap-1" title={m.explain}>
+                        <Icon className={`w-3 h-3 ${m.color}`} />
+                        {m.label}
+                      </span>
                     );
                   })}
+                </div>
               </div>
+
+              {(["persuasion", "execution", "experience"] as const)
+                .filter((dim) => activeTab === "all" || activeTab === dim)
+                .map((dim) => {
+                  const dimSummary = report.dimensions[dim];
+                  const rows = report.criteria.filter((c) => c.dimension === dim);
+                  const pct = dimSummary.percentage;
+                  return (
+                    <div key={dim}>
+                      {/* Dimension group header */}
+                      <div className="px-4 py-2.5 bg-zinc-950/60 border-b border-zinc-800/70 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300">
+                            {dimSummary.name || dim}
+                          </span>
+                          {dimSummary.gateApplied && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-950/70 text-rose-300 border border-rose-800/60">
+                              Capped by gate
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-24 h-1.5 bg-zinc-800 rounded-full overflow-hidden hidden sm:block">
+                            <div
+                              className={`h-full rounded-full ${pct >= 75 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500"}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-mono text-white tabular-nums">
+                            {dimSummary.score}
+                            <span className="text-zinc-500"> / {dimSummary.maxScore}</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="divide-y divide-zinc-800/60">
+                        {rows.map((criterion) => {
+                          const isExpanded = !!expandedCriteria[criterion.id];
+                          const method = METHOD_META[criterion.source as keyof typeof METHOD_META] ?? METHOD_META.dom_extraction;
+                          const MethodIcon = method.icon;
+                          const ratio = criterion.maxPoints > 0 ? criterion.earnedPoints / criterion.maxPoints : 0;
+                          const barColor = criterion.status === "passed" ? "bg-emerald-500" : criterion.status === "partial" ? "bg-amber-500" : "bg-rose-500";
+                          const StatusIcon = criterion.status === "passed" ? CheckCircle2 : criterion.status === "partial" ? AlertCircle : XCircle;
+                          const statusColor = criterion.status === "passed" ? "text-emerald-400" : criterion.status === "partial" ? "text-amber-400" : "text-rose-400";
+                          const summary = criterion.notes || criterion.scoringRule;
+
+                          return (
+                            <div key={criterion.id}>
+                              <button
+                                type="button"
+                                onClick={() => toggleCriterion(criterion.id)}
+                                className="w-full text-left px-4 py-3 hover:bg-zinc-900/50 transition-colors grid grid-cols-[18px_1fr_auto_16px] sm:grid-cols-[18px_1fr_150px_120px_16px] items-center gap-3"
+                              >
+                                <StatusIcon className={`w-4 h-4 ${statusColor}`} />
+
+                                <div className="min-w-0">
+                                  <div className="text-[13px] font-medium text-white truncate">{criterion.name}</div>
+                                  <div className="text-[11px] text-zinc-500 truncate">{summary}</div>
+                                </div>
+
+                                <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-zinc-400">
+                                  <MethodIcon className={`w-3.5 h-3.5 ${method.color}`} />
+                                  {method.label}
+                                </span>
+
+                                <div className="flex items-center gap-2 justify-end">
+                                  <div className="w-12 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.round(ratio * 100)}%` }} />
+                                  </div>
+                                  <span className="text-xs font-mono tabular-nums text-white w-14 text-right">
+                                    {criterion.earnedPoints}
+                                    <span className="text-zinc-500">/{criterion.maxPoints}</span>
+                                  </span>
+                                </div>
+
+                                {isExpanded ? (
+                                  <ChevronUp className="w-3.5 h-3.5 text-zinc-500" />
+                                ) : (
+                                  <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                )}
+                              </button>
+
+                              {isExpanded && (
+                                <div className="px-4 pb-4 pl-[46px] grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                  <div className="space-y-1.5">
+                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Found on page</div>
+                                    <blockquote className="p-2.5 rounded-lg bg-zinc-950 border-l-2 border-zinc-700 text-zinc-300 text-[11px] leading-relaxed break-words">
+                                      {criterion.evidence || "No direct evidence extracted."}
+                                    </blockquote>
+                                  </div>
+
+                                  <div className="space-y-1.5">
+                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Assessment</div>
+                                    {criterion.checks && criterion.checks.length > 0 && (
+                                      <ul className="space-y-1">
+                                        {criterion.checks.map((chk, i) => (
+                                          <li key={i} className="flex items-center gap-1.5 text-[11px] text-zinc-300">
+                                            {chk.passed ? (
+                                              <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                                            ) : (
+                                              <XCircle className="w-3 h-3 text-rose-400 shrink-0" />
+                                            )}
+                                            {chk.label}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                    {criterion.notes && (
+                                      <p className="text-[11px] text-zinc-400 leading-relaxed">{criterion.notes}</p>
+                                    )}
+                                    {!criterion.notes && (!criterion.checks || criterion.checks.length === 0) && (
+                                      <p className="text-[11px] text-zinc-400 leading-relaxed">{criterion.scoringRule}</p>
+                                    )}
+                                  </div>
+
+                                  <div className="space-y-1.5">
+                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">How it is scored</div>
+                                    <div className="flex items-center gap-1.5 text-[11px] text-zinc-300">
+                                      <MethodIcon className={`w-3.5 h-3.5 ${method.color}`} />
+                                      {method.label}
+                                    </div>
+                                    <p className="text-[11px] text-zinc-500 leading-relaxed">{method.explain}</p>
+                                    <div className="text-[11px] font-mono text-zinc-400 bg-zinc-950 border border-zinc-800 rounded px-2 py-1">
+                                      {criterion.scoringRule} → {criterion.earnedPoints} / {criterion.maxPoints} pts
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
