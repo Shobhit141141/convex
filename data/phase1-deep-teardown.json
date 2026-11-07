@@ -1,0 +1,165 @@
+[
+  {
+    "id": "homepage",
+    "name": "Homepage",
+    "url": "https://leena.ai/",
+    "title": "Agentic AI for the Enterprise Back Office | Leena AI",
+    "hero": {
+      "h1": "Enterprise AI,live in 45 days",
+      "subheader": ""
+    },
+    "conversionMechanisms": {
+      "directForms": 0,
+      "hasHubspot": true,
+      "hasMarketo": false,
+      "hasChiliPiper": false,
+      "hasCalendly": false,
+      "hasModalTrigger": 0,
+      "topCtas": [
+        {
+          "text": "Book a demo",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Book a demo",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Watch product tour",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Book a personalised demo",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Schedule demo",
+          "href": "",
+          "tag": "a"
+        },
+        {
+          "text": "Product tour",
+          "href": "/live-product-demo",
+          "tag": "a"
+        }
+      ]
+    },
+    "quantifiedProof": [
+      "45 days",
+      "500+ enterprises",
+      "2 days",
+      "6 hours"
+    ],
+    "textLength": 9828
+  },
+  {
+    "id": "hr_functional",
+    "name": "HR Functional Page",
+    "url": "https://leena.ai/function/hr",
+    "title": "Universal HR Assistant: Agentic AI for HR Ops | Leena AI",
+    "hero": {
+      "h1": "Most HR requests shouldn't reach a human. Now they don't.",
+      "subheader": "Harrison closes Tier-1 HR requests - leave, letters, benefits, payroll - in seconds, not days."
+    },
+    "conversionMechanisms": {
+      "directForms": 0,
+      "hasHubspot": true,
+      "hasMarketo": false,
+      "hasChiliPiper": false,
+      "hasCalendly": false,
+      "hasModalTrigger": 0,
+      "topCtas": [
+        {
+          "text": "Book a demo",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Book a personalised demo",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Schedule demo",
+          "href": "",
+          "tag": "a"
+        },
+        {
+          "text": "Product tour",
+          "href": "/live-product-demo",
+          "tag": "a"
+        },
+        {
+          "text": "Talk to sales",
+          "href": "",
+          "tag": "a"
+        }
+      ]
+    },
+    "quantifiedProof": [
+      "3 days",
+      "8 hours",
+      "2 days",
+      "6 hours"
+    ],
+    "textLength": 9409
+  },
+  {
+    "id": "christus_webinar",
+    "name": "Christus Health Webinar",
+    "url": "https://leena.ai/resources/webinars/christus-health-hr-ai-rollout-webinar",
+    "title": "HR AI Rollout: Inside CHRISTUS Health's AI Launch | Leena AI",
+    "hero": {
+      "h1": "What It Really Takes to Get 51,000 Employees Using AI",
+      "subheader": "Proof in Production"
+    },
+    "conversionMechanisms": {
+      "directForms": 0,
+      "hasHubspot": true,
+      "hasMarketo": false,
+      "hasChiliPiper": false,
+      "hasCalendly": false,
+      "hasModalTrigger": 0,
+      "topCtas": [
+        {
+          "text": "Book a demo",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Watch now",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Book a personalised demo",
+          "href": "",
+          "tag": "button"
+        },
+        {
+          "text": "Schedule demo",
+          "href": "",
+          "tag": "a"
+        },
+        {
+          "text": "Product tour",
+          "href": "/live-product-demo",
+          "tag": "a"
+        },
+        {
+          "text": "Talk to sales",
+          "href": "",
+          "tag": "a"
+        }
+      ]
+    },
+    "quantifiedProof": [
+      "000 Employees"
+    ],
+    "textLength": 4538
+  }
+]

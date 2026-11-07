@@ -1,0 +1,138 @@
+{
+  "phase": "Phase 1 — Evaluation Framework",
+  "pillars": [
+    {
+      "id": "performance_ux",
+      "name": "Performance & UX",
+      "defaultWeight": 25,
+      "signals": [
+        {
+          "id": "perf_lighthouse_mobile",
+          "name": "Mobile Lighthouse Performance",
+          "detection": "PageSpeed Insights API",
+          "unit": "0-100 score",
+          "rationale": "Directly impacts mobile bounce rate and ad quality score."
+        },
+        {
+          "id": "perf_lcp",
+          "name": "Largest Contentful Paint (LCP)",
+          "detection": "PageSpeed Insights API",
+          "unit": "seconds (< 2.5s good)",
+          "rationale": "Core Web Vital measuring perceived loading speed."
+        },
+        {
+          "id": "perf_cls",
+          "name": "Cumulative Layout Shift (CLS)",
+          "detection": "PageSpeed Insights API",
+          "unit": "score (< 0.1 good)",
+          "rationale": "Measures visual stability to avoid accidental misclicks."
+        },
+        {
+          "id": "ux_viewport_meta",
+          "name": "Mobile Viewport Configuration",
+          "detection": "DOM (Cheerio)",
+          "unit": "boolean",
+          "rationale": "Essential for responsive rendering across devices."
+        }
+      ]
+    },
+    {
+      "id": "value_prop_clarity",
+      "name": "Value Proposition & Clarity",
+      "defaultWeight": 25,
+      "signals": [
+        {
+          "id": "clarity_h1_present",
+          "name": "Hero Headline Structure",
+          "detection": "DOM (Cheerio)",
+          "unit": "boolean",
+          "rationale": "Page must feature a single clear H1 heading in the hero."
+        },
+        {
+          "id": "clarity_problem_statement",
+          "name": "Clear Problem Statement",
+          "detection": "LLM Semantic Sensor",
+          "unit": "boolean + quote evidence",
+          "rationale": "Visitor must immediately understand what friction is being solved."
+        },
+        {
+          "id": "clarity_concrete_outcome",
+          "name": "Measurable Benefit / Outcome",
+          "detection": "LLM Semantic Sensor",
+          "unit": "boolean + quote evidence",
+          "rationale": "Vague claims fail; concrete metrics build conviction."
+        },
+        {
+          "id": "clarity_low_jargon",
+          "name": "Plain Language vs. Buzzwords",
+          "detection": "LLM Semantic Sensor",
+          "unit": "boolean + evidence",
+          "rationale": "Penalizes empty corporate buzzwords lacking substance."
+        }
+      ]
+    },
+    {
+      "id": "conversion_path",
+      "name": "Conversion Path & Friction",
+      "defaultWeight": 25,
+      "signals": [
+        {
+          "id": "cta_above_fold",
+          "name": "Primary CTA in Hero",
+          "detection": "DOM (Cheerio)",
+          "unit": "boolean",
+          "rationale": "Visitors must see the primary action without scrolling."
+        },
+        {
+          "id": "cta_action_oriented",
+          "name": "Action-Oriented CTA Labeling",
+          "detection": "DOM (Cheerio)",
+          "unit": "boolean + button text",
+          "rationale": "Specific verbs (Book, Watch, Start) convert better than Submit/Click."
+        },
+        {
+          "id": "cta_lead_capture_engine",
+          "name": "Lead Capture Engine Integration",
+          "detection": "DOM (Cheerio)",
+          "unit": "boolean (form / modal / hubspot / marketo)",
+          "rationale": "Detects native forms and dynamic modal triggers like HubSpot."
+        },
+        {
+          "id": "cta_next_step_clarity",
+          "name": "Clarity of Next Step",
+          "detection": "LLM Semantic Sensor",
+          "unit": "boolean + explanation",
+          "rationale": "Sets expectation of what happens after click (e.g. 15-min demo vs instant trial)."
+        }
+      ]
+    },
+    {
+      "id": "trust_social_proof",
+      "name": "Trust & Social Proof",
+      "defaultWeight": 25,
+      "signals": [
+        {
+          "id": "trust_client_logos",
+          "name": "Enterprise Customer Logos",
+          "detection": "DOM (Cheerio)",
+          "unit": "count + alt text citations",
+          "rationale": "Establishes institutional credibility and category validation."
+        },
+        {
+          "id": "trust_compliance_certifications",
+          "name": "Security & Compliance (SOC2 / ISO / HIPAA)",
+          "detection": "DOM / Regex",
+          "unit": "array of detected standards",
+          "rationale": "Crucial trust gate for enterprise IT/HR decision-makers."
+        },
+        {
+          "id": "trust_quantified_case_studies",
+          "name": "Quantified Case Study Evidence",
+          "detection": "LLM Semantic Sensor + Regex",
+          "unit": "metrics array + quote",
+          "rationale": "Specific proof (e.g. 70% resolution, 45 days) drives high-ticket conversion."
+        }
+      ]
+    }
+  ]
+}
