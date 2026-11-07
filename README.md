@@ -111,10 +111,12 @@ High persuasive copy cannot convert if the capture mechanism is broken:
 
 ## Supabase Caching, Live Re-Run Telemetry, Plain-English UX & Exports
 
+- **"In a Nutshell" 10-Second Plain-English Summary Card**: Highlighted with a subtle emerald glow right below the score hero, giving a jargon-free **Bottom Line** verdict alongside **What's Working Well**, **What's Hurting Sign-Ups**, and **Top 3 Quick Wins (Do First)** with 1-click **`Pin #N`** jump links.
+- **1-to-1 Synchronized Screenshot Pins & Cards**: Every numbered hotspot pin (`#1..#N`) on the left full-page canvas is sorted top-to-bottom (`yPercent`) and strictly 1-to-1 matched with Card `#1..#N` on the right (covering both Actionable CRO Fixes and Verified Page Strengths).
+- **Plain-English Tooltips (`?`) Across All Metrics**: Every section—including the 4 Context Strip cards, 4 Core Web Vitals gauges, 3 Dimension Summary Cards (`Message & Copy Persuasion`, `Button & Form Execution`, `Speed & Mobile Experience`), measurement method badges, and all 13 Rubric v3 checks—includes hoverable/clickable **`(?)` Plain-English Tooltips** with everyday explanations and concrete examples alongside the mathematical **`Algo & Why`** formulas.
 - **Instant URL Cache (`public.landing_page_audits`)**: Stores every evaluation keyed by normalized URL so repeat visits load immediately without re-running Playwright or LLM calls.
 - **Historical Audit Timeline**: Browse all saved website evaluations from the homepage or top **History** drawer.
 - **Live Re-Run Audit Telemetry**: Clicking **Re-run Live Audit** (`forceRefresh: true`) bypasses the Supabase cache, smoothly scrolls to the top, displays a spinning active indicator (`Re-running Live Audit (68%)...`), and opens a live NDJSON server milestone progress banner directly above the report while streaming fresh DOM, AI, and Playwright steps.
-- **Plain-English Tooltips (`?`) Across All Metrics**: Every section—including the 4 Context Strip cards, 4 Core Web Vitals gauges, 3 Dimension Summary Cards (`Message & Copy Persuasion`, `Button & Form Execution`, `Speed & Mobile Experience`), measurement method badges, and all 13 Rubric v3 checks—includes hoverable/clickable **`(?)` Plain-English Tooltips** with everyday explanations and concrete examples alongside the mathematical **`Algo & Why`** formulas.
 - **1-Click Exports**: Export any audit report and its prioritized recommendations as **Markdown (`.md`)**, **Recommendations CSV (`.csv`)**, or **Structured JSON (`.json`)**.
 
 ---
