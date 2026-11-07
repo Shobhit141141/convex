@@ -155,6 +155,72 @@ function MetricBar({
   );
 }
 
+// Reusable plain-English tooltip popover for every item across the website
+function SimpleHelpTooltip({
+  title,
+  plainEnglish,
+  example,
+  align = "left",
+  badgeText
+}: {
+  title: string;
+  plainEnglish: string;
+  example?: string;
+  align?: "left" | "right";
+  badgeText?: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <span
+      className="relative inline-flex items-center"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((prev) => !prev);
+        }}
+        className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-200 transition-colors focus:outline-none"
+        aria-label={`Explain ${title}`}
+      >
+        <Info className="w-3.5 h-3.5 shrink-0" />
+        {badgeText && <span className="text-[10px] font-mono underline decoration-zinc-700">{badgeText}</span>}
+      </button>
+
+      {open && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`absolute ${
+            align === "right" ? "right-0" : "left-0"
+          } bottom-full mb-2 w-72 sm:w-80 p-3.5 rounded-xl bg-zinc-950 border border-zinc-700 shadow-2xl z-50 text-left space-y-2 pointer-events-auto`}
+        >
+          <div className="text-xs font-semibold text-white border-b border-zinc-800 pb-1.5 flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>{title}</span>
+          </div>
+          <div className="space-y-1">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+              In Simple Words
+            </div>
+            <p className="text-[11px] text-zinc-200 leading-relaxed font-normal">
+              {plainEnglish}
+            </p>
+          </div>
+          {example && (
+            <div className="p-2 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[11px] text-emerald-300/90 leading-relaxed font-normal">
+              <strong className="text-emerald-400">Example: </strong>
+              {example}
+            </div>
+          )}
+        </div>
+      )}
+    </span>
+  );
+}
+
 // How each criterion is measured (shown in Score Breakdown)
 const METHOD_META = {
   ai_semantic: {
@@ -162,30 +228,34 @@ const METHOD_META = {
     icon: Sparkles,
     color: "text-violet-400",
     explain:
-      "An LLM reads the page copy and rates this one aspect on a 0-10 scale against a fixed rubric prompt. Code then scales that rating to the criterion's point value. The LLM never sets the final score."
+      "Reads your page text like a real buyer to check if the problem, promise, and proof are clear and specific."
   },
   browser_playwright: {
     label: "Live browser test",
     icon: Crosshair,
     color: "text-sky-400",
-    explain: "A headless browser loads the page, clicks the CTA, and checks whether a working form or modal appears."
+    explain:
+      "Opens your page in a real browser, clicks the main button, and verifies that a working sign-up or demo form appears."
   },
   dom_extraction: {
     label: "Page structure check",
     icon: Layers,
     color: "text-zinc-300",
-    explain: "Deterministic rules applied to the page HTML (headings, buttons, forms, meta tags)."
+    explain:
+      "Scans your page HTML to verify headings, button placement, form fields, and mobile screen settings."
   },
   pagespeed: {
     label: "Lighthouse",
     icon: Activity,
     color: "text-emerald-400",
-    explain: "Core Web Vitals thresholds from Google Lighthouse / PageSpeed."
+    explain:
+      "Measures how fast your page loads and whether elements jump around on mobile and desktop."
   }
 } as const;
 
 // Complete algorithm & mathematical formula lookup for every Rubric v3 criterion
 function getCriterionAlgorithm(criterion: V3CriterionScore): {
+  simpleMeaning: string;
   formula: string;
   calculation: string;
   tiers: string[];
@@ -199,145 +269,171 @@ function getCriterionAlgorithm(criterion: V3CriterionScore): {
   switch (criterion.id) {
     case "persuasion_problem_fit":
       return {
+        simpleMeaning:
+          "Does the top of the page clearly call out the exact headache your visitor is trying to solve?",
         formula: "Earned = min(10, round((SemanticRating / 10) × 10, 1))",
         calculation: `Rating ${rawRating}/10 → (${rawRating} / 10) × 10 = ${earned} / 10 pts`,
         tiers: [
-          "Passed (≥ 8.0 pts): High pain-point specificity + explicit problem quote in hero/headings",
-          "Partial (4.0 – 7.9 pts): Generic problem mentioned without concrete operational pain",
-          "Failed (< 4.0 pts): No identifiable buyer pain point articulated"
+          "Passed (≥ 8.0 pts): Clearly names a specific buyer problem in the main headline",
+          "Partial (4.0 – 7.9 pts): Mentions a broad problem without specific details",
+          "Failed (< 4.0 pts): Doesn't mention what problem the product solves"
         ],
         reasoning
       };
     case "persuasion_value_prop":
       return {
+        simpleMeaning:
+          "Does the headline clearly state what result the buyer gets and how fast they get it (e.g., 'Cut HR tickets by 70% in 14 days')?",
         formula: "Earned = min(12, round((SemanticRating / 10) × 12, 1))",
         calculation: `Rating ${rawRating}/10 → round((${rawRating} / 10) × 12, 1) = ${earned} / 12 pts`,
         tiers: [
-          "Passed (≥ 9.0 pts): Clear H1 outcome + quantified impact (%) + speed-to-value stated",
-          "Partial (5.0 – 8.9 pts): Clear value statement but missing quantified metric or timeframe",
-          "Failed (< 5.0 pts): Vague slogan without measurable outcome"
+          "Passed (≥ 9.0 pts): Clear result + real numbers/percentage + how fast it works",
+          "Partial (5.0 – 8.9 pts): Clear benefit, but missing exact numbers or timeframe",
+          "Failed (< 5.0 pts): Vague slogan that doesn't explain what the product achieves"
         ],
         reasoning
       };
     case "persuasion_credibility":
       return {
+        simpleMeaning:
+          "Does the page prove its claims with real customer names, quotes, and numbers instead of just showing company logos?",
         formula: "Earned = min(10, round((CredibilityRating / 10) × 10, 1))",
         calculation: `Rating ${rawRating}/10 → (${rawRating} / 10) × 10 = ${earned} / 10 pts`,
         tiers: [
-          "Passed (≥ 8.0 pts): Customer-attributed metrics + named case studies + 3rd-party trust badges",
-          "Partial (4.0 – 7.9 pts): Logo wall (≥ 3 logos) or unattributed company claims only",
-          "Failed (< 4.0 pts): No verifiable social proof or customer evidence"
+          "Passed (≥ 8.0 pts): Named customer stories with real results + trust badges",
+          "Partial (4.0 – 7.9 pts): Only shows customer logos or unverified claims",
+          "Failed (< 4.0 pts): No customer proof, reviews, or case studies shown"
         ],
         reasoning
       };
     case "persuasion_audience_alignment":
       return {
+        simpleMeaning:
+          "Does the page use the everyday words and examples that your target buyer (e.g., an HR Director or IT Leader) actually cares about?",
         formula: "Earned = min(10, round((AlignmentRating / 10) × 10, 1))",
         calculation: `Rating ${rawRating}/10 → (${rawRating} / 10) × 10 = ${earned} / 10 pts`,
         tiers: [
-          "Passed (≥ 8.0 pts): Role-specific domain vocabulary + zero audience misalignment",
-          "Partial (4.0 – 7.9 pts): Broad enterprise terminology applicable to multiple personas",
-          "Failed (< 4.0 pts): Copy contradicts or ignores target buyer persona"
+          "Passed (≥ 8.0 pts): Speaks directly to the target job role's daily workflows",
+          "Partial (4.0 – 7.9 pts): Generic business language that could apply to anyone",
+          "Failed (< 4.0 pts): Confusing or mismatched audience language"
         ],
         reasoning
       };
     case "persuasion_offer_attractiveness":
       return {
+        simpleMeaning:
+          "Is the main button offer appealing and low-stress for the visitor to click right now?",
         formula: "Earned = min(8, round((OfferRating / 10) × 8, 1))",
         calculation: `Rating ${rawRating}/10 → round((${rawRating} / 10) × 8, 1) = ${earned} / 8 pts`,
         tiers: [
-          "Passed (≥ 6.0 pts): High CTA-to-problem relevance + low perceived commitment friction",
-          "Partial (3.0 – 5.9 pts): Standard high-commitment CTA ('Book Demo') without friction reducer",
-          "Failed (< 3.0 pts): Generic or mismatched conversion offer"
+          "Passed (≥ 6.0 pts): Compelling, low-friction offer that matches the visitor's goal",
+          "Partial (3.0 – 5.9 pts): High-commitment ask ('Book a sales call') with no preview",
+          "Failed (< 3.0 pts): Unclear or unappealing button offer"
         ],
         reasoning
       };
     case "exec_cta_effectiveness":
       return {
+        simpleMeaning:
+          "Can visitors see the main action button immediately without scrolling, and does it tell them what happens next?",
         formula: "Earned = AboveFold(+5) + ActionOrientedVerb(+3) + NextStepMicrocopy(+2)",
         calculation: `${criterion.checks?.map((c) => `${c.label.split(" (")[0]}: ${c.passed ? c.label.match(/\+\d+/)?.[0] || "+pts" : "+0"}`).join(" + ") || criterion.scoringRule} = ${earned} / 10 pts`,
         tiers: [
-          "+5 pts: Primary CTA positioned in above-the-fold hero viewport",
-          "+3 pts: Starts with strong action verb (Book, Start, Get, Try, Request, Launch)",
-          "+2 pts: Supporting microcopy clarifies what happens after clicking"
+          "+5 pts: Main button is visible at the top of the page without scrolling",
+          "+3 pts: Button starts with a clear action word (Book, Start, Try, Get)",
+          "+2 pts: Short note near the button explains what happens after clicking"
         ],
         reasoning
       };
     case "exec_promise_destination":
       return {
+        simpleMeaning:
+          "When a visitor clicks the main button, does it actually give them what the button promised?",
         formula: "Earned = PageType & Intent Consistency Rule (0, 3, 4, or 7–8 pts)",
         calculation: `${criterion.scoringRule} → ${earned} / 8 pts`,
         tiers: [
-          "7–8 pts (Passed): CTA destination directly fulfills the headline promise & visitor intent",
-          "3–4 pts (Partial): Content/webinar promise gated behind a mismatched sales modal",
-          "0 pts (Failed): Missing primary CTA cannot fulfill page promise"
+          "7–8 pts (Passed): Button destination matches what the button text promised",
+          "3–4 pts (Partial): Button promises 'Watch video' but forces a sales call form first",
+          "0 pts (Failed): No working button found on the page"
         ],
         reasoning
       };
     case "exec_lead_capture_usability":
       return {
+        simpleMeaning:
+          "When someone clicks the main button, does a real, working form pop up where they can type their details?",
         formula: "Earned = InteractiveFormVerified(10) | StaticDOMForm(8) | ScriptOnly(3.5–4) | Missing(0)",
         calculation: `${criterion.scoringRule} → ${earned} / 10 pts`,
         tiers: [
-          "10 pts (Passed): Live browser click verified interactive form/modal renders & accepts input",
-          "8 pts (Passed): Explicit <form> & <input> fields verified in static DOM",
-          "3.5–4 pts (Partial): External form script (e.g., HubSpot) detected but live render unverified",
-          "0 pts (Failed): No lead capture form or script detected"
+          "10 pts (Passed): Live browser clicked the button and verified a working form opened",
+          "8 pts (Passed): Working form fields are directly embedded on the page",
+          "3.5–4 pts (Partial): External form script detected, but couldn't verify it opens",
+          "0 pts (Failed): No sign-up or lead form found"
         ],
         reasoning
       };
     case "exec_friction_load":
       return {
+        simpleMeaning:
+          "Is the sign-up or demo form short enough that people won't give up halfway through?",
         formula: "Earned = FieldCount ≤ 4 ? 7 : FieldCount ≤ 7 ? 4.5 : 2 (0 if no CTA)",
         calculation: `${criterion.evidence} → ${earned} / 7 pts`,
         tiers: [
-          "7.0 pts (Passed): Low friction (≤ 4 form fields or streamlined work-email flow)",
-          "4.5 pts (Partial): Moderate friction (5–7 form fields)",
-          "2.0 pts (Partial): High drop-off risk (> 7 form fields)"
+          "7.0 pts (Passed): Easy & fast (4 or fewer boxes to fill out)",
+          "4.5 pts (Partial): Medium effort (5 to 7 boxes to fill out)",
+          "2.0 pts (Partial): Too long (more than 7 boxes causes visitors to quit)"
         ],
         reasoning
       };
     case "exp_lcp_speed":
       return {
+        simpleMeaning:
+          "How many seconds does a visitor wait before the main headline and image show up?",
         formula: "Earned = LCP ≤ 2.5s ? 5 : LCP ≤ 4.0s ? 2.5 : 0",
         calculation: `${criterion.evidence} → ${earned} / 5 pts`,
         tiers: [
-          "5.0 pts (Good): LCP ≤ 2.5 seconds",
-          "2.5 pts (Needs Improvement): 2.5s < LCP ≤ 4.0 seconds",
-          "0.0 pts (Poor): LCP > 4.0 seconds"
+          "5.0 pts (Good): Loads in 2.5 seconds or less",
+          "2.5 pts (Needs Work): Takes between 2.5 and 4.0 seconds",
+          "0.0 pts (Slow): Takes longer than 4.0 seconds (visitors may leave)"
         ],
         reasoning
       };
     case "exp_cls_stability":
       return {
+        simpleMeaning:
+          "Do buttons or text jump around unexpectedly while the page is still loading?",
         formula: "Earned = CLS ≤ 0.10 ? 4 : CLS ≤ 0.25 ? 2 : 0",
         calculation: `${criterion.evidence} → ${earned} / 4 pts`,
         tiers: [
-          "4.0 pts (Good): CLS ≤ 0.100 (visually stable layout)",
-          "2.0 pts (Needs Improvement): 0.100 < CLS ≤ 0.250",
-          "0.0 pts (Poor): CLS > 0.250 (severe layout shift)"
+          "4.0 pts (Good): Page stays still while loading (CLS ≤ 0.10)",
+          "2.0 pts (Needs Work): Slight shifting while images load (0.10 – 0.25)",
+          "0.0 pts (Poor): Elements jump around noticeably (> 0.25)"
         ],
         reasoning
       };
     case "exp_mobile_viewport":
       return {
+        simpleMeaning:
+          "Is the page properly set up to resize and fit cleanly on phone screens?",
         formula: "Earned = hasViewportMeta ? 3 : 0",
         calculation: `${criterion.evidence} → ${earned} / 3 pts`,
         tiers: [
-          "3.0 pts (Passed): Responsive meta[name='viewport'] tag present",
-          "0.0 pts (Failed): Missing mobile viewport configuration"
+          "3.0 pts (Passed): Mobile screen scaling tag is properly configured",
+          "0.0 pts (Failed): Page is not configured for mobile phones"
         ],
         reasoning
       };
     case "exp_text_readability":
     default:
       return {
+        simpleMeaning:
+          "Does the page have a clear main title (H1) and enough readable text to explain the product?",
         formula: "Earned = (hasClearH1 && wordCount ≥ 100) ? 3 : hasClearH1 ? 1.5 : 0",
         calculation: `${criterion.evidence} → ${earned} / ${max} pts`,
         tiers: [
-          "3.0 pts (Passed): Clear single H1 heading + substantive copy (≥ 100 words)",
-          "1.5 pts (Partial): Clear H1 present but thin body copy (< 100 words)",
-          "0.0 pts (Failed): Missing H1 heading structure"
+          "3.0 pts (Passed): Clear main headline + at least 100 words of helpful copy",
+          "1.5 pts (Partial): Has a main headline, but very little text (< 100 words)",
+          "0.0 pts (Failed): Missing a main headline"
         ],
         reasoning
       };
@@ -1440,59 +1536,80 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Minimal, Monochromatic Editorial Context Strip */}
+              {/* Minimal, Monochromatic Editorial Context Strip with Plain-English Tooltips */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800/80 rounded-xl border border-zinc-800/80 bg-zinc-950/50 text-xs">
                 {/* 1. Target Audience */}
                 <div className="p-3.5 space-y-1">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                    Target Audience (ICP)
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between gap-1">
+                    <span>Who This Page Is For</span>
+                    <SimpleHelpTooltip
+                      title="Target Audience (ICP)"
+                      plainEnglish="The specific job roles and buyers this page is written for. When a page speaks directly to a specific buyer's daily problems, more visitors convert."
+                      example="For an HR tool, speaking directly to 'HR Directors' instead of 'Everyone'."
+                    />
                   </div>
                   <div className="text-xs font-semibold text-zinc-100 truncate">
                     {report.targetAudience.roles.length > 0
                       ? report.targetAudience.roles.slice(0, 2).join(" • ")
                       : "Enterprise B2B Buyers"}
                   </div>
-                  <div className="text-[11px] text-zinc-500 truncate">
-                    {report.targetAudience.segments[0] || "B2B Decision Makers"}
+                  <div className="text-[11px] text-zinc-400 truncate">
+                    {report.targetAudience.segments[0] || "Business Decision Makers"}
                   </div>
                 </div>
 
                 {/* 2. Primary Conversion Action */}
                 <div className="p-3.5 space-y-1">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                    Primary Conversion Action
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between gap-1">
+                    <span>Main Action Button (CTA)</span>
+                    <SimpleHelpTooltip
+                      title="Primary Conversion Action (CTA)"
+                      plainEnglish="The #1 button on the page that you want visitors to click. It should be visible immediately at the top of the page without scrolling."
+                      example="'Book a demo', 'Start free trial', or 'Get instant price'."
+                    />
                   </div>
                   <div className="text-xs font-semibold text-zinc-100 font-mono truncate">
                     {report.signalsPreview.primaryCtaText
                       ? `"${report.signalsPreview.primaryCtaText}"`
-                      : "No Primary CTA"}
+                      : "No Main Button Found"}
                   </div>
-                  <div className="text-[11px] text-zinc-500">
+                  <div className="text-[11px] text-zinc-400">
                     {report.signalsPreview.hasAboveTheFoldCta
-                      ? "Positioned above the fold"
-                      : "Below-the-fold placement"}
+                      ? "Visible at top without scrolling"
+                      : "Hidden lower down the page"}
                   </div>
                 </div>
 
                 {/* 3. Visitor Journey Intent */}
                 <div className="p-3.5 space-y-1">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                    Visitor Journey Intent
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between gap-1">
+                    <span>Visitor Buying Stage</span>
+                    <SimpleHelpTooltip
+                      title="Visitor Buying Stage (Intent)"
+                      plainEnglish="Shows what mindset visitors are in when they land here—whether they are just learning ('Discovery'), comparing options ('Consideration'), or ready to buy ('High Intent')."
+                      example="A 'Consideration' visitor wants to see product proof and book a walkthrough."
+                    />
                   </div>
                   <div className="text-xs font-semibold text-zinc-100 capitalize">
                     {report.visitorIntent}
                   </div>
-                  <div className="text-[11px] text-zinc-500">
+                  <div className="text-[11px] text-zinc-400">
                     {report.visitorIntent.toLowerCase().includes("discovery")
-                      ? "Evaluating capability fit & proof"
-                      : "Direct acquisition intent"}
+                      ? "Learning what the product does"
+                      : "Comparing options & ready to try"}
                   </div>
                 </div>
 
                 {/* 4. Lead Capture Funnel */}
                 <div className="p-3.5 space-y-1">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                    Lead Funnel Engine
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center justify-between gap-1">
+                    <span>Sign-Up / Lead Form</span>
+                    <SimpleHelpTooltip
+                      title="Sign-Up / Lead Form Status"
+                      plainEnglish="Checks whether clicking the main button actually opens a working form on the page where visitors can type their email or book a demo."
+                      example="A popup modal with 3 quick boxes (Name, Work Email, Company) right on the page."
+                      align="right"
+                    />
                   </div>
                   <div className="text-xs font-semibold text-zinc-100 flex items-center gap-1.5">
                     <span
@@ -1502,14 +1619,14 @@ export default function Home() {
                     />
                     <span className="truncate">
                       {report.signalsPreview.leadCaptureEngine
-                        ? "Verified Form / Modal"
-                        : "External Redirect / Script"}
+                        ? "Working On-Page Form"
+                        : "External Link / Unverified"}
                     </span>
                   </div>
-                  <div className="text-[11px] text-zinc-500">
+                  <div className="text-[11px] text-zinc-400">
                     {report.signalsPreview.leadCaptureEngine
-                      ? "Direct on-page capture active"
-                      : "Unverified inline form"}
+                      ? "Visitors can sign up right on this page"
+                      : "No inline form verified on page"}
                   </div>
                 </div>
               </div>
@@ -1573,8 +1690,14 @@ export default function Home() {
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-emerald-400" />
                     <h2 className="text-sm font-semibold text-white">
-                      Full-Page Visual Audit & Section Hotspot Annotations
+                      Full-Page Visual Audit &amp; Section Hotspot Annotations
                     </h2>
+                    <SimpleHelpTooltip
+                      title="Visual Page Audit & Fix Pins"
+                      plainEnglish="We take a full-length screenshot of the live webpage and drop numbered pins right on the sections that can be improved."
+                      example="Click any card on the right (or any pin on the screenshot) to jump straight to that exact spot and see what copy or button to change."
+                      align="left"
+                    />
                   </div>
                   <p className="text-xs text-zinc-400 mt-0.5">
                     Pins are tagged across the entire website height (hero, proof, and deep funnel). Click any card to jump directly to its location.
@@ -1946,14 +2069,19 @@ export default function Home() {
               </div>
             )}
 
-            {/* Section 2: Core Web Vitals & Lighthouse Metrics (Visual Gauges & Bars) */}
+            {/* Section 2: Core Web Vitals & Lighthouse Metrics (Visual Gauges & Plain-English Tooltips) */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-emerald-400" />
                   <h2 className="text-sm font-semibold text-white">
-                    Lighthouse & Core Web Vitals Performance
+                    Page Speed &amp; Mobile Experience (Core Web Vitals)
                   </h2>
+                  <SimpleHelpTooltip
+                    title="Page Speed & Core Web Vitals"
+                    plainEnglish="Measures how fast your page loads on phones and computers, and whether buttons or text jump around while loading. Slow pages cause visitors to leave before reading your offer."
+                    example="Pages that load in under 2.5 seconds keep significantly more visitors."
+                  />
                 </div>
                 <span className="text-[10px] font-mono text-zinc-500 uppercase px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">
                   Source: {lighthouse.source.replace("_", " ")}
@@ -1977,16 +2105,23 @@ export default function Home() {
                     label={String(lighthouse.performanceScore)}
                     sublabel="/ 100"
                   />
-                  <div>
-                    <div className="text-xs font-semibold text-white">Performance Score</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-white flex items-center justify-between gap-1">
+                      <span>Overall Speed</span>
+                      <SimpleHelpTooltip
+                        title="Overall Speed Score (0–100)"
+                        plainEnglish="A single 0–100 score from Google Lighthouse showing how fast and smoothly this page loads on a mobile phone."
+                        example="80+ is fast; 50–79 is average; under 50 feels slow to visitors."
+                      />
+                    </div>
                     <div className="text-[11px] text-zinc-400 mt-0.5">
                       {lighthouse.performanceScore >= 80
-                        ? "Mobile optimized"
+                        ? "Fast on mobile phones"
                         : lighthouse.performanceScore >= 50
                         ? "Average mobile speed"
-                        : "High bounce risk"}
+                        : "Slow — visitors may leave"}
                     </div>
-                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Target ≥ 75</div>
+                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Goal: 75 or higher</div>
                   </div>
                 </div>
 
@@ -2007,16 +2142,23 @@ export default function Home() {
                     label={`${lighthouse.lcpSeconds}s`}
                     sublabel="LCP"
                   />
-                  <div>
-                    <div className="text-xs font-semibold text-white">LCP (Load Speed)</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-white flex items-center justify-between gap-1">
+                      <span>Main Content Load</span>
+                      <SimpleHelpTooltip
+                        title="Main Content Load Time (LCP)"
+                        plainEnglish="How many seconds a visitor waits before the main headline and biggest top image finish showing up on screen."
+                        example="2.2s means a visitor sees your main headline and banner in 2.2 seconds."
+                      />
+                    </div>
                     <div className="text-[11px] text-zinc-400 mt-0.5">
                       {lighthouse.lcpSeconds <= 2.5
-                        ? "Fast hero render"
+                        ? "Main banner loads quickly"
                         : lighthouse.lcpSeconds <= 4.0
-                        ? "Moderate load time"
-                        : "Slow largest paint"}
+                        ? "Slight wait for main banner"
+                        : "Main banner loads too slowly"}
                     </div>
-                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Target &lt; 2.5s</div>
+                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Goal: Under 2.5s</div>
                   </div>
                 </div>
 
@@ -2037,16 +2179,23 @@ export default function Home() {
                     label={String(lighthouse.cls)}
                     sublabel="CLS"
                   />
-                  <div>
-                    <div className="text-xs font-semibold text-white">CLS (Visual Shift)</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-white flex items-center justify-between gap-1">
+                      <span>Layout Stability</span>
+                      <SimpleHelpTooltip
+                        title="Layout Stability (CLS)"
+                        plainEnglish="Checks if text or buttons suddenly jump around on screen while images or fonts finish loading."
+                        example="0.00 to 0.10 means the page stays rock-solid and nothing jumps under the user's finger."
+                      />
+                    </div>
                     <div className="text-[11px] text-zinc-400 mt-0.5">
                       {lighthouse.cls <= 0.1
-                        ? "Stable page layout"
+                        ? "Page stays still while loading"
                         : lighthouse.cls <= 0.25
-                        ? "Minor layout shift"
-                        : "Unstable layout"}
+                        ? "Slight movement during load"
+                        : "Elements jump around on load"}
                     </div>
-                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Target &lt; 0.10</div>
+                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Goal: Under 0.10</div>
                   </div>
                 </div>
 
@@ -2067,25 +2216,33 @@ export default function Home() {
                     label={`${lighthouse.fcpSeconds}s`}
                     sublabel="FCP"
                   />
-                  <div>
-                    <div className="text-xs font-semibold text-white">FCP (First Paint)</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-semibold text-white flex items-center justify-between gap-1">
+                      <span>First Visual (FCP)</span>
+                      <SimpleHelpTooltip
+                        title="First Visual Response (FCP)"
+                        plainEnglish="How fast the very first piece of text or color appears on screen so the visitor knows the website isn't frozen."
+                        example="1.7s means the screen starts showing content in 1.7 seconds."
+                        align="right"
+                      />
+                    </div>
                     <div className="text-[11px] text-zinc-400 mt-0.5">
                       {lighthouse.fcpSeconds <= 1.8
-                        ? "Instant visual feedback"
+                        ? "Page responds right away"
                         : lighthouse.fcpSeconds <= 3.0
-                        ? "Acceptable first paint"
-                        : "Delayed first paint"}
+                        ? "Acceptable start time"
+                        : "Blank screen takes too long"}
                     </div>
-                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Target &lt; 1.8s</div>
+                    <div className="text-[10px] font-mono text-zinc-500 mt-1">Goal: Under 1.8s</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Section 3: Dimension Breakdown Summary Cards (Uniform Circular Gauges) */}
+            {/* Section 3: Dimension Breakdown Summary Cards (Plain-English Explanations + Interactive Tooltips) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Dimension A */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-center gap-4">
+              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-start gap-4">
                 <ScoreRing
                   value={report.dimensions.persuasion.score}
                   max={report.dimensions.persuasion.maxScore}
@@ -2101,23 +2258,35 @@ export default function Home() {
                   label={`${report.dimensions.persuasion.percentage}%`}
                   sublabel={`${report.dimensions.persuasion.score}/${report.dimensions.persuasion.maxScore}`}
                 />
-                <div className="space-y-1 min-w-0">
+                <div className="space-y-1 min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="text-white font-semibold flex items-center gap-1.5 truncate">
-                      <Sparkles className="w-3.5 h-3.5 text-violet-400 shrink-0" /> Conversion Persuasion
+                      <Sparkles className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+                      <span>1. Message &amp; Copy Persuasion</span>
+                    </span>
+                    <SimpleHelpTooltip
+                      title="Message & Copy Persuasion (50 pts)"
+                      plainEnglish="Measures whether your words convince the visitor to care. It checks if you clearly name their problem, promise a specific result (with numbers/timeframes), and prove it with real customer stories."
+                      example="Instead of 'AI for HR', saying 'Auto-resolve 70% of employee HR tickets in 10 seconds — trusted by 500+ enterprises.'"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-zinc-100">
+                      {report.dimensions.persuasion.score}{" "}
+                      <span className="text-zinc-500 font-normal">/ {report.dimensions.persuasion.maxScore} pts</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-medium">
+                      • Does the copy convince the buyer?
                     </span>
                   </div>
-                  <div className="text-xs font-mono font-bold text-zinc-200">
-                    {report.dimensions.persuasion.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.persuasion.maxScore} pts</span>
-                  </div>
-                  <div className="text-[11px] text-zinc-400 leading-snug">
-                    Audience-problem resonance, quantified value proposition, customer proof.
-                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    Checks if the headline names a clear problem, promises a real outcome, and backs it up with customer proof.
+                  </p>
                 </div>
               </div>
 
               {/* Dimension B */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-center gap-4">
+              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-start gap-4">
                 <ScoreRing
                   value={report.dimensions.execution.score}
                   max={report.dimensions.execution.maxScore}
@@ -2133,23 +2302,35 @@ export default function Home() {
                   label={`${report.dimensions.execution.percentage}%`}
                   sublabel={`${report.dimensions.execution.score}/${report.dimensions.execution.maxScore}`}
                 />
-                <div className="space-y-1 min-w-0">
+                <div className="space-y-1 min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="text-white font-semibold flex items-center gap-1.5 truncate">
-                      <Target className="w-3.5 h-3.5 text-sky-400 shrink-0" /> Conversion Execution
+                      <Target className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <span>2. Button &amp; Form Execution</span>
+                    </span>
+                    <SimpleHelpTooltip
+                      title="Button & Form Execution (35 pts)"
+                      plainEnglish="Measures how easy it is for a convinced visitor to actually sign up or book a demo. Checks if the main button is easy to see at the top and opens a short, working form."
+                      example="A clear 'Book a demo' button at the top that opens a working 3-field form right on the page."
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-zinc-100">
+                      {report.dimensions.execution.score}{" "}
+                      <span className="text-zinc-500 font-normal">/ {report.dimensions.execution.maxScore} pts</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-medium">
+                      • How easy is it to take action?
                     </span>
                   </div>
-                  <div className="text-xs font-mono font-bold text-zinc-200">
-                    {report.dimensions.execution.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.execution.maxScore} pts</span>
-                  </div>
-                  <div className="text-[11px] text-zinc-400 leading-snug">
-                    Above-the-fold CTA prominence, low modal friction, lead capture usability.
-                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    Checks if the main action button stands out at the top and opens a working, easy-to-complete sign-up form.
+                  </p>
                 </div>
               </div>
 
               {/* Dimension C */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-center gap-4">
+              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-start gap-4">
                 <ScoreRing
                   value={report.dimensions.experience.score}
                   max={report.dimensions.experience.maxScore}
@@ -2165,18 +2346,31 @@ export default function Home() {
                   label={`${report.dimensions.experience.percentage}%`}
                   sublabel={`${report.dimensions.experience.score}/${report.dimensions.experience.maxScore}`}
                 />
-                <div className="space-y-1 min-w-0">
+                <div className="space-y-1 min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="text-white font-semibold flex items-center gap-1.5 truncate">
-                      <Layers className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Supporting Experience
+                      <Layers className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>3. Speed &amp; Mobile Experience</span>
+                    </span>
+                    <SimpleHelpTooltip
+                      title="Speed & Mobile Experience (15 pts)"
+                      plainEnglish="Measures the technical basics that keep visitors from bouncing: fast page load speed, no jumping buttons, proper phone screen scaling, and readable text structure."
+                      example="Loads in under 2.5s, fits cleanly on mobile phones, and has a clear main title."
+                      align="right"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-zinc-100">
+                      {report.dimensions.experience.score}{" "}
+                      <span className="text-zinc-500 font-normal">/ {report.dimensions.experience.maxScore} pts</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-medium">
+                      • Is it fast &amp; phone-friendly?
                     </span>
                   </div>
-                  <div className="text-xs font-mono font-bold text-zinc-200">
-                    {report.dimensions.experience.score} <span className="text-zinc-500 font-normal">/ {report.dimensions.experience.maxScore} pts</span>
-                  </div>
-                  <div className="text-[11px] text-zinc-400 leading-snug">
-                    Mobile viewport configuration, LCP rendering speed, and layout stability.
-                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    Checks if the page loads quickly, stays visually steady, and is properly formatted for mobile phones.
+                  </p>
                 </div>
               </div>
             </div>
@@ -2186,9 +2380,17 @@ export default function Home() {
               <div className="p-4 border-b border-zinc-800 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-white">Score Breakdown</h2>
-                    <p className="text-xs text-zinc-500 mt-0.5">
-                      {report.criteria.length} checks across 3 dimensions. Hover or click <span className="text-zinc-300 font-mono">Algo &amp; Why</span> for the complete mathematical formula and reasoning.
+                    <div className="flex items-center gap-1.5">
+                      <h2 className="text-sm font-semibold text-white">Score Breakdown</h2>
+                      <SimpleHelpTooltip
+                        title="13-Point Conversion Checklist"
+                        plainEnglish="Every score is broken down into 13 individual checks across Message Persuasion (50 pts), Button & Form Execution (35 pts), and Speed & Mobile Experience (15 pts)."
+                        example="Hover the (?) icon next to any check for a simple explanation, or hover 'Algo & Why' to see the exact math formula."
+                        align="left"
+                      />
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      {report.criteria.length} checks across 3 categories. Hover any <span className="text-zinc-200 font-medium">(?)</span> icon for a simple explanation or <span className="text-zinc-200 font-mono">Algo &amp; Why</span> for the exact math formula.
                     </p>
                   </div>
                   <div className="flex gap-1 text-xs">
@@ -2209,15 +2411,20 @@ export default function Home() {
                 </div>
 
                 {/* Method legend */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-500">
-                  <span className="text-zinc-600">How each check is measured:</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-400">
+                  <span className="text-zinc-500">How each check is measured:</span>
                   {(Object.keys(METHOD_META) as Array<keyof typeof METHOD_META>).map((k) => {
                     const m = METHOD_META[k];
                     const Icon = m.icon;
                     return (
-                      <span key={k} className="inline-flex items-center gap-1" title={m.explain}>
+                      <span key={k} className="inline-flex items-center gap-1">
                         <Icon className={`w-3 h-3 ${m.color}`} />
-                        {m.label}
+                        <span>{m.label}</span>
+                        <SimpleHelpTooltip
+                          title={m.label}
+                          plainEnglish={m.explain}
+                          align="left"
+                        />
                       </span>
                     );
                   })}
@@ -2413,10 +2620,18 @@ export default function Home() {
 
                                 {/* Col 2: Criterion Name & Summary */}
                                 <div className="min-w-0">
-                                  <div className="text-[13px] font-medium text-white truncate">
-                                    {criterion.name}
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="text-[13px] font-medium text-white truncate">
+                                      {criterion.name}
+                                    </span>
+                                    <SimpleHelpTooltip
+                                      title={criterion.name}
+                                      plainEnglish={algo.simpleMeaning}
+                                      example={`Scored ${criterion.earnedPoints} out of ${criterion.maxPoints} pts using ${method.label}.`}
+                                      align="left"
+                                    />
                                   </div>
-                                  <div className="text-[11px] text-zinc-500 truncate">{summary}</div>
+                                  <div className="text-[11px] text-zinc-400 truncate">{summary}</div>
                                 </div>
 
                                 {/* Col 3: Measurement Source */}
@@ -2463,6 +2678,16 @@ export default function Home() {
                                         <span className="text-xs font-mono font-bold text-white bg-zinc-900 border border-zinc-700 px-2 py-0.5 rounded whitespace-nowrap">
                                           {criterion.earnedPoints} / {criterion.maxPoints} pts
                                         </span>
+                                      </div>
+
+                                      {/* 0. In Plain English */}
+                                      <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-900/50 space-y-1">
+                                        <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold">
+                                          What This Means (Plain English)
+                                        </div>
+                                        <p className="text-[11px] text-zinc-200 leading-relaxed">
+                                          {algo.simpleMeaning}
+                                        </p>
                                       </div>
 
                                       {/* 1. Complete Scoring Algorithm Formula */}

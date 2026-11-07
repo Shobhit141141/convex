@@ -57,13 +57,14 @@ When a URL is submitted (`POST /api/grade`), Convex streams real-time server mil
 
 ## Rubric v3 Scoring Algorithm (`100 Points Max`)
 
-> **Master Formula:**  
-> $$\text{Total Score} = \operatorname{round}\!\Big(\text{Persuasion}_{/50} + \min(\text{Execution}_{/35},\, \text{GateCap}) + \text{Experience}_{/15}\Big)$$
+```text
+Total Score = round( Persuasion [0–50] + min(Execution [0–35], GateCap) + Experience [0–15] )
+```
 
 LLMs never directly output the final score—deterministic TypeScript rules scale and gate all inputs.
 
 ### Dimension A: Conversion Persuasion (`50 pts`)
-Each check is rated `0–10` against strict evidence criteria and scaled via $\operatorname{round}((\text{Rating}/10) \times \text{MaxPts}, 1)$:
+Each check is rated `0–10` against strict evidence criteria and scaled via `round((Rating / 10) * MaxPoints, 1)`:
 | Check | Max Pts | What It Measures |
 | :--- | :---: | :--- |
 | **1. Audience-Problem Fit & Specificity** | `10` | Concrete buyer pain point articulated in hero/headings vs. generic fluff |
