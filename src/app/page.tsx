@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import Link from "next/link";
 import { GraderReport, CRORecommendation, ScreenshotTag } from "@/features/pipeline/grader-pipeline";
 import {
   ArrowRight,
@@ -1044,6 +1045,15 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Interactive Algorithm & Pipeline Guide Route */}
+            <Link
+              href="/algorithm"
+              className="text-xs text-emerald-300 hover:text-white flex items-center gap-1.5 transition-colors px-2.5 py-1.5 rounded-md bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-800/60"
+            >
+              <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Algorithm &amp; Pipeline</span>
+            </Link>
+
             {/* Supabase Saved History Button */}
             <button
               type="button"
@@ -1323,6 +1333,17 @@ export default function Home() {
                 >
                   leena.ai Homepage
                 </button>
+              </div>
+
+              <div className="pt-2 flex justify-center">
+                <Link
+                  href="/algorithm"
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-500/30 text-xs text-emerald-300 hover:text-white transition-all shadow-sm"
+                >
+                  <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Explore How Our Rubric v3 Algorithm &amp; 6-Stage Pipeline Works</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
             </form>
 
