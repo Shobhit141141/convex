@@ -9,6 +9,8 @@
  * safely returns status "not_tested" without crashing evaluation runs.
  */
 
+import fs from "node:fs";
+
 export interface ConversionVerificationResult {
   ctaFound: boolean;
   ctaVisible: boolean;
@@ -19,12 +21,16 @@ export interface ConversionVerificationResult {
   hubspotDetected: boolean;
   verificationStatus: "passed" | "partial" | "failed" | "not_tested";
   evidenceNotes: string[];
+  screenshotBase64?: string;
 }
 
 export interface VerificationOptions {
   timeoutMs?: number;
   viewport?: { width: number; height: number };
+  captureScreenshot?: boolean;
 }
+
+const LOCAL_CHROMIUM_FALLBACK = "/Users/apple/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell";
 
 export async function verifyConversionInteraction(
   urlOrHtml: string,
@@ -33,6 +39,7 @@ export async function verifyConversionInteraction(
 ): Promise<ConversionVerificationResult> {
   const timeoutMs = options.timeoutMs ?? 8000;
   const isHtml = urlOrHtml.trim().startsWith("<") || urlOrHtml.includes("<!DOCTYPE");
+  const captureScreenshot = options.captureScreenshot ?? true;
 
   let chromiumModule: any;
   try {
@@ -53,10 +60,14 @@ export async function verifyConversionInteraction(
 
   let browser: any = null;
   try {
-    browser = await chromiumModule.chromium.launch({
+    const launchOptions: any = {
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    });
+    };
+    if (fs.existsSync(LOCAL_CHROMIUM_FALLBACK)) {
+      launchOptions.executablePath = LOCAL_CHROMIUM_FALLBACK;
+    }
+    browser = await chromiumModule.chromium.launch(launchOptions);
   } catch (err: any) {
     return {
       ctaFound: false,
@@ -74,6 +85,7 @@ export async function verifyConversionInteraction(
   }
 
   const notes: string[] = [];
+  let screenshotBase64: string | undefined = undefined;
 
   try {
     const page = await browser.newPage({
@@ -84,6 +96,16 @@ export async function verifyConversionInteraction(
       await page.setContent(urlOrHtml, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     } else {
       await page.goto(urlOrHtml, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    }
+
+    // Capture hero screenshot
+    if (captureScreenshot) {
+      try {
+        const buffer = await page.screenshot({ type: "jpeg", quality: 75 });
+        screenshotBase64 = `data:image/jpeg;base64,${buffer.toString("base64")}`;
+      } catch {
+        // Screenshot capture non-blocking
+      }
     }
 
     // Detect HubSpot script or form container in DOM
@@ -122,7 +144,8 @@ export async function verifyConversionInteraction(
         formFieldCount: 0,
         hubspotDetected,
         verificationStatus: "failed",
-        evidenceNotes: ["No matching primary CTA button or link found on page"]
+        evidenceNotes: ["No matching primary CTA button or link found on page"],
+        screenshotBase64
       };
     }
 
@@ -141,7 +164,8 @@ export async function verifyConversionInteraction(
         formFieldCount: 0,
         hubspotDetected,
         verificationStatus: "failed",
-        evidenceNotes: notes
+        evidenceNotes: notes,
+        screenshotBase64
       };
     }
 
@@ -222,7 +246,8 @@ export async function verifyConversionInteraction(
       formFieldCount,
       hubspotDetected,
       verificationStatus,
-      evidenceNotes: notes
+      evidenceNotes: notes,
+      screenshotBase64
     };
   } catch (err: any) {
     return {
@@ -234,7 +259,8 @@ export async function verifyConversionInteraction(
       formFieldCount: 0,
       hubspotDetected: false,
       verificationStatus: "failed",
-      evidenceNotes: [`Verification error: ${err?.message || "Unknown error"}`]
+      evidenceNotes: [`Verification error: ${err?.message || "Unknown error"}`],
+      screenshotBase64
     };
   } finally {
     if (browser) {

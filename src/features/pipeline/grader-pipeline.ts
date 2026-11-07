@@ -60,6 +60,14 @@ export interface GraderReport {
   criteria: V3CriterionScore[];
   recommendations: CRORecommendation[];
   summary: string;
+  screenshotBase64?: string;
+  lighthouse: {
+    performanceScore: number;
+    lcpSeconds: number;
+    cls: number;
+    fcpSeconds: number;
+    source: "pagespeed_api" | "estimated";
+  };
   signalsPreview: {
     wordCount: number;
     primaryCtaText: string;
@@ -185,7 +193,7 @@ function generateRecommendations(
     });
   }
 
-  return recommendations.slice(0, 5);
+  return recommendations.slice(0, 3);
 }
 
 export async function gradeLandingPage(
@@ -270,31 +278,25 @@ export async function gradeLandingPage(
     }
   }
 
-  // 1 & 2: Run AI Classification and AI Semantic Evaluation in PARALLEL
+  // Run AI Classification, AI Semantic Evaluation, and Playwright verification in PARALLEL
   const apiKey = process.env.OPENAI_API_KEY;
   const aiClassifier = createOpenAIClassifier(apiKey, "gpt-4o-mini");
   const semanticEvaluator = apiKey ? new SemanticEvaluator(apiKey, "gpt-4o-mini", "gpt-5-mini", 12000) : null;
+  const shouldRunPlaywright = options.enableLivePlaywright ?? true;
 
-  const [classification, semanticEval] = await Promise.all([
+  const [classification, semanticEval, verification] = await Promise.all([
     classifyPage(rawInput, aiClassifier),
-    semanticEvaluator ? semanticEvaluator.evaluate(rawInput).catch(() => undefined) : Promise.resolve(undefined)
+    semanticEvaluator ? semanticEvaluator.evaluate(rawInput).catch(() => undefined) : Promise.resolve(undefined),
+    shouldRunPlaywright
+      ? verifyConversionInteraction(
+          signals.url,
+          signals.conversion.primaryCtaText,
+          { timeoutMs: 6000, captureScreenshot: true }
+        ).catch(() => undefined)
+      : Promise.resolve(undefined)
   ]);
 
-  // 3. Playwright Verification (if requested or enabled)
-  let verification = undefined;
-  if (options.enableLivePlaywright) {
-    try {
-      verification = await verifyConversionInteraction(
-        signals.url,
-        signals.conversion.primaryCtaText,
-        { timeoutMs: 5000 }
-      );
-    } catch {
-      // Verifier returns safe not_tested
-    }
-  }
-
-  // 4. Calculate Rubric v3 Score
+  // Calculate Rubric v3 Score
   const v3Result = calculateRubricV3({
     signals,
     classification,
@@ -329,6 +331,14 @@ export async function gradeLandingPage(
     criteria: allCriteria,
     recommendations,
     summary,
+    screenshotBase64: verification?.screenshotBase64,
+    lighthouse: {
+      performanceScore: signals.performance.mobileLighthouseScore,
+      lcpSeconds: signals.performance.lcpSeconds,
+      cls: signals.performance.cls,
+      fcpSeconds: signals.performance.fcpSeconds,
+      source: signals.performance.source
+    },
     signalsPreview: {
       wordCount: signals.wordCount,
       primaryCtaText: signals.conversion.primaryCtaText,

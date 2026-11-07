@@ -30,7 +30,7 @@ export const SemanticEvaluationSchema = z.object({
     identifiedProblem: z.string().nullable().optional(),
   }),
   valuePropositionStrength: SemanticScoreSchema.extend({
-    statement: z.string(),
+    statement: z.string().nullable().optional(),
     hasQuantifiedOutcome: z.boolean(),
     hasSpeedToValue: z.boolean(),
   }),

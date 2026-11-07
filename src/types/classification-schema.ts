@@ -73,7 +73,7 @@ export const CTAAnalysisSchema = z.object({
   primaryText: z.string().nullable().optional(),
   action: z.string().nullable().optional(),
   relevanceToAudience: z.string().nullable().optional(),
-  frictionLevel: z.enum(["low", "medium", "high"]).nullable().optional()
+  frictionLevel: z.enum(["low", "medium", "high", "none", "unknown"]).nullable().optional()
 });
 export type CTAAnalysis = z.infer<typeof CTAAnalysisSchema>;
 

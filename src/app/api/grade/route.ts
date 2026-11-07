@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const GradeRequestSchema = z.object({
   url: z.string().min(3, "URL is required"),
-  enablePlaywright: z.boolean().optional().default(false)
+  enablePlaywright: z.boolean().optional().default(true)
 });
 
 export async function POST(req: NextRequest) {
