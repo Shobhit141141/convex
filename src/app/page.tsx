@@ -1978,13 +1978,15 @@ export default function Home() {
               )}
             </div>
 
-            {/* Crisp Plain-English "In a Nutshell" Summary Card (Subtly Highlighted) */}
+            {/* Crisp Plain-English "In a Nutshell" Summary Card (Subtle Green Glowy Gradient) */}
             {plainDigest && (
-              <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-zinc-900/75 to-zinc-950/90 p-5 sm:p-6 space-y-4 shadow-[0_0_38px_-12px_rgba(16,185,129,0.22)] ring-1 ring-emerald-500/10">
-                {/* Subtle luminous top-edge highlight line */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/65 to-transparent" />
+              <div className="relative overflow-hidden rounded-2xl border border-emerald-500/35 bg-gradient-to-br from-emerald-950/45 via-emerald-950/15 to-zinc-950/95 p-5 sm:p-6 space-y-4 shadow-[0_0_52px_-10px_rgba(16,185,129,0.28)] ring-1 ring-emerald-400/15">
+                {/* Ambient radial green glow orbs + luminous top edge */}
+                <div className="pointer-events-none absolute -top-24 -left-20 w-72 h-72 rounded-full bg-emerald-500/15 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-24 -right-20 w-72 h-72 rounded-full bg-emerald-400/10 blur-3xl" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent" />
 
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/15 pb-3.5">
+                <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/20 pb-3.5">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-emerald-500/15 border border-emerald-500/30">
                       <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -2007,13 +2009,13 @@ export default function Home() {
                 </div>
 
                 {/* Plain-English Verdict */}
-                <div className="p-3.5 rounded-xl bg-zinc-950/85 border border-emerald-500/20 text-xs sm:text-[13px] text-zinc-100 leading-relaxed shadow-inner">
+                <div className="relative p-3.5 rounded-xl bg-zinc-950/80 border border-emerald-500/25 text-xs sm:text-[13px] text-zinc-100 leading-relaxed shadow-inner backdrop-blur-sm">
                   <span className="font-semibold text-emerald-400 mr-1.5">Bottom Line:</span>
                   {plainDigest.verdict}
                 </div>
 
                 {/* 3 Simple Columns: Working Well | Hurting Sign-Ups | Top 3 Quick Wins */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                <div className="relative grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                   {/* Col 1: What's Working Well */}
                   <div className="p-4 rounded-xl bg-zinc-950/75 border border-emerald-900/40 space-y-2.5">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
