@@ -4,11 +4,49 @@ Convex is an evidence-based Conversion Rate Optimization (CRO) grader that evalu
 
 ---
 
-## Core Architecture & Pipeline
+## Visual Walkthrough & Product Interface
+
+### 1. Executive Score Hero & Minimal Audience Context Strip
+![Executive Score Hero & Context Strip](docs/screenshots/01-report-hero-and-context.png)
+- **Overall Conversion Score Pod**: Displays the final `0–100` score (`79 / 100`), letter grade (`Grade B`), mini dimension gauges (`Persuasion 37/50`, `Execution 27/35`, `Experience 15/15`), and the **`Algo & Formula`** popover trigger showing the master Rubric v3 equation.
+- **Minimal 4-Column Context Strip**: Summarizes the classified **Target Audience (ICP)** (`HR Manager • HR Director`), **Primary Conversion Action** (`"Book a demo"` above the fold), **Visitor Journey Intent** (`Consideration`), and **Lead Funnel Engine** (`Verified Form / Modal`).
+
+---
+
+### 2. Full-Page Visual Audit Studio & Section Hotspot Pins
+![Full-Page Visual Audit & Hotspot Annotations](docs/screenshots/02-visual-audit-studio.jpg)
+- **Dynamic Full-Page Canvas (Left)**: Renders the live Playwright full-page capture and overlays numbered, color-coded pins (`#1` green strength, `#2` amber warning, `#3` red high-priority issue) anchored to actual DOM section coordinates (`0%–100% Y`). Hovering or clicking any pin opens an edge-aware diagnostic card on the canvas.
+- **Actionable CRO Fix Cards (Right)**: Lists prioritized issues paired with the exact page zone (`Hero CTA Area ~14%`, `Social Proof Band ~26%`), concrete **Direct Fix** copy/engineering instructions, expected conversion lift, and a **`Locate Pin`** button that auto-scrolls the screenshot canvas to that element.
+
+---
+
+### 3. Lighthouse Core Web Vitals & Dimension Summary
+![Lighthouse Core Web Vitals & Dimension Overview](docs/screenshots/03-lighthouse-and-dimensions.png)
+- **Core Web Vitals Gauges**: Evaluates mobile **Performance Score** (`75 / 100`), **LCP (Load Speed)** (`2.2s` vs. `< 2.5s` target), **CLS (Visual Shift)** (`0.03` vs. `< 0.10` target), and **FCP (First Paint)** (`1.7s` vs. `< 1.8s` target) using uniform circular SVG rings.
+
+---
+
+### 4. Three-Pillar Rubric v3 Dimension Cards
+![Rubric v3 Dimension Summary Cards](docs/screenshots/04-dimension-cards.png)
+- Breaks the `100`-point rubric into its three weighted pillars:
+  1. **Conversion Persuasion (`50 pts max`)**: Audience-problem resonance, quantified value proposition, and verifiable customer proof.
+  2. **Conversion Execution (`35 pts max`)**: Above-the-fold CTA prominence, promise-destination consistency, live lead-capture verification, and form friction.
+  3. **Supporting Experience (`15 pts max`)**: Mobile viewport configuration, LCP rendering speed, layout stability, and readability.
+
+---
+
+### 5. Aligned Score Breakdown & Interactive `Algo & Why` Popovers
+![Score Breakdown & Algorithm Tooltip Popovers](docs/screenshots/05-score-breakdown-and-algo.jpg)
+- **Pixel-Aligned 7-Column Grid**: Category headers (`CONVERSION PERSUASION — 37 / 50 pts`) and individual criterion rows share the exact same grid columns for status icons, measurement source tags (`AI copy review`, `Live browser test`, `Page structure check`, `Lighthouse`), **`Category Algo` / `Algo & Why`** triggers, circular percentage rings, and point totals.
+- **Transparent Math & Evidence**: Clicking or hovering **`Algo & Why`** reveals the exact mathematical formula, live point substitution, evaluated sub-check pass/fail inputs, and verbatim evidence extracted from the page.
+
+---
+
+## Core Architecture & 6-Stage Pipeline
 
 When a URL is submitted (`POST /api/grade`), Convex streams real-time server milestones (`application/x-ndjson`) across 6 stages:
 
-1. **Supabase URL Cache Check**: Checks `public.landing_page_audits` by normalized URL. Previously audited pages load instantaneously without re-fetching unless a live re-run (`forceRefresh: true`) is requested.
+1. **Supabase URL Cache Check**: Queries `public.landing_page_audits` by normalized URL. Previously audited pages load instantaneously without re-fetching unless a live re-run (`forceRefresh: true`) is requested.
 2. **Safe DOM & Signal Extraction**: SSRF-guarded HTML fetch + Cheerio parsing for headings (`H1`–`H3`), CTAs, form fields, trust badges, customer quotes, and metadata.
 3. **Audience & Intent Classification**: Classifies `pageType` (`homepage`, `product`, `functional`, `campaign`, `resource`, `case_study`), target ICP roles, and `visitorIntent` (`discovery`, `consideration`, `high_intent`, `education`).
 4. **Semantic Persuasion Evaluation**: Evaluates copy specificity, quantified outcomes, speed-to-value, third-party credibility, and offer friction on a structured `0–10` scale (with deterministic heuristic fallback).
@@ -60,12 +98,11 @@ High persuasive copy cannot convert if the capture mechanism is broken:
 
 ---
 
-## Key Features
+## Supabase Caching, Audit History & Report Exports
 
-- **Visual Audit Studio**: Full-page screenshot canvas with dynamic DOM-discovered hotspot pins (`#1`, `#2`, ...) linked to prioritized CRO fix cards.
-- **Interactive `Algo & Why` Popovers**: Hover or click any score (Overall Hero, Category Header, or Criterion Row) to inspect the exact mathematical formula, live point substitution, evaluated sub-checks, and extracted evidence.
-- **Supabase URL Cache & Audit History**: Stores every evaluation in `public.landing_page_audits` for instant retrieval without re-fetching, plus 1-click **Re-run Live Audit** to track score progression over time.
-- **1-Click Exports**: Export the full report and prioritized recommendations as **Markdown (`.md`)**, **Recommendations CSV (`.csv`)**, or **Structured JSON (`.json`)**.
+- **Instant URL Cache (`public.landing_page_audits`)**: Stores every evaluation keyed by normalized URL so repeat visits load immediately without re-running Playwright or LLM calls.
+- **Historical Audit Timeline**: Browse all saved website evaluations from the homepage or top **History** drawer, or click **Re-run Live Audit** to capture a fresh snapshot.
+- **1-Click Exports**: Export any audit report and its prioritized recommendations as **Markdown (`.md`)**, **Recommendations CSV (`.csv`)**, or **Structured JSON (`.json`)**.
 
 ---
 
@@ -86,25 +123,4 @@ pnpm dev
 
 # 4. Run test suite (56 unit & scenario tests)
 pnpm vitest run
-```
-
----
-
-## Project Structure
-
-```text
-src/
-├── app/
-│   ├── api/grade/route.ts         # NDJSON streaming evaluation & Supabase cache endpoint
-│   ├── api/history/route.ts       # Saved audit history & snapshot retrieval endpoint
-│   └── page.tsx                   # Visual Audit Studio UI, Score Breakdown & Export engine
-├── features/
-│   ├── ai/                        # Page classifier & semantic persuasion evaluator
-│   ├── browser/                   # Playwright live CTA verifier & dynamic section discovery
-│   ├── crawler/                   # SSRF-safe HTML extractor & DOM signal parser
-│   ├── performance/               # Google PageSpeed / Core Web Vitals integration
-│   ├── pipeline/                  # End-to-end orchestrator & hotspot pin mapper
-│   ├── scoring/                   # Rubric v3 deterministic scoring engine & gates
-│   └── storage/                   # Supabase PostgREST caching & audit history client
-└── types/                         # Zod schemas & TypeScript contracts
 ```
