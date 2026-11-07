@@ -24,6 +24,15 @@ export interface ElementPositions {
   scrollHeight?: number;
 }
 
+export interface DiscoveredSection {
+  type: "navigation" | "hero" | "cta" | "pricing" | "code_snippet" | "features" | "social_proof" | "testimonials" | "faq" | "footer" | "content";
+  label: string;
+  xPercent: number;
+  yPercent: number;
+  heightPercent: number;
+  rawTextPreview?: string;
+}
+
 export interface ConversionVerificationResult {
   ctaFound: boolean;
   ctaVisible: boolean;
@@ -36,6 +45,7 @@ export interface ConversionVerificationResult {
   evidenceNotes: string[];
   screenshotBase64?: string;
   elementPositions?: ElementPositions;
+  discoveredSections?: DiscoveredSection[];
 }
 
 export interface VerificationOptions {
@@ -228,6 +238,86 @@ export async function verifyConversionInteraction(
       }
     } catch {}
 
+    // Dynamic DOM Section Discovery across ANY page type
+    const discoveredSections: DiscoveredSection[] = [];
+    try {
+      const detected = await page.evaluate(() => {
+        const docH = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, window.innerHeight);
+        const docW = window.innerWidth || 1280;
+        const results: Array<{
+          type: "navigation" | "hero" | "cta" | "pricing" | "code_snippet" | "features" | "social_proof" | "testimonials" | "faq" | "footer" | "content";
+          label: string;
+          xPercent: number;
+          yPercent: number;
+          heightPercent: number;
+          rawTextPreview: string;
+        }> = [];
+
+        const candidates = Array.from(document.querySelectorAll("header, nav, section, article, main > div, footer, [id*='pricing'], [id*='faq'], [id*='feature'], [id*='testim'], [id*='code'], pre, [class*='hero'], [class*='pricing'], [class*='faq']"));
+
+        for (const el of candidates) {
+          const rect = el.getBoundingClientRect();
+          const style = window.getComputedStyle(el);
+          if (style.display === "none" || style.visibility === "hidden" || rect.height < 50) continue;
+
+          const absY = rect.top + window.scrollY;
+          const yPercent = Math.min(Math.max(Math.round(((absY + Math.min(rect.height / 2, 220)) / docH) * 100), 1), 98);
+          const xPercent = Math.min(Math.max(Math.round(((rect.left + Math.min(rect.width / 2, 300)) / docW) * 100), 10), 90);
+          const heightPercent = Math.round((rect.height / docH) * 100);
+
+          const text = ((el as HTMLElement).innerText || el.textContent || "").trim();
+          const lower = text.toLowerCase().slice(0, 400);
+          const idClass = (el.id + " " + el.className).toLowerCase();
+          const tag = el.tagName.toLowerCase();
+
+          let type: DiscoveredSection["type"] | "" = "";
+          let label = "";
+
+          if (tag === "header" || tag === "nav" || idClass.includes("nav") || absY < 80) {
+            type = "navigation";
+            label = "Navigation & Header";
+          } else if (absY < 700 && (tag === "h1" || el.querySelector("h1") || idClass.includes("hero"))) {
+            type = "hero";
+            label = "Hero & Problem Hook";
+          } else if (idClass.includes("pricing") || lower.includes("pricing") || lower.includes("/mo") || lower.includes("per month")) {
+            type = "pricing";
+            label = "Pricing & Plans";
+          } else if (tag === "pre" || idClass.includes("code") || el.querySelector("pre, code")) {
+            type = "code_snippet";
+            label = "Developer Code Preview";
+          } else if (idClass.includes("faq") || lower.includes("frequently asked") || el.querySelector("details")) {
+            type = "faq";
+            label = "Frequently Asked Questions";
+          } else if (idClass.includes("logo") || idClass.includes("proof") || idClass.includes("trusted by") || lower.includes("trusted by")) {
+            type = "social_proof";
+            label = "Customer Proof & Badges";
+          } else if (idClass.includes("testimonial") || idClass.includes("review") || idClass.includes("case") || lower.includes("testimonial")) {
+            type = "testimonials";
+            label = "Customer Stories & Outcomes";
+          } else if (idClass.includes("feature") || idClass.includes("product") || idClass.includes("solution") || idClass.includes("capability")) {
+            type = "features";
+            label = "Core Capabilities & Features";
+          } else if (tag === "footer" || idClass.includes("footer") || absY > docH - 500) {
+            type = "footer";
+            label = "Footer & Conversion Anchor";
+          }
+
+          if (type && !results.some(r => r.type === type && Math.abs(r.yPercent - yPercent) < 7)) {
+            results.push({
+              type,
+              label,
+              xPercent,
+              yPercent,
+              heightPercent,
+              rawTextPreview: text.slice(0, 100)
+            });
+          }
+        }
+        return results;
+      });
+      discoveredSections.push(...(detected as any));
+    } catch {}
+
     // Locate primary CTA
     let ctaHandle = null;
     if (primaryCtaText && primaryCtaText.trim().length > 0) {
@@ -266,7 +356,8 @@ export async function verifyConversionInteraction(
         verificationStatus: "failed",
         evidenceNotes: ["No matching primary CTA button or link found on page"],
         screenshotBase64,
-        elementPositions
+        elementPositions,
+        discoveredSections
       };
     }
 
@@ -287,7 +378,8 @@ export async function verifyConversionInteraction(
         verificationStatus: "failed",
         evidenceNotes: notes,
         screenshotBase64,
-        elementPositions
+        elementPositions,
+        discoveredSections
       };
     }
 
@@ -370,7 +462,8 @@ export async function verifyConversionInteraction(
       verificationStatus,
       evidenceNotes: notes,
       screenshotBase64,
-      elementPositions
+      elementPositions,
+      discoveredSections
     };
   } catch (err: any) {
     return {

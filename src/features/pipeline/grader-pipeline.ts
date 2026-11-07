@@ -268,130 +268,239 @@ function generateScreenshotTags(
   recommendations: CRORecommendation[],
   v3Result: RubricV3Result,
   signals: PageSignals,
-  positions?: any
+  positions?: any,
+  discoveredSections?: any[],
+  pageType?: string
 ): ScreenshotTag[] {
   const tags: ScreenshotTag[] = [];
   let pin = 1;
 
-  // Pin 1: Navigation Bar & Sticky Conversion Action (~2-4%)
-  tags.push({
-    id: `tag_${pin}`,
-    pinNumber: pin++,
-    title: `Navigation Bar & Action Button (${signals.conversion.primaryCtaText || "Primary CTA"})`,
-    type: signals.conversion.hasAboveTheFoldCta ? "strength" : "issue",
-    category: "cta",
-    label: "Sticky Navigation",
-    locationLabel: "Header & Navigation Bar (~3%)",
-    xPercent: positions?.navigation?.xPercent ?? (positions?.primaryCta?.xPercent ?? 85),
-    yPercent: positions?.navigation?.yPercent ?? 3,
-    directFix: "Ensure the primary action button remains pinned in the sticky navbar as visitors scroll.",
-    description: "Header navigation sets immediate context and provides global conversion access."
-  });
+  // 1. Navigation / Global Actions (ONLY if navigation was detected or CTA is above fold)
+  if (positions?.navigation || signals.conversion.hasAboveTheFoldCta) {
+    tags.push({
+      id: `tag_${pin}`,
+      pinNumber: pin++,
+      title: `Navigation & Global CTA (${signals.conversion.primaryCtaText || "Primary Action"})`,
+      type: signals.conversion.hasAboveTheFoldCta ? "strength" : "issue",
+      category: "cta",
+      label: "Global Navigation",
+      locationLabel: "Header & Navigation Bar",
+      xPercent: positions?.navigation?.xPercent ?? (positions?.primaryCta?.xPercent ?? 85),
+      yPercent: positions?.navigation?.yPercent ?? (positions?.primaryCta?.yPercent ?? 3),
+      directFix: "Ensure the primary action button remains pinned in the sticky navbar as visitors scroll.",
+      description: "Header navigation sets immediate context and provides global conversion access."
+    });
+  }
 
-  // Pin 2: Hero Headline & Problem Fit (~6-12%)
-  const heroRec = recommendations.find(r => r.section === "hero" || r.id === "rec_value_prop");
-  tags.push({
-    id: `tag_${pin}`,
-    pinNumber: pin++,
-    title: heroRec ? heroRec.title : `Hero Value Proposition: "${signals.headings.h1[0]?.slice(0, 48) || signals.title.slice(0, 48)}..."`,
-    type: heroRec ? "warning" : "strength",
-    category: "headline",
-    label: "Hero Problem Hook",
-    locationLabel: heroRec?.locationLabel || "Hero Headline (~8%)",
-    xPercent: positions?.headline?.xPercent ?? 32,
-    yPercent: positions?.headline?.yPercent ?? 8,
-    recommendationId: heroRec?.id,
-    directFix: heroRec?.directFix || "Value proposition clearly articulates core transformation.",
-    description: heroRec?.problem || "Hero H1 captures audience attention within 3 seconds."
-  });
+  // 2. Hero Headline / Problem Hook (ONLY if H1 exists)
+  if (signals.headings.h1.length > 0 || positions?.headline) {
+    const heroRec = recommendations.find(r => r.section === "hero" || r.id === "rec_value_prop");
+    tags.push({
+      id: `tag_${pin}`,
+      pinNumber: pin++,
+      title: heroRec ? heroRec.title : `Hero Value Hook: "${signals.headings.h1[0]?.slice(0, 48) || signals.title.slice(0, 48)}..."`,
+      type: heroRec ? "warning" : "strength",
+      category: "headline",
+      label: "Hero Value Hook",
+      locationLabel: heroRec?.locationLabel || "Hero Headline & Hook",
+      xPercent: positions?.headline?.xPercent ?? 32,
+      yPercent: positions?.headline?.yPercent ?? 8,
+      recommendationId: heroRec?.id,
+      directFix: heroRec?.directFix || "Value proposition clearly articulates core transformation.",
+      description: heroRec?.problem || "Hero H1 captures audience attention within 3 seconds."
+    });
+  }
 
-  // Pin 3: Primary Above-the-Fold Conversion CTA (~12-18%)
-  const ctaRec = recommendations.find(r => r.id === "rec_broken_form" || r.id === "rec_cta_commitment" || r.id === "rec_missing_cta");
-  tags.push({
-    id: `tag_${pin}`,
-    pinNumber: pin++,
-    title: ctaRec ? ctaRec.title : `Primary CTA: "${signals.conversion.primaryCtaText || 'Action'}"`,
-    type: ctaRec ? "issue" : "strength",
-    category: "cta",
-    label: "Conversion Trigger",
-    locationLabel: ctaRec?.locationLabel || "Primary Hero CTA (~14%)",
-    xPercent: positions?.primaryCta?.xPercent ?? 50,
-    yPercent: positions?.primaryCta?.yPercent ?? 14,
-    recommendationId: ctaRec?.id,
-    directFix: ctaRec?.directFix || "Above-the-fold CTA is high-contrast and action-oriented.",
-    description: ctaRec?.problem || "Primary conversion gateway matches visitor intent."
-  });
+  // 3. Primary Conversion CTA (ONLY if a CTA was found)
+  if (signals.conversion.primaryCtaText || positions?.primaryCta) {
+    const ctaRec = recommendations.find(r => r.id === "rec_broken_form" || r.id === "rec_cta_commitment" || r.id === "rec_missing_cta");
+    tags.push({
+      id: `tag_${pin}`,
+      pinNumber: pin++,
+      title: ctaRec ? ctaRec.title : `Primary CTA: "${signals.conversion.primaryCtaText || 'Action'}"`,
+      type: ctaRec ? "issue" : "strength",
+      category: "cta",
+      label: "Conversion Trigger",
+      locationLabel: ctaRec?.locationLabel || "Primary Action Area",
+      xPercent: positions?.primaryCta?.xPercent ?? 50,
+      yPercent: positions?.primaryCta?.yPercent ?? 14,
+      recommendationId: ctaRec?.id,
+      directFix: ctaRec?.directFix || "Above-the-fold CTA is high-contrast and action-oriented.",
+      description: ctaRec?.problem || "Primary conversion gateway matches visitor intent."
+    });
+  }
 
-  // Pin 4: Enterprise Social Proof Band (~22-32%)
-  const proofRec = recommendations.find(r => r.section === "social_proof");
-  tags.push({
-    id: `tag_${pin}`,
-    pinNumber: pin++,
-    title: proofRec ? proofRec.title : `Enterprise Social Proof (${signals.trust.logoCount} Customer Logos Detected)`,
-    type: proofRec ? (proofRec.priority === "high" ? "issue" : "warning") : "strength",
-    category: "social_proof",
-    label: "Social Proof Band",
-    locationLabel: proofRec?.locationLabel || "Client Logos & Badges (~26%)",
-    xPercent: positions?.socialProof?.xPercent ?? 50,
-    yPercent: positions?.socialProof?.yPercent ?? 26,
-    recommendationId: proofRec?.id,
-    directFix: proofRec?.directFix || "Enterprise logos provide early third-party credibility.",
-    description: proofRec?.problem || "Social proof establishes trust before presenting feature complexity."
-  });
+  // 4. Lead Capture Form / Modal (ONLY if form was detected in DOM or verified by Playwright)
+  if (signals.conversion.leadCaptureEngine || positions?.leadCapture) {
+    tags.push({
+      id: `tag_${pin}`,
+      pinNumber: pin++,
+      title: `Verified Lead Funnel: ${signals.conversion.leadCaptureType || 'Direct Form'}`,
+      type: "strength",
+      category: "cta",
+      label: "Lead Funnel",
+      locationLabel: "Form Input Area",
+      xPercent: positions?.leadCapture?.xPercent ?? 50,
+      yPercent: positions?.leadCapture?.yPercent ?? 22,
+      directFix: "Inline form capture minimizes multi-hop funnel drop-off.",
+      description: "Direct on-page lead capture is active and ready to receive conversions."
+    });
+  }
 
-  // Pin 5: Product Core Capabilities & Architecture (~42-54%)
-  const featRec = recommendations.find(r => r.section === "features");
-  tags.push({
-    id: `tag_${pin}`,
-    pinNumber: pin++,
-    title: featRec ? featRec.title : "Product Capabilities & Workflow Engine",
-    type: featRec ? "warning" : "strength",
-    category: "features",
-    label: "Feature Architecture",
-    locationLabel: featRec?.locationLabel || "Product Capabilities Zone (~46%)",
-    xPercent: positions?.features?.xPercent ?? 50,
-    yPercent: positions?.features?.yPercent ?? 46,
-    recommendationId: featRec?.id,
-    directFix: featRec?.directFix || "Detailed functional capabilities demonstrate enterprise readiness.",
-    description: featRec?.problem || "Core product workflow visualizes how outcomes are delivered."
-  });
+  // 5. Dynamic sections discovered in the DOM (Pricing, Code Previews, FAQs, Features, Proof)
+  if (discoveredSections && discoveredSections.length > 0) {
+    for (const sec of discoveredSections) {
+      if (sec.type === "navigation" || sec.type === "hero") continue;
 
-  // Pin 6: Customer Case Studies & Quantified Outcomes (~62-74%)
-  const casePos = positions?.caseStudy ?? { xPercent: 50, yPercent: 66 };
-  tags.push({
-    id: `tag_${pin}`,
-    pinNumber: pin++,
-    title: signals.trust.hasQuantifiedCaseStudy
-      ? `Quantified Outcome: "${signals.trust.quantifiedCaseStudyQuote?.slice(0, 50) || 'Verified ROI'}..."`
-      : "Customer Attributed Impact & Case Studies",
-    type: signals.trust.hasQuantifiedCaseStudy ? "strength" : "warning",
-    category: "social_proof",
-    label: "Customer Proof",
-    locationLabel: "Customer ROI & Case Studies (~66%)",
-    xPercent: casePos.xPercent,
-    yPercent: casePos.yPercent,
-    directFix: "Pair named enterprise leaders with concrete % deflection or ROI metrics.",
-    description: signals.trust.hasQuantifiedCaseStudy
-      ? "Specific customer outcomes reinforce buyer confidence in mid-funnel evaluation."
-      : "Mid-page sections lack customer-attributed ROI metrics."
-  });
+      if (sec.type === "pricing") {
+        tags.push({
+          id: `tag_${pin}`,
+          pinNumber: pin++,
+          title: "Pricing Tiers & Subscription Matrix",
+          type: "strength",
+          category: "cta",
+          label: "Pricing Matrix",
+          locationLabel: `Pricing Section (~${sec.yPercent}%)`,
+          xPercent: sec.xPercent,
+          yPercent: sec.yPercent,
+          directFix: "Transparent pricing tiers accelerate self-serve buyer decision making.",
+          description: "Clear tier separation and feature matrix detected."
+        });
+      } else if (sec.type === "code_snippet") {
+        tags.push({
+          id: `tag_${pin}`,
+          pinNumber: pin++,
+          title: "Developer Integration & Code Quickstart",
+          type: "strength",
+          category: "features",
+          label: "Code Quickstart",
+          locationLabel: `Developer Preview (~${sec.yPercent}%)`,
+          xPercent: sec.xPercent,
+          yPercent: sec.yPercent,
+          directFix: "Actionable code examples reduce time-to-hello-world for technical users.",
+          description: "Technical syntax highlighting and quickstart instructions detected."
+        });
+      } else if (sec.type === "faq") {
+        tags.push({
+          id: `tag_${pin}`,
+          pinNumber: pin++,
+          title: "Frequently Asked Questions & Objections",
+          type: "strength",
+          category: "features",
+          label: "Objection Handling",
+          locationLabel: `FAQ Section (~${sec.yPercent}%)`,
+          xPercent: sec.xPercent,
+          yPercent: sec.yPercent,
+          directFix: "Direct answers address buyer hesitations right before final conversion.",
+          description: "Interactive FAQ accordion overcomes common sales objections."
+        });
+      } else if (sec.type === "social_proof" && (signals.trust.logoCount > 0 || positions?.socialProof)) {
+        const proofRec = recommendations.find(r => r.section === "social_proof");
+        tags.push({
+          id: `tag_${pin}`,
+          pinNumber: pin++,
+          title: proofRec ? proofRec.title : `Customer Proof (${signals.trust.logoCount || 'Customer'} Badges)`,
+          type: proofRec ? (proofRec.priority === "high" ? "issue" : "warning") : "strength",
+          category: "social_proof",
+          label: "Customer Proof",
+          locationLabel: proofRec?.locationLabel || `Social Proof Band (~${sec.yPercent}%)`,
+          xPercent: sec.xPercent,
+          yPercent: sec.yPercent,
+          recommendationId: proofRec?.id,
+          directFix: proofRec?.directFix || "Customer proof establishes third-party validation.",
+          description: proofRec?.problem || "Customer logos provide immediate authority."
+        });
+      } else if (sec.type === "features" && positions?.features) {
+        const featRec = recommendations.find(r => r.section === "features");
+        tags.push({
+          id: `tag_${pin}`,
+          pinNumber: pin++,
+          title: featRec ? featRec.title : "Product Capabilities & Workflow Engine",
+          type: featRec ? "warning" : "strength",
+          category: "features",
+          label: "Capabilities",
+          locationLabel: featRec?.locationLabel || `Feature Zone (~${sec.yPercent}%)`,
+          xPercent: sec.xPercent,
+          yPercent: sec.yPercent,
+          recommendationId: featRec?.id,
+          directFix: featRec?.directFix || "Clear capability breakdown explains how value is delivered.",
+          description: featRec?.problem || "Core product workflow visualizes platform value."
+        });
+      }
+    }
+  } else {
+    // Dynamic Fallback: ONLY emit pins for elements that were actually detected!
+    if (signals.trust.logoCount > 0 && positions?.socialProof) {
+      const proofRec = recommendations.find(r => r.section === "social_proof");
+      tags.push({
+        id: `tag_${pin}`,
+        pinNumber: pin++,
+        title: proofRec ? proofRec.title : `Customer Proof (${signals.trust.logoCount} Badges)`,
+        type: proofRec ? (proofRec.priority === "high" ? "issue" : "warning") : "strength",
+        category: "social_proof",
+        label: "Customer Proof",
+        locationLabel: proofRec?.locationLabel || "Customer Logos & Badges",
+        xPercent: positions.socialProof.xPercent,
+        yPercent: positions.socialProof.yPercent,
+        recommendationId: proofRec?.id,
+        directFix: proofRec?.directFix || "Social proof builds trust.",
+        description: proofRec?.problem || "Third-party validation."
+      });
+    }
 
-  // Pin 7: Bottom-Funnel Funnel & Footer Dock (~84-94%)
-  const funnelRec = recommendations.find(r => r.section === "footer");
-  tags.push({
-    id: `tag_${pin}`,
-    pinNumber: pin++,
-    title: funnelRec ? funnelRec.title : "Deep Funnel Conversion & Footer",
-    type: funnelRec ? "warning" : "strength",
-    category: "footer",
-    label: "Deep Funnel CTA",
-    locationLabel: funnelRec?.locationLabel || "Bottom Conversion Funnel (~88%)",
-    xPercent: positions?.bottomFunnel?.xPercent ?? 50,
-    yPercent: positions?.bottomFunnel?.yPercent ?? 88,
-    recommendationId: funnelRec?.id,
-    directFix: funnelRec?.directFix || "Re-engages visitors who scrolled through the entire page.",
-    description: funnelRec?.problem || "Footer conversion anchor ensures no visitor leaves without a clear next step."
-  });
+    if (positions?.features) {
+      const featRec = recommendations.find(r => r.section === "features");
+      tags.push({
+        id: `tag_${pin}`,
+        pinNumber: pin++,
+        title: featRec ? featRec.title : "Product Capabilities & Workflow",
+        type: featRec ? "warning" : "strength",
+        category: "features",
+        label: "Capabilities",
+        locationLabel: featRec?.locationLabel || "Feature Breakdown",
+        xPercent: positions.features.xPercent,
+        yPercent: positions.features.yPercent,
+        recommendationId: featRec?.id,
+        directFix: featRec?.directFix || "Shows how outcomes are achieved.",
+        description: featRec?.problem || "Visualizes capabilities."
+      });
+    }
+
+    if (signals.trust.hasQuantifiedCaseStudy && positions?.caseStudy) {
+      tags.push({
+        id: `tag_${pin}`,
+        pinNumber: pin++,
+        title: `Quantified Outcome: "${signals.trust.quantifiedCaseStudyQuote?.slice(0, 48) || 'Verified Metric'}..."`,
+        type: "strength",
+        category: "social_proof",
+        label: "Verified Case Study",
+        locationLabel: "Customer Outcome Section",
+        xPercent: positions.caseStudy.xPercent,
+        yPercent: positions.caseStudy.yPercent,
+        directFix: "Quantified customer metrics validate ROI claims.",
+        description: "Customer quote provides empirical proof."
+      });
+    }
+  }
+
+  // Final: Bottom Funnel Re-engagement (ONLY if bottom funnel element was detected)
+  if (positions?.bottomFunnel) {
+    const funnelRec = recommendations.find(r => r.section === "footer");
+    tags.push({
+      id: `tag_${pin}`,
+      pinNumber: pin++,
+      title: funnelRec ? funnelRec.title : "Deep Funnel Re-engagement & Footer",
+      type: funnelRec ? "warning" : "strength",
+      category: "footer",
+      label: "Deep Funnel CTA",
+      locationLabel: funnelRec?.locationLabel || "Bottom Conversion Funnel",
+      xPercent: positions.bottomFunnel.xPercent,
+      yPercent: positions.bottomFunnel.yPercent,
+      recommendationId: funnelRec?.id,
+      directFix: funnelRec?.directFix || "Captures visitors who scrolled through entire page.",
+      description: funnelRec?.problem || "Provides clear closing conversion opportunity."
+    });
+  }
 
   return tags;
 }
@@ -520,7 +629,9 @@ export async function gradeLandingPage(
     recommendations,
     v3Result,
     signals,
-    verification?.elementPositions
+    verification?.elementPositions,
+    verification?.discoveredSections,
+    classification.pageType
   );
 
   const summary = `Evaluated ${classification.pageType.toUpperCase()} page targeting ${classification.targetAudience.roles.join(", ") || "enterprise stakeholders"}. Achieved ${v3Result.totalScore}/100 (${letterGrade}) across Persuasion (${v3Result.dimensions.persuasion.score}/${v3Result.dimensions.persuasion.maxScore}), Execution (${v3Result.dimensions.execution.score}/${v3Result.dimensions.execution.maxScore}), and Experience (${v3Result.dimensions.experience.score}/${v3Result.dimensions.experience.maxScore}).`;
