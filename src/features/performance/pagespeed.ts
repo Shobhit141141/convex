@@ -25,7 +25,7 @@ export async function fetchPageSpeedMetrics(
     headers: {
       Accept: "application/json"
     },
-    signal: AbortSignal.timeout(9000)
+    signal: AbortSignal.timeout(20000)
   });
 
   if (!response.ok) {

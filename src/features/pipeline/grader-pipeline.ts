@@ -610,18 +610,6 @@ export async function gradeLandingPage(
     const extracted = await extractLivePage(rawUrl, 10000);
     signals = extracted.signals;
     rawInput = extracted.rawInput;
-
-    // Fetch live Google PageSpeed Insights v5 metrics (uses PAGESPEED_API_KEY when set, or public v5 quota with graceful fallback)
-    try {
-      const ps = await fetchPageSpeedMetrics(rawUrl, options.pageSpeedApiKey || process.env.PAGESPEED_API_KEY);
-      signals.performance.lcpSeconds = ps.lcpSeconds;
-      signals.performance.cls = ps.cls;
-      signals.performance.fcpSeconds = ps.fcpSeconds;
-      signals.performance.mobileLighthouseScore = ps.lighthouseScore;
-      signals.performance.source = "pagespeed_api";
-    } catch {
-      // Keep estimated fallback if rate-limited or offline
-    }
   }
 
   emit(
@@ -631,11 +619,12 @@ export async function gradeLandingPage(
     `Parsed ${signals.wordCount} words • H1: "${(signals.headings.h1[0] || signals.title).slice(0, 44)}" • CTA: "${signals.conversion.primaryCtaText || "None"}"`
   );
 
-  // Run AI Classification, AI Semantic Evaluation, and Playwright verification in PARALLEL
+  // Run AI Classification, AI Semantic Evaluation, Playwright verification, and Google PageSpeed Insights v5 in PARALLEL
   const apiKey = process.env.OPENAI_API_KEY;
   const aiClassifier = createOpenAIClassifier(apiKey, "gpt-4o-mini");
   const semanticEvaluator = apiKey ? new SemanticEvaluator(apiKey, "gpt-4o-mini", "gpt-4o-mini", 10000) : null;
   const shouldRunPlaywright = options.enableLivePlaywright ?? true;
+  const pageSpeedKey = options.pageSpeedApiKey || process.env.PAGESPEED_API_KEY;
 
   let completedTasks = 0;
   const nextParallelPercent = () => {
@@ -684,7 +673,20 @@ export async function gradeLandingPage(
           : "Completed conversion funnel verification"
       );
       return res;
-    })
+    }),
+    (!isBenchmark
+      ? fetchPageSpeedMetrics(signals.url, pageSpeedKey)
+          .then((ps) => {
+            signals.performance.lcpSeconds = ps.lcpSeconds;
+            signals.performance.cls = ps.cls;
+            signals.performance.fcpSeconds = ps.fcpSeconds;
+            signals.performance.mobileLighthouseScore = ps.lighthouseScore;
+            signals.performance.source = "pagespeed_api";
+          })
+          .catch(() => {
+            // Keep estimated fallback if rate-limited or offline
+          })
+      : Promise.resolve())
   ]);
 
   // Calculate Rubric v3 Score
