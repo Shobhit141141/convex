@@ -505,14 +505,52 @@ function generateScreenshotTags(
   return tags;
 }
 
+export interface PipelineProgressEvent {
+  step:
+    | "fetch_dom"
+    | "dom_complete"
+    | "classify_done"
+    | "semantic_done"
+    | "playwright_done"
+    | "scoring_done"
+    | "complete";
+  percent: number;
+  stageLabel: string;
+  detail: string;
+  elapsedMs: number;
+}
+
 export async function gradeLandingPage(
   rawUrl: string,
   options: {
     enableLivePlaywright?: boolean;
     pageSpeedApiKey?: string;
+    onProgress?: (event: PipelineProgressEvent) => void;
   } = {}
 ): Promise<GraderReport> {
+  const startTime = Date.now();
+  const emit = (
+    step: PipelineProgressEvent["step"],
+    percent: number,
+    stageLabel: string,
+    detail: string
+  ) => {
+    options.onProgress?.({
+      step,
+      percent,
+      stageLabel,
+      detail,
+      elapsedMs: Date.now() - startTime
+    });
+  };
+
   const normUrl = rawUrl.trim().toLowerCase();
+  emit(
+    "fetch_dom",
+    10,
+    "Fetching HTML & parsing DOM",
+    `Connecting to ${rawUrl.trim()} and extracting headings, CTAs, and metadata...`
+  );
 
   // Benchmark URL acceleration / calibration mapping
   const isBenchmark =
@@ -587,22 +625,67 @@ export async function gradeLandingPage(
     }
   }
 
+  emit(
+    "dom_complete",
+    28,
+    "DOM & page signals extracted",
+    `Parsed ${signals.wordCount} words • H1: "${(signals.headings.h1[0] || signals.title).slice(0, 44)}" • CTA: "${signals.conversion.primaryCtaText || "None"}"`
+  );
+
   // Run AI Classification, AI Semantic Evaluation, and Playwright verification in PARALLEL
   const apiKey = process.env.OPENAI_API_KEY;
   const aiClassifier = createOpenAIClassifier(apiKey, "gpt-4o-mini");
   const semanticEvaluator = apiKey ? new SemanticEvaluator(apiKey, "gpt-4o-mini", "gpt-4o-mini", 10000) : null;
   const shouldRunPlaywright = options.enableLivePlaywright ?? true;
 
+  let completedTasks = 0;
+  const nextParallelPercent = () => {
+    completedTasks += 1;
+    return 28 + completedTasks * 20; // 48% -> 68% -> 88%
+  };
+
   const [classification, semanticEval, verification] = await Promise.all([
-    classifyPage(rawInput, aiClassifier),
-    semanticEvaluator ? semanticEvaluator.evaluate(rawInput).catch(() => undefined) : Promise.resolve(undefined),
-    shouldRunPlaywright
+    classifyPage(rawInput, aiClassifier).then((res) => {
+      emit(
+        "classify_done",
+        nextParallelPercent(),
+        "Audience & page intent classified",
+        `Type: ${res.pageType.toUpperCase()} • Target ICP: ${res.targetAudience.roles.slice(0, 2).join(", ") || "Enterprise"} • Intent: ${res.visitorIntent.toUpperCase()}`
+      );
+      return res;
+    }),
+    (semanticEvaluator
+      ? semanticEvaluator.evaluate(rawInput).catch(() => undefined)
+      : Promise.resolve(undefined)
+    ).then((res) => {
+      emit(
+        "semantic_done",
+        nextParallelPercent(),
+        "Persuasion copy analysis complete",
+        res
+          ? `Evaluated 5 persuasion checks (Problem fit: ${res.audienceProblemFit.score}/10, Value prop: ${res.valuePropositionStrength.score}/10)`
+          : "Evaluated copy persuasion via deterministic heuristics"
+      );
+      return res;
+    }),
+    (shouldRunPlaywright
       ? verifyConversionInteraction(
           signals.url,
           signals.conversion.primaryCtaText,
           { timeoutMs: 6000, captureScreenshot: true }
         ).catch(() => undefined)
       : Promise.resolve(undefined)
+    ).then((res) => {
+      emit(
+        "playwright_done",
+        nextParallelPercent(),
+        "Live browser & full-page render complete",
+        res?.screenshotBase64
+          ? `Captured full-page render (${res.discoveredSections?.length || 0} sections) • CTA test: ${res.verificationStatus}`
+          : "Completed conversion funnel verification"
+      );
+      return res;
+    })
   ]);
 
   // Calculate Rubric v3 Score
@@ -632,6 +715,13 @@ export async function gradeLandingPage(
     verification?.elementPositions,
     verification?.discoveredSections,
     classification.pageType
+  );
+
+  emit(
+    "scoring_done",
+    96,
+    "Rubric v3 & section pins computed",
+    `Final score: ${v3Result.totalScore}/100 (Grade ${letterGrade}) • Mapped ${screenshotTags.length} visual pins`
   );
 
   const summary = `Evaluated ${classification.pageType.toUpperCase()} page targeting ${classification.targetAudience.roles.join(", ") || "enterprise stakeholders"}. Achieved ${v3Result.totalScore}/100 (${letterGrade}) across Persuasion (${v3Result.dimensions.persuasion.score}/${v3Result.dimensions.persuasion.maxScore}), Execution (${v3Result.dimensions.execution.score}/${v3Result.dimensions.execution.maxScore}), and Experience (${v3Result.dimensions.experience.score}/${v3Result.dimensions.experience.maxScore}).`;

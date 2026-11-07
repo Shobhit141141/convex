@@ -4,7 +4,8 @@ import { z } from "zod";
 
 const GradeRequestSchema = z.object({
   url: z.string().min(3, "URL is required"),
-  enablePlaywright: z.boolean().optional().default(true)
+  enablePlaywright: z.boolean().optional().default(true),
+  stream: z.boolean().optional().default(false)
 });
 
 export async function POST(req: NextRequest) {
@@ -22,7 +23,52 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { url, enablePlaywright } = parsed.data;
+    const { url, enablePlaywright, stream } = parsed.data;
+
+    if (stream) {
+      const encoder = new TextEncoder();
+      const readable = new ReadableStream({
+        async start(controller) {
+          const send = (payload: Record<string, unknown>) => {
+            try {
+              controller.enqueue(encoder.encode(JSON.stringify(payload) + "\n"));
+            } catch {
+              // Stream closed by client
+            }
+          };
+
+          try {
+            const report = await gradeLandingPage(url, {
+              enableLivePlaywright: enablePlaywright,
+              pageSpeedApiKey: process.env.PAGESPEED_API_KEY,
+              onProgress: (event) => {
+                send({ type: "progress", event });
+              }
+            });
+
+            send({ type: "result", success: true, report });
+          } catch (err: any) {
+            send({
+              type: "error",
+              success: false,
+              error: err.message || "Failed to evaluate page."
+            });
+          } finally {
+            try {
+              controller.close();
+            } catch {}
+          }
+        }
+      });
+
+      return new Response(readable, {
+        headers: {
+          "Content-Type": "application/x-ndjson; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive"
+        }
+      });
+    }
 
     const report = await gradeLandingPage(url, {
       enableLivePlaywright: enablePlaywright,

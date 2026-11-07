@@ -28,8 +28,11 @@ import {
   Flame,
   Wrench,
   TrendingUp,
-  Crosshair
+  Crosshair,
+  Info,
+  Calculator
 } from "lucide-react";
+import { V3CriterionScore } from "@/types/rubric-v3-schema";
 
 // Circular SVG Progress Ring (Uniform across Hero, Dimensions, Web Vitals, and Criterion Rows)
 function ScoreRing({
@@ -173,6 +176,166 @@ const METHOD_META = {
   }
 } as const;
 
+// Complete algorithm & mathematical formula lookup for every Rubric v3 criterion
+function getCriterionAlgorithm(criterion: V3CriterionScore): {
+  formula: string;
+  calculation: string;
+  tiers: string[];
+  reasoning: string;
+} {
+  const earned = criterion.earnedPoints;
+  const max = criterion.maxPoints;
+  const rawRating = max > 0 ? Math.round((earned / max) * 10 * 10) / 10 : 0;
+  const reasoning = criterion.notes || criterion.scoringRule;
+
+  switch (criterion.id) {
+    case "persuasion_problem_fit":
+      return {
+        formula: "Earned = min(10, round((SemanticRating / 10) × 10, 1))",
+        calculation: `Rating ${rawRating}/10 → (${rawRating} / 10) × 10 = ${earned} / 10 pts`,
+        tiers: [
+          "Passed (≥ 8.0 pts): High pain-point specificity + explicit problem quote in hero/headings",
+          "Partial (4.0 – 7.9 pts): Generic problem mentioned without concrete operational pain",
+          "Failed (< 4.0 pts): No identifiable buyer pain point articulated"
+        ],
+        reasoning
+      };
+    case "persuasion_value_prop":
+      return {
+        formula: "Earned = min(12, round((SemanticRating / 10) × 12, 1))",
+        calculation: `Rating ${rawRating}/10 → round((${rawRating} / 10) × 12, 1) = ${earned} / 12 pts`,
+        tiers: [
+          "Passed (≥ 9.0 pts): Clear H1 outcome + quantified impact (%) + speed-to-value stated",
+          "Partial (5.0 – 8.9 pts): Clear value statement but missing quantified metric or timeframe",
+          "Failed (< 5.0 pts): Vague slogan without measurable outcome"
+        ],
+        reasoning
+      };
+    case "persuasion_credibility":
+      return {
+        formula: "Earned = min(10, round((CredibilityRating / 10) × 10, 1))",
+        calculation: `Rating ${rawRating}/10 → (${rawRating} / 10) × 10 = ${earned} / 10 pts`,
+        tiers: [
+          "Passed (≥ 8.0 pts): Customer-attributed metrics + named case studies + 3rd-party trust badges",
+          "Partial (4.0 – 7.9 pts): Logo wall (≥ 3 logos) or unattributed company claims only",
+          "Failed (< 4.0 pts): No verifiable social proof or customer evidence"
+        ],
+        reasoning
+      };
+    case "persuasion_audience_alignment":
+      return {
+        formula: "Earned = min(10, round((AlignmentRating / 10) × 10, 1))",
+        calculation: `Rating ${rawRating}/10 → (${rawRating} / 10) × 10 = ${earned} / 10 pts`,
+        tiers: [
+          "Passed (≥ 8.0 pts): Role-specific domain vocabulary + zero audience misalignment",
+          "Partial (4.0 – 7.9 pts): Broad enterprise terminology applicable to multiple personas",
+          "Failed (< 4.0 pts): Copy contradicts or ignores target buyer persona"
+        ],
+        reasoning
+      };
+    case "persuasion_offer_attractiveness":
+      return {
+        formula: "Earned = min(8, round((OfferRating / 10) × 8, 1))",
+        calculation: `Rating ${rawRating}/10 → round((${rawRating} / 10) × 8, 1) = ${earned} / 8 pts`,
+        tiers: [
+          "Passed (≥ 6.0 pts): High CTA-to-problem relevance + low perceived commitment friction",
+          "Partial (3.0 – 5.9 pts): Standard high-commitment CTA ('Book Demo') without friction reducer",
+          "Failed (< 3.0 pts): Generic or mismatched conversion offer"
+        ],
+        reasoning
+      };
+    case "exec_cta_effectiveness":
+      return {
+        formula: "Earned = AboveFold(+5) + ActionOrientedVerb(+3) + NextStepMicrocopy(+2)",
+        calculation: `${criterion.checks?.map((c) => `${c.label.split(" (")[0]}: ${c.passed ? c.label.match(/\+\d+/)?.[0] || "+pts" : "+0"}`).join(" + ") || criterion.scoringRule} = ${earned} / 10 pts`,
+        tiers: [
+          "+5 pts: Primary CTA positioned in above-the-fold hero viewport",
+          "+3 pts: Starts with strong action verb (Book, Start, Get, Try, Request, Launch)",
+          "+2 pts: Supporting microcopy clarifies what happens after clicking"
+        ],
+        reasoning
+      };
+    case "exec_promise_destination":
+      return {
+        formula: "Earned = PageType & Intent Consistency Rule (0, 3, 4, or 7–8 pts)",
+        calculation: `${criterion.scoringRule} → ${earned} / 8 pts`,
+        tiers: [
+          "7–8 pts (Passed): CTA destination directly fulfills the headline promise & visitor intent",
+          "3–4 pts (Partial): Content/webinar promise gated behind a mismatched sales modal",
+          "0 pts (Failed): Missing primary CTA cannot fulfill page promise"
+        ],
+        reasoning
+      };
+    case "exec_lead_capture_usability":
+      return {
+        formula: "Earned = InteractiveFormVerified(10) | StaticDOMForm(8) | ScriptOnly(3.5–4) | Missing(0)",
+        calculation: `${criterion.scoringRule} → ${earned} / 10 pts`,
+        tiers: [
+          "10 pts (Passed): Live browser click verified interactive form/modal renders & accepts input",
+          "8 pts (Passed): Explicit <form> & <input> fields verified in static DOM",
+          "3.5–4 pts (Partial): External form script (e.g., HubSpot) detected but live render unverified",
+          "0 pts (Failed): No lead capture form or script detected"
+        ],
+        reasoning
+      };
+    case "exec_friction_load":
+      return {
+        formula: "Earned = FieldCount ≤ 4 ? 7 : FieldCount ≤ 7 ? 4.5 : 2 (0 if no CTA)",
+        calculation: `${criterion.evidence} → ${earned} / 7 pts`,
+        tiers: [
+          "7.0 pts (Passed): Low friction (≤ 4 form fields or streamlined work-email flow)",
+          "4.5 pts (Partial): Moderate friction (5–7 form fields)",
+          "2.0 pts (Partial): High drop-off risk (> 7 form fields)"
+        ],
+        reasoning
+      };
+    case "exp_lcp_speed":
+      return {
+        formula: "Earned = LCP ≤ 2.5s ? 5 : LCP ≤ 4.0s ? 2.5 : 0",
+        calculation: `${criterion.evidence} → ${earned} / 5 pts`,
+        tiers: [
+          "5.0 pts (Good): LCP ≤ 2.5 seconds",
+          "2.5 pts (Needs Improvement): 2.5s < LCP ≤ 4.0 seconds",
+          "0.0 pts (Poor): LCP > 4.0 seconds"
+        ],
+        reasoning
+      };
+    case "exp_cls_stability":
+      return {
+        formula: "Earned = CLS ≤ 0.10 ? 4 : CLS ≤ 0.25 ? 2 : 0",
+        calculation: `${criterion.evidence} → ${earned} / 4 pts`,
+        tiers: [
+          "4.0 pts (Good): CLS ≤ 0.100 (visually stable layout)",
+          "2.0 pts (Needs Improvement): 0.100 < CLS ≤ 0.250",
+          "0.0 pts (Poor): CLS > 0.250 (severe layout shift)"
+        ],
+        reasoning
+      };
+    case "exp_mobile_viewport":
+      return {
+        formula: "Earned = hasViewportMeta ? 3 : 0",
+        calculation: `${criterion.evidence} → ${earned} / 3 pts`,
+        tiers: [
+          "3.0 pts (Passed): Responsive meta[name='viewport'] tag present",
+          "0.0 pts (Failed): Missing mobile viewport configuration"
+        ],
+        reasoning
+      };
+    case "exp_text_readability":
+    default:
+      return {
+        formula: "Earned = (hasClearH1 && wordCount ≥ 100) ? 3 : hasClearH1 ? 1.5 : 0",
+        calculation: `${criterion.evidence} → ${earned} / ${max} pts`,
+        tiers: [
+          "3.0 pts (Passed): Clear single H1 heading + substantive copy (≥ 100 words)",
+          "1.5 pts (Partial): Clear H1 present but thin body copy (< 100 words)",
+          "0.0 pts (Failed): Missing H1 heading structure"
+        ],
+        reasoning
+      };
+  }
+}
+
 export default function Home() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -185,27 +348,10 @@ export default function Home() {
   const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
   const [isScreenshotExpanded, setIsScreenshotExpanded] = useState(false);
   const [progress, setProgress] = useState(0);
-
-  // Dynamic 0% -> 100% realistic progress tracker
-  React.useEffect(() => {
-    if (!loading) {
-      setProgress(0);
-      return;
-    }
-
-    setProgress(8);
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev < 24) return prev + Math.floor(Math.random() * 4 + 3);
-        if (prev < 55) return prev + Math.floor(Math.random() * 3 + 2);
-        if (prev < 82) return prev + Math.floor(Math.random() * 2 + 1);
-        if (prev < 95) return prev + 1;
-        return 95; // Hold at 95% until response arrives
-      });
-    }, 240);
-
-    return () => clearInterval(interval);
-  }, [loading]);
+  const [progressEvents, setProgressEvents] = useState<
+    Array<{ step: string; percent: number; stageLabel: string; detail: string; elapsedMs: number }>
+  >([]);
+  const [openAlgoId, setOpenAlgoId] = useState<string | null>(null);
 
   const screenshotContainerRef = useRef<HTMLDivElement>(null);
 
@@ -228,26 +374,57 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setSelectedTagId(null);
+    setProgress(4);
+    setProgressEvents([]);
 
     try {
       const res = await fetch("/api/grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: cleanUrl, enablePlaywright: true })
+        body: JSON.stringify({ url: cleanUrl, enablePlaywright: true, stream: true })
       });
 
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || "Failed to analyze page.");
+      if (!res.ok || !res.body) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Request failed with status ${res.status}`);
       }
 
-      // Smooth completion to 100%
-      setProgress(100);
-      await new Promise((resolve) => setTimeout(resolve, 320));
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalReport: GraderReport | null = null;
 
-      setReport(data.report);
-      if (data.report.screenshotTags && data.report.screenshotTags.length > 0) {
-        setSelectedTagId(data.report.screenshotTags[0].id);
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (!line) continue;
+          const msg = JSON.parse(line);
+          if (msg.type === "progress" && msg.event) {
+            setProgress(msg.event.percent);
+            setProgressEvents((prev) => [...prev, msg.event]);
+          } else if (msg.type === "result" && msg.success && msg.report) {
+            finalReport = msg.report;
+            setProgress(100);
+          } else if (msg.type === "error") {
+            throw new Error(msg.error || "Failed to analyze page.");
+          }
+        }
+      }
+
+      if (!finalReport) {
+        throw new Error("Evaluation stream ended without returning a report.");
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 220));
+      setReport(finalReport);
+      if (finalReport.screenshotTags && finalReport.screenshotTags.length > 0) {
+        setSelectedTagId(finalReport.screenshotTags[0].id);
       }
     } catch (err: any) {
       setError(err.message || "Failed to analyze page.");
@@ -262,6 +439,8 @@ export default function Home() {
     setUrl("");
     setSelectedTagId(null);
     setProgress(0);
+    setProgressEvents([]);
+    setOpenAlgoId(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -417,47 +596,70 @@ export default function Home() {
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
                     </span>
                     <span className="text-xs font-semibold text-white tracking-tight">
-                      Audience & Conversion Audit in Progress
+                      {progressEvents.length > 0
+                        ? progressEvents[progressEvents.length - 1].stageLabel
+                        : "Connecting to Live Evaluation Pipeline..."}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-md">
+                    <span className="text-[11px] font-mono font-bold text-zinc-100 bg-zinc-950 border border-zinc-800 px-2.5 py-0.5 rounded-md tabular-nums">
                       {progress}%
                     </span>
                   </div>
                 </div>
 
-                {/* 0% -> 100% Responsive Filling Bar */}
+                {/* Real-Time Server Milestone Progress Bar */}
                 <div className="space-y-1.5">
-                  <div className="w-full h-2.5 bg-zinc-950 rounded-full overflow-hidden p-0.5 border border-zinc-800">
+                  <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
                     <div
-                      className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 rounded-full transition-all duration-300 ease-out shadow-sm"
+                      className="h-full bg-white rounded-full transition-all duration-300 ease-out"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                   <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
-                    <span>0% Init</span>
-                    <span>25% DOM</span>
-                    <span>60% Render</span>
-                    <span>85% Rubric</span>
-                    <span>100% Studio</span>
+                    <span className={progress >= 10 ? "text-zinc-300" : ""}>10% Fetch DOM</span>
+                    <span className={progress >= 28 ? "text-zinc-300" : ""}>28% Signals</span>
+                    <span className={progress >= 48 ? "text-zinc-300" : ""}>68% AI & Browser</span>
+                    <span className={progress >= 96 ? "text-zinc-300" : ""}>96% Rubric v3</span>
+                    <span className={progress >= 100 ? "text-emerald-400" : ""}>100% Done</span>
                   </div>
                 </div>
 
-                <div className="space-y-1 pt-1 border-t border-zinc-800/80">
-                  <div className="text-xs font-medium text-zinc-200 flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>
-                      {progress < 25 && "Phase 1: Extracting DOM tree, headings, and CTA paths..."}
-                      {progress >= 25 && progress < 60 && "Phase 2: Launching Playwright & capturing full-page screenshot..."}
-                      {progress >= 60 && progress < 85 && "Phase 3: Evaluating conversion persuasion rubric & gates..."}
-                      {progress >= 85 && progress < 100 && "Phase 4: Pinpointing visual section hotspots & Core Web Vitals..."}
-                      {progress >= 100 && "Complete! Assembling Visual Audit Studio..."}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-zinc-400 leading-relaxed pl-5.5">
-                    Assessing ICP audience alignment, inspecting interactive lead funnels, and tagging minute page zones across full page height.
-                  </p>
+                {/* Live Server Telemetry Feed */}
+                <div className="space-y-1.5 pt-2 border-t border-zinc-800/80 max-h-48 overflow-y-auto font-mono">
+                  {progressEvents.length === 0 ? (
+                    <div className="text-[11px] text-zinc-400 flex items-center gap-2 py-1">
+                      <Loader2 className="w-3 h-3 animate-spin text-zinc-400 shrink-0" />
+                      <span>Initializing server stream & requesting target URL...</span>
+                    </div>
+                  ) : (
+                    progressEvents.map((ev, idx) => {
+                      const isLatest = idx === progressEvents.length - 1;
+                      return (
+                        <div
+                          key={`${ev.step}-${idx}`}
+                          className={`flex items-start justify-between gap-3 text-[11px] py-1 px-2 rounded ${
+                            isLatest ? "bg-zinc-950/90 text-zinc-100 border border-zinc-800/80" : "text-zinc-400"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2 min-w-0">
+                            <CheckCircle2
+                              className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+                                isLatest ? "text-emerald-400" : "text-zinc-600"
+                              }`}
+                            />
+                            <div className="min-w-0">
+                              <span className="font-semibold text-zinc-200">{ev.stageLabel}: </span>
+                              <span className="text-zinc-400 break-words">{ev.detail}</span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-zinc-500 shrink-0 tabular-nums">
+                            {(ev.elapsedMs / 1000).toFixed(1)}s
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}
@@ -507,8 +709,8 @@ export default function Home() {
                   </p>
                 </div>
 
-                {/* Right: Prominent Overall Score Circular Hero Pod */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-5 p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800/90 shadow-inner shrink-0">
+                {/* Right: Prominent Overall Score Circular Hero Pod + Algorithm Tooltip Popover */}
+                <div className="relative flex flex-wrap sm:flex-nowrap items-center gap-5 p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800/90 shadow-inner shrink-0">
                   <ScoreRing
                     value={report.totalScore}
                     max={100}
@@ -526,9 +728,90 @@ export default function Home() {
                   />
 
                   <div className="space-y-2">
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
-                      Overall Conversion Score
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                        Overall Conversion Score
+                      </span>
+
+                      {/* Overall Algorithm & Formula Tooltip Popover Trigger */}
+                      <div
+                        className="relative"
+                        onMouseEnter={() => setOpenAlgoId("overall_hero")}
+                        onMouseLeave={() => setOpenAlgoId((prev) => (prev === "overall_hero" ? null : prev))}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenAlgoId((prev) => (prev === "overall_hero" ? null : "overall_hero"))
+                          }
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-[10px] font-mono text-zinc-300 hover:text-white transition-colors"
+                        >
+                          <Calculator className="w-3 h-3 text-zinc-400" />
+                          Algo & Formula
+                        </button>
+
+                        {openAlgoId === "overall_hero" && (
+                          <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 p-4 rounded-xl bg-zinc-950 border border-zinc-700 shadow-2xl z-50 text-left space-y-3">
+                            <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                              <span className="text-xs font-semibold text-white flex items-center gap-1.5">
+                                <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+                                Rubric v3 Master Scoring Algorithm
+                              </span>
+                              <span className="text-[10px] font-mono text-zinc-400">100 Pts Max</span>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="text-[10px] font-mono uppercase text-zinc-500">Exact Mathematical Formula</div>
+                              <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-[11px] text-emerald-300 leading-relaxed">
+                                Total = round(Persuasion + min(Execution, GateCap) + Experience)
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="text-[10px] font-mono uppercase text-zinc-500">Live Score Substitution</div>
+                              <div className="p-2 rounded-lg bg-zinc-900/70 border border-zinc-800/80 font-mono text-[11px] text-zinc-200 space-y-1">
+                                <div className="flex justify-between">
+                                  <span className="text-zinc-400">A. Conversion Persuasion:</span>
+                                  <span>{report.dimensions.persuasion.score} / 50 pts</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-zinc-400">B. Conversion Execution:</span>
+                                  <span>
+                                    {report.dimensions.execution.score} / 35 pts
+                                    {report.dimensions.execution.gateApplied ? " (Gated)" : ""}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-zinc-400">C. Supporting Experience:</span>
+                                  <span>{report.dimensions.experience.score} / 15 pts</span>
+                                </div>
+                                <div className="border-t border-zinc-800 pt-1 flex justify-between font-bold text-white">
+                                  <span>Final Computed Score:</span>
+                                  <span>
+                                    round({report.dimensions.persuasion.score} + {report.dimensions.execution.score} +{" "}
+                                    {report.dimensions.experience.score}) = {report.totalScore} / 100
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1 text-[11px] text-zinc-400 leading-relaxed">
+                              <div className="text-[10px] font-mono uppercase text-zinc-500">Conversion-Readiness Gates & Grades</div>
+                              <p>
+                                • <strong className="text-zinc-200">Missing CTA Gate:</strong> Caps Execution at 20% (7.0/35 pts).
+                              </p>
+                              <p>
+                                • <strong className="text-zinc-200">Missing Lead Capture Gate:</strong> Caps Execution at 30% (10.5/35 pts).
+                              </p>
+                              <p className="text-[10px] font-mono text-zinc-500 pt-1">
+                                Grades: A (≥85) • B (70–84) • C (55–69) • D (40–54) • F (&lt;40)
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
+
                     <div className="flex items-center gap-2.5">
                       <span
                         className={`inline-flex items-center justify-center px-3 py-1 rounded-lg font-bold text-base border shadow-sm ${
@@ -586,74 +869,49 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Audience & Conversion Context Matrix */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              {/* Minimal, Monochromatic Editorial Context Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800/80 rounded-xl border border-zinc-800/80 bg-zinc-950/50 text-xs">
                 {/* 1. Target Audience */}
-                <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
-                  <div className="flex items-center gap-1.5 text-zinc-400">
-                    <Target className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">
-                      Target Audience (ICP)
-                    </span>
+                <div className="p-3.5 space-y-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                    Target Audience (ICP)
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {report.targetAudience.roles.length > 0 ? (
-                      report.targetAudience.roles.slice(0, 3).map((role, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200 text-[11px] font-medium"
-                        >
-                          {role}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-zinc-300 font-medium text-xs">
-                        Enterprise B2B Buyers
-                      </span>
-                    )}
+                  <div className="text-xs font-semibold text-zinc-100 truncate">
+                    {report.targetAudience.roles.length > 0
+                      ? report.targetAudience.roles.slice(0, 2).join(" • ")
+                      : "Enterprise B2B Buyers"}
                   </div>
-                  <div className="text-[10px] text-zinc-500 font-mono">
+                  <div className="text-[11px] text-zinc-500 truncate">
                     {report.targetAudience.segments[0] || "B2B Decision Makers"}
                   </div>
                 </div>
 
                 {/* 2. Primary Conversion Action */}
-                <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
-                  <div className="flex items-center gap-1.5 text-zinc-400">
-                    <Zap className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">
-                      Primary Conversion Action
-                    </span>
+                <div className="p-3.5 space-y-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                    Primary Conversion Action
                   </div>
-                  <div>
-                    {report.signalsPreview.primaryCtaText ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-950/50 border border-amber-800/60 text-amber-300 font-medium text-xs font-mono">
-                        "{report.signalsPreview.primaryCtaText}"
-                        <ArrowRight className="w-3 h-3 text-amber-400" />
-                      </span>
-                    ) : (
-                      <span className="text-zinc-500 text-xs">No CTA Detected</span>
-                    )}
+                  <div className="text-xs font-semibold text-zinc-100 font-mono truncate">
+                    {report.signalsPreview.primaryCtaText
+                      ? `"${report.signalsPreview.primaryCtaText}"`
+                      : "No Primary CTA"}
                   </div>
-                  <div className="text-[10px] text-zinc-500 font-mono">
-                    {report.signalsPreview.hasAboveTheFoldCta ? "Positioned Above-the-fold" : "Below-the-fold Placement"}
+                  <div className="text-[11px] text-zinc-500">
+                    {report.signalsPreview.hasAboveTheFoldCta
+                      ? "Positioned above the fold"
+                      : "Below-the-fold placement"}
                   </div>
                 </div>
 
                 {/* 3. Visitor Journey Intent */}
-                <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
-                  <div className="flex items-center gap-1.5 text-zinc-400">
-                    <Compass className="w-3.5 h-3.5 text-indigo-400" />
-                    <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">
-                      Visitor Journey Intent
-                    </span>
+                <div className="p-3.5 space-y-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                    Visitor Journey Intent
                   </div>
-                  <div>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-950/50 border border-indigo-800/60 text-indigo-300 font-medium text-[11px] font-mono uppercase tracking-wide">
-                      {report.visitorIntent}
-                    </span>
+                  <div className="text-xs font-semibold text-zinc-100 capitalize">
+                    {report.visitorIntent}
                   </div>
-                  <div className="text-[10px] text-zinc-500 font-mono">
+                  <div className="text-[11px] text-zinc-500">
                     {report.visitorIntent.toLowerCase().includes("discovery")
                       ? "Evaluating capability fit & proof"
                       : "Direct acquisition intent"}
@@ -661,28 +919,26 @@ export default function Home() {
                 </div>
 
                 {/* 4. Lead Capture Funnel */}
-                <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
-                  <div className="flex items-center gap-1.5 text-zinc-400">
-                    <Layers className="w-3.5 h-3.5 text-sky-400" />
-                    <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">
-                      Lead Funnel Engine
-                    </span>
+                <div className="p-3.5 space-y-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                    Lead Funnel Engine
                   </div>
-                  <div>
+                  <div className="text-xs font-semibold text-zinc-100 flex items-center gap-1.5">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium font-mono truncate max-w-full ${
-                        report.signalsPreview.leadCaptureEngine
-                          ? "bg-sky-950/50 border border-sky-800/60 text-sky-300"
-                          : "bg-rose-950/50 border border-rose-800/60 text-rose-300"
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        report.signalsPreview.leadCaptureEngine ? "bg-emerald-400" : "bg-amber-400"
                       }`}
-                    >
-                      {report.signalsPreview.leadCaptureEngine ? "Verified Form / Modal" : "External Redirect / Script"}
+                    />
+                    <span className="truncate">
+                      {report.signalsPreview.leadCaptureEngine
+                        ? "Verified Form / Modal"
+                        : "External Redirect / Script"}
                     </span>
                   </div>
-                  <div className="text-[10px] text-zinc-500 font-mono">
+                  <div className="text-[11px] text-zinc-500">
                     {report.signalsPreview.leadCaptureEngine
-                      ? "Direct On-Page Funnel Active"
-                      : "Unverified On-Page Capture"}
+                      ? "Direct on-page capture active"
+                      : "Unverified inline form"}
                   </div>
                 </div>
               </div>
@@ -1354,14 +1610,14 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Section 4: Score Breakdown (grouped by dimension, aligned grid rows with Circular Progress) */}
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 overflow-hidden">
+            {/* Section 4: Score Breakdown (Strictly Aligned Grid across Category Headers & Criterion Rows + Algorithm Tooltip Popovers) */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/30">
               <div className="p-4 border-b border-zinc-800 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h2 className="text-sm font-semibold text-white">Score Breakdown</h2>
                     <p className="text-xs text-zinc-500 mt-0.5">
-                      {report.criteria.length} checks across 3 dimensions. Click a row for evidence and scoring math.
+                      {report.criteria.length} checks across 3 dimensions. Hover or click <span className="text-zinc-300 font-mono">Algo &amp; Why</span> for the complete mathematical formula and reasoning.
                     </p>
                   </div>
                   <div className="flex gap-1 text-xs">
@@ -1403,108 +1659,350 @@ export default function Home() {
                   const dimSummary = report.dimensions[dim];
                   const rows = report.criteria.filter((c) => c.dimension === dim);
                   const pct = dimSummary.percentage;
+                  const dimAlgoKey = `dim_${dim}`;
+                  const rawSum = Math.round(rows.reduce((acc, c) => acc + c.earnedPoints, 0) * 10) / 10;
+                  const barColor =
+                    pct >= 75 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500";
+                  const ringColorDim =
+                    pct >= 75 ? "text-emerald-500" : pct >= 50 ? "text-amber-500" : "text-rose-500";
+
                   return (
                     <div key={dim}>
-                      {/* Dimension group header */}
-                      <div className="px-4 py-2.5 bg-zinc-950/60 border-b border-zinc-800/70 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300">
+                      {/* Dimension Category Header — Uses EXACT same 7-col grid as Criterion Rows for pixel-perfect vertical alignment */}
+                      <div className="px-4 py-3 bg-zinc-950/80 border-b border-zinc-800/80 grid grid-cols-[20px_minmax(0,1fr)_auto] sm:grid-cols-[20px_minmax(0,1fr)_145px_100px_48px_140px_20px] items-center gap-3">
+                        {/* Col 1: Category Indicator */}
+                        <div className="flex items-center justify-center">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              pct >= 75 ? "bg-emerald-400" : pct >= 50 ? "bg-amber-400" : "bg-rose-400"
+                            }`}
+                          />
+                        </div>
+
+                        {/* Col 2: Category Title & Gate Status */}
+                        <div className="flex flex-wrap items-center gap-2 min-w-0">
+                          <span className="text-xs font-bold uppercase tracking-wider text-zinc-100 truncate">
                             {dimSummary.name || dim}
                           </span>
                           {dimSummary.gateApplied && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-950/70 text-rose-300 border border-rose-800/60">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-950/70 text-rose-300 border border-rose-800/60 font-mono">
                               Capped by gate
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2.5">
+
+                        {/* Col 3: Category Weight & Check Count */}
+                        <span className="hidden sm:inline-flex items-center text-[11px] font-mono text-zinc-500">
+                          {dimSummary.maxScore} pts • {rows.length} checks
+                        </span>
+
+                        {/* Col 4: Category Algorithm Tooltip Popover */}
+                        <div
+                          className="hidden sm:flex justify-end relative"
+                          onMouseEnter={() => setOpenAlgoId(dimAlgoKey)}
+                          onMouseLeave={() => setOpenAlgoId((prev) => (prev === dimAlgoKey ? null : prev))}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenAlgoId((prev) => (prev === dimAlgoKey ? null : dimAlgoKey))
+                            }
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-[10px] font-mono text-zinc-300 hover:text-white transition-colors"
+                          >
+                            <Calculator className="w-3 h-3 text-zinc-400" />
+                            Category Algo
+                          </button>
+
+                          {openAlgoId === dimAlgoKey && (
+                            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 p-4 rounded-xl bg-zinc-950 border border-zinc-700 shadow-2xl z-50 text-left space-y-2.5">
+                              <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                                <span className="text-xs font-semibold text-white">
+                                  {dimSummary.name} Algorithm
+                                </span>
+                                <span className="text-[10px] font-mono text-emerald-400">
+                                  {dimSummary.score} / {dimSummary.maxScore} pts ({pct}%)
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="text-[10px] font-mono uppercase text-zinc-500">Category Formula</div>
+                                <div className="p-2 rounded bg-zinc-900 border border-zinc-800 font-mono text-[11px] text-zinc-200">
+                                  {dim === "execution"
+                                    ? "Score = min(Σ CriterionPoints, GateCap)"
+                                    : "Score = round(Σ CriterionPoints, 1)"}
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="text-[10px] font-mono uppercase text-zinc-500">Step-by-Step Sum</div>
+                                <div className="p-2 rounded bg-zinc-900/60 border border-zinc-800/80 font-mono text-[11px] text-zinc-300 space-y-1">
+                                  {rows.map((r) => (
+                                    <div key={r.id} className="flex justify-between gap-2">
+                                      <span className="text-zinc-400 truncate">{r.name}:</span>
+                                      <span className="shrink-0">
+                                        {r.earnedPoints} / {r.maxPoints}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  <div className="border-t border-zinc-800 pt-1 flex justify-between font-bold text-white">
+                                    <span>Category Total:</span>
+                                    <span>
+                                      {rows.map((r) => r.earnedPoints).join(" + ")} = {rawSum}
+                                      {dimSummary.gateApplied ? ` → Capped at ${dimSummary.score}` : ""}{" "}
+                                      / {dimSummary.maxScore} pts
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Col 5: Category Circular ScoreRing (Aligned with Row ScoreRings) */}
+                        <div className="hidden sm:flex items-center justify-center">
                           <ScoreRing
                             value={dimSummary.score}
                             max={dimSummary.maxScore}
-                            size={30}
-                            strokeWidth={3.5}
-                            colorClass={pct >= 75 ? "text-emerald-500" : pct >= 50 ? "text-amber-500" : "text-rose-500"}
+                            size={38}
+                            strokeWidth={4}
+                            colorClass={ringColorDim}
                             label={`${pct}%`}
                           />
-                          <span className="text-xs font-mono text-white tabular-nums w-14 text-right">
-                            {dimSummary.score}
-                            <span className="text-zinc-500"> / {dimSummary.maxScore}</span>
-                          </span>
                         </div>
+
+                        {/* Col 6: Larger & Wider Category Overall Score + Full-Width Length Bar */}
+                        <div className="flex flex-col items-end justify-center gap-1 min-w-[125px] sm:w-[140px]">
+                          <div className="text-sm sm:text-base font-bold font-mono text-white tabular-nums whitespace-nowrap leading-none">
+                            {dimSummary.score}
+                            <span className="text-xs font-normal text-zinc-400"> / {dimSummary.maxScore} pts</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${barColor} rounded-full transition-all duration-500`}
+                              style={{ width: `${Math.min(Math.max(pct, 4), 100)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Col 7: Spacer matching Row Chevron column */}
+                        <span className="hidden sm:block w-4 h-4" />
                       </div>
 
                       <div className="divide-y divide-zinc-800/60">
                         {rows.map((criterion) => {
                           const isExpanded = !!expandedCriteria[criterion.id];
-                          const method = METHOD_META[criterion.source as keyof typeof METHOD_META] ?? METHOD_META.dom_extraction;
+                          const method =
+                            METHOD_META[criterion.source as keyof typeof METHOD_META] ?? METHOD_META.dom_extraction;
                           const MethodIcon = method.icon;
-                          const ratio = criterion.maxPoints > 0 ? criterion.earnedPoints / criterion.maxPoints : 0;
+                          const ratio =
+                            criterion.maxPoints > 0 ? criterion.earnedPoints / criterion.maxPoints : 0;
                           const ringColor =
                             criterion.status === "passed"
                               ? "text-emerald-500"
                               : criterion.status === "partial"
                               ? "text-amber-500"
                               : "text-rose-500";
-                          const StatusIcon = criterion.status === "passed" ? CheckCircle2 : criterion.status === "partial" ? AlertCircle : XCircle;
-                          const statusColor = criterion.status === "passed" ? "text-emerald-400" : criterion.status === "partial" ? "text-amber-400" : "text-rose-400";
+                          const StatusIcon =
+                            criterion.status === "passed"
+                              ? CheckCircle2
+                              : criterion.status === "partial"
+                              ? AlertCircle
+                              : XCircle;
+                          const statusColor =
+                            criterion.status === "passed"
+                              ? "text-emerald-400"
+                              : criterion.status === "partial"
+                              ? "text-amber-400"
+                              : "text-rose-400";
                           const rawSummary = criterion.notes || criterion.scoringRule;
                           const summary = rawSummary.replace(
                             /^AI scored \d+(\.\d+)?\/10\.?\s*(\([^)]*\)\.?\s*)?(Specificity:\s*\w+\.?\s*)?(Friction:\s*\w+\.?\s*)?/i,
                             ""
                           );
+                          const algo = getCriterionAlgorithm(criterion);
+                          const isAlgoOpen = openAlgoId === criterion.id;
 
                           return (
-                            <div key={criterion.id}>
-                              <button
-                                type="button"
+                            <div key={criterion.id} className="relative">
+                              {/* Criterion Row — Uses EXACT same 7-col grid as Category Header */}
+                              <div
                                 onClick={() => toggleCriterion(criterion.id)}
-                                className="w-full text-left px-4 py-3 hover:bg-zinc-900/50 transition-colors grid grid-cols-[18px_1fr_auto_16px] sm:grid-cols-[18px_1fr_150px_110px_16px] items-center gap-3"
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    toggleCriterion(criterion.id);
+                                  }
+                                }}
+                                className="w-full text-left px-4 py-3 hover:bg-zinc-900/50 transition-colors cursor-pointer grid grid-cols-[20px_minmax(0,1fr)_auto] sm:grid-cols-[20px_minmax(0,1fr)_145px_100px_48px_140px_20px] items-center gap-3"
                               >
-                                <StatusIcon className={`w-4 h-4 ${statusColor}`} />
+                                {/* Col 1: Status Icon */}
+                                <div className="flex items-center justify-center">
+                                  <StatusIcon className={`w-4 h-4 ${statusColor}`} />
+                                </div>
 
+                                {/* Col 2: Criterion Name & Summary */}
                                 <div className="min-w-0">
-                                  <div className="text-[13px] font-medium text-white truncate">{criterion.name}</div>
+                                  <div className="text-[13px] font-medium text-white truncate">
+                                    {criterion.name}
+                                  </div>
                                   <div className="text-[11px] text-zinc-500 truncate">{summary}</div>
                                 </div>
 
-                                <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-zinc-400">
-                                  <MethodIcon className={`w-3.5 h-3.5 ${method.color}`} />
-                                  {method.label}
+                                {/* Col 3: Measurement Source */}
+                                <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-zinc-400 truncate">
+                                  <MethodIcon className={`w-3.5 h-3.5 shrink-0 ${method.color}`} />
+                                  <span className="truncate">{method.label}</span>
                                 </span>
 
-                                <div className="flex items-center gap-2 justify-end">
+                                {/* Col 4: Interactive Reasoning & Complete Algorithm Tooltip Popover */}
+                                <div
+                                  className="hidden sm:flex justify-end relative"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onMouseEnter={() => setOpenAlgoId(criterion.id)}
+                                  onMouseLeave={() =>
+                                    setOpenAlgoId((prev) => (prev === criterion.id ? null : prev))
+                                  }
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenAlgoId((prev) =>
+                                        prev === criterion.id ? null : criterion.id
+                                      );
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-[10px] font-mono text-zinc-300 hover:text-white transition-colors"
+                                  >
+                                    <Info className="w-3 h-3 text-zinc-400" />
+                                    Algo &amp; Why
+                                  </button>
+
+                                  {isAlgoOpen && (
+                                    <div className="absolute right-0 bottom-full mb-2 w-80 sm:w-[400px] p-4 rounded-xl bg-zinc-950 border border-zinc-700 shadow-2xl z-50 text-left space-y-3 cursor-default">
+                                      <div className="flex items-start justify-between gap-2 border-b border-zinc-800 pb-2">
+                                        <div>
+                                          <div className="text-xs font-semibold text-white">
+                                            {criterion.name}
+                                          </div>
+                                          <div className="text-[10px] font-mono text-zinc-400 flex items-center gap-1.5 mt-0.5">
+                                            <MethodIcon className={`w-3 h-3 ${method.color}`} />
+                                            {method.label}
+                                          </div>
+                                        </div>
+                                        <span className="text-xs font-mono font-bold text-white bg-zinc-900 border border-zinc-700 px-2 py-0.5 rounded whitespace-nowrap">
+                                          {criterion.earnedPoints} / {criterion.maxPoints} pts
+                                        </span>
+                                      </div>
+
+                                      {/* 1. Complete Scoring Algorithm Formula */}
+                                      <div className="space-y-1">
+                                        <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                                          1. Scoring Algorithm &amp; Formula
+                                        </div>
+                                        <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-[11px] text-emerald-300 break-words">
+                                          {algo.formula}
+                                        </div>
+                                        <div className="p-2 rounded-lg bg-zinc-900/60 border border-zinc-800/80 font-mono text-[11px] text-zinc-200 break-words">
+                                          {algo.calculation}
+                                        </div>
+                                      </div>
+
+                                      {/* 2. Reasoning Behind Score */}
+                                      <div className="space-y-1">
+                                        <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                                          2. Reasoning Behind Score
+                                        </div>
+                                        <p className="text-[11px] text-zinc-300 leading-relaxed bg-zinc-900/40 p-2 rounded-lg border border-zinc-800/60">
+                                          {algo.reasoning}
+                                        </p>
+                                      </div>
+
+                                      {/* 3. Sub-Check Inputs (if any) */}
+                                      {criterion.checks && criterion.checks.length > 0 && (
+                                        <div className="space-y-1">
+                                          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                                            3. Evaluated Signals
+                                          </div>
+                                          <ul className="space-y-1 bg-zinc-900/40 p-2 rounded-lg border border-zinc-800/60">
+                                            {criterion.checks.map((chk, i) => (
+                                              <li
+                                                key={i}
+                                                className="flex items-center gap-1.5 text-[11px] text-zinc-300 font-mono"
+                                              >
+                                                {chk.passed ? (
+                                                  <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                                                ) : (
+                                                  <XCircle className="w-3 h-3 text-rose-400 shrink-0" />
+                                                )}
+                                                <span>{chk.label}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+
+                                      {/* 4. Rubric Threshold Tiers */}
+                                      <div className="space-y-1">
+                                        <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                                          Rubric Point Tiers
+                                        </div>
+                                        <ul className="space-y-1 text-[10px] text-zinc-400 font-mono">
+                                          {algo.tiers.map((t, idx) => (
+                                            <li key={idx} className="leading-snug">
+                                              • {t}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Col 5: Circular ScoreRing (Aligned with Category Header ScoreRing) */}
+                                <div className="hidden sm:flex items-center justify-center">
                                   <ScoreRing
                                     value={criterion.earnedPoints}
                                     max={criterion.maxPoints}
-                                    size={28}
+                                    size={30}
                                     strokeWidth={3}
                                     colorClass={ringColor}
                                     label={`${Math.round(ratio * 100)}%`}
                                   />
-                                  <span className="text-xs font-mono tabular-nums text-white w-14 text-right">
+                                </div>
+
+                                {/* Col 6: Criterion Score (Aligned with Category Header Score) */}
+                                <div className="flex items-center justify-end sm:w-[140px]">
+                                  <span className="text-xs font-mono font-semibold tabular-nums text-white whitespace-nowrap text-right">
                                     {criterion.earnedPoints}
-                                    <span className="text-zinc-500">/{criterion.maxPoints}</span>
+                                    <span className="text-zinc-500 font-normal"> / {criterion.maxPoints} pts</span>
                                   </span>
                                 </div>
 
-                                {isExpanded ? (
-                                  <ChevronUp className="w-3.5 h-3.5 text-zinc-500" />
-                                ) : (
-                                  <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
-                                )}
-                              </button>
+                                {/* Col 7: Expand Chevron */}
+                                <div className="hidden sm:flex items-center justify-end">
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-4 h-4 text-zinc-500" />
+                                  ) : (
+                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
+                                  )}
+                                </div>
+                              </div>
 
                               {isExpanded && (
-                                <div className="px-4 pb-4 pl-[46px] grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                <div className="px-4 pb-4 pl-[52px] grid grid-cols-1 md:grid-cols-3 gap-4 text-xs bg-zinc-950/30 border-t border-zinc-800/40 pt-3">
                                   <div className="space-y-1.5">
-                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Found on page</div>
+                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+                                      Found on page
+                                    </div>
                                     <blockquote className="p-2.5 rounded-lg bg-zinc-950 border-l-2 border-zinc-700 text-zinc-300 text-[11px] leading-relaxed break-words">
                                       {criterion.evidence || "No direct evidence extracted."}
                                     </blockquote>
                                   </div>
 
                                   <div className="space-y-1.5">
-                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Assessment</div>
+                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+                                      Reasoning &amp; Signal Checks
+                                    </div>
                                     {criterion.checks && criterion.checks.length > 0 && (
                                       <ul className="space-y-1">
                                         {criterion.checks.map((chk, i) => (
@@ -1519,23 +2017,18 @@ export default function Home() {
                                         ))}
                                       </ul>
                                     )}
-                                    {criterion.notes && (
-                                      <p className="text-[11px] text-zinc-400 leading-relaxed">{criterion.notes}</p>
-                                    )}
-                                    {!criterion.notes && (!criterion.checks || criterion.checks.length === 0) && (
-                                      <p className="text-[11px] text-zinc-400 leading-relaxed">{criterion.scoringRule}</p>
-                                    )}
+                                    <p className="text-[11px] text-zinc-400 leading-relaxed">{algo.reasoning}</p>
                                   </div>
 
                                   <div className="space-y-1.5">
-                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">How it is scored</div>
-                                    <div className="flex items-center gap-1.5 text-[11px] text-zinc-300">
-                                      <MethodIcon className={`w-3.5 h-3.5 ${method.color}`} />
-                                      {method.label}
+                                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
+                                      Complete Scoring Algorithm
                                     </div>
-                                    <p className="text-[11px] text-zinc-500 leading-relaxed">{method.explain}</p>
-                                    <div className="text-[11px] font-mono text-zinc-400 bg-zinc-950 border border-zinc-800 rounded px-2 py-1">
-                                      {criterion.scoringRule} → {criterion.earnedPoints} / {criterion.maxPoints} pts
+                                    <div className="text-[11px] font-mono text-emerald-300 bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 break-words">
+                                      {algo.formula}
+                                    </div>
+                                    <div className="text-[11px] font-mono text-zinc-300 bg-zinc-950/70 border border-zinc-800/80 rounded px-2.5 py-1.5 break-words">
+                                      {algo.calculation}
                                     </div>
                                   </div>
                                 </div>
