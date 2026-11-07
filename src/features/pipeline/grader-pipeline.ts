@@ -632,6 +632,8 @@ export async function gradeLandingPage(
     return 28 + completedTasks * 20; // 48% -> 68% -> 88%
   };
 
+  let pageSpeedScreenshotBase64: string | undefined;
+
   const [classification, semanticEval, verification] = await Promise.all([
     classifyPage(rawInput, aiClassifier).then((res) => {
       emit(
@@ -674,19 +676,20 @@ export async function gradeLandingPage(
       );
       return res;
     }),
-    (!isBenchmark
-      ? fetchPageSpeedMetrics(signals.url, pageSpeedKey)
-          .then((ps) => {
-            signals.performance.lcpSeconds = ps.lcpSeconds;
-            signals.performance.cls = ps.cls;
-            signals.performance.fcpSeconds = ps.fcpSeconds;
-            signals.performance.mobileLighthouseScore = ps.lighthouseScore;
-            signals.performance.source = "pagespeed_api";
-          })
-          .catch(() => {
-            // Keep estimated fallback if rate-limited or offline
-          })
-      : Promise.resolve())
+    fetchPageSpeedMetrics(signals.url, pageSpeedKey)
+      .then((ps) => {
+        signals.performance.lcpSeconds = ps.lcpSeconds;
+        signals.performance.cls = ps.cls;
+        signals.performance.fcpSeconds = ps.fcpSeconds;
+        signals.performance.mobileLighthouseScore = ps.lighthouseScore;
+        signals.performance.source = "pagespeed_api";
+        if (ps.screenshotDataUrl) {
+          pageSpeedScreenshotBase64 = ps.screenshotDataUrl;
+        }
+      })
+      .catch(() => {
+        // Keep estimated fallback if rate-limited or offline
+      })
   ]);
 
   // Calculate Rubric v3 Score
@@ -744,7 +747,10 @@ export async function gradeLandingPage(
     recommendations,
     screenshotTags,
     summary,
-    screenshotBase64: verification?.screenshotBase64,
+    screenshotBase64:
+      verification?.screenshotBase64?.startsWith("data:image/")
+        ? verification.screenshotBase64
+        : pageSpeedScreenshotBase64 || verification?.screenshotBase64,
     lighthouse: {
       performanceScore: signals.performance.mobileLighthouseScore,
       lcpSeconds: signals.performance.lcpSeconds,

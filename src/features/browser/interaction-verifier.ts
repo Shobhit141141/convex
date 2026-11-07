@@ -65,9 +65,16 @@ export async function verifyConversionInteraction(
   const isHtml = urlOrHtml.trim().startsWith("<") || urlOrHtml.includes("<!DOCTYPE");
   const captureScreenshot = options.captureScreenshot ?? true;
 
+  const serverlessScreenshotUrl = !isHtml
+    ? `https://api.microlink.io/?url=${encodeURIComponent(
+        urlOrHtml
+      )}&screenshot=true&meta=false&embed=screenshot.url&screenshot.fullPage=true&viewport.width=1280&viewport.height=900`
+    : undefined;
+
   let chromiumModule: any;
   try {
-    chromiumModule = await import("playwright");
+    const playwrightPkg = "playwright";
+    chromiumModule = await import(/* webpackIgnore: true */ playwrightPkg);
   } catch {
     return {
       ctaFound: false,
@@ -78,7 +85,8 @@ export async function verifyConversionInteraction(
       formFieldCount: 0,
       hubspotDetected: false,
       verificationStatus: "not_tested",
-      evidenceNotes: ["Playwright package not accessible. Dynamic verification skipped."]
+      screenshotBase64: serverlessScreenshotUrl,
+      evidenceNotes: ["Playwright package not accessible in serverless runtime. Using remote screenshot & DOM verification."]
     };
   }
 
@@ -88,16 +96,11 @@ export async function verifyConversionInteraction(
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
     };
-    if (fs.existsSync(LOCAL_CHROMIUM_FALLBACK)) {
+    if (typeof fs?.existsSync === "function" && fs.existsSync(LOCAL_CHROMIUM_FALLBACK)) {
       launchOptions.executablePath = LOCAL_CHROMIUM_FALLBACK;
     }
     browser = await chromiumModule.chromium.launch(launchOptions);
   } catch (err: any) {
-    const serverlessScreenshotUrl = !isHtml
-      ? `https://api.microlink.io/?url=${encodeURIComponent(
-          urlOrHtml
-        )}&screenshot=true&meta=false&embed=screenshot.url&screenshot.fullPage=true&viewport.width=1280&viewport.height=900`
-      : undefined;
     return {
       ctaFound: false,
       ctaVisible: false,

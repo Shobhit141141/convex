@@ -5,6 +5,7 @@ export interface PageSpeedMetrics {
   fcpSeconds: number;
   strategy: "mobile" | "desktop";
   fetchedAt: string;
+  screenshotDataUrl?: string;
 }
 
 export async function fetchPageSpeedMetrics(
@@ -41,6 +42,9 @@ export async function fetchPageSpeedMetrics(
   const lcpSeconds = (audits["largest-contentful-paint"]?.numericValue ?? 3500) / 1000;
   const cls = audits["cumulative-layout-shift"]?.numericValue ?? 0.05;
   const fcpSeconds = (audits["first-contentful-paint"]?.numericValue ?? 2000) / 1000;
+  const screenshotDataUrl: string | undefined =
+    lighthouse?.fullPageScreenshot?.screenshot?.data ||
+    audits["final-screenshot"]?.details?.data;
 
   return {
     lighthouseScore,
@@ -48,6 +52,7 @@ export async function fetchPageSpeedMetrics(
     cls: Number(cls.toFixed(3)),
     fcpSeconds: Number(fcpSeconds.toFixed(2)),
     strategy,
-    fetchedAt: new Date().toISOString()
+    fetchedAt: new Date().toISOString(),
+    screenshotDataUrl
   };
 }
