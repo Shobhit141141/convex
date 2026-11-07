@@ -979,29 +979,29 @@ export default function AlgorithmPage() {
             {/* Side-by-Side Signal Weight Comparison Across Audiences */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden text-[11px]">
               <div className="grid grid-cols-12 px-3 py-1.5 bg-zinc-900 border-b border-zinc-800 font-mono text-[10px] text-zinc-400 uppercase">
-                <span className="col-span-5">Signal Evaluated</span>
-                <span className="col-span-2 text-center">Enterprise</span>
-                <span className="col-span-3 text-center">Practitioner</span>
+                <span className="col-span-5">What We Check</span>
+                <span className="col-span-2 text-center">Executive</span>
+                <span className="col-span-3 text-center">HR / IT Lead</span>
                 <span className="col-span-2 text-center">Webinar</span>
               </div>
               <div className="divide-y divide-zinc-800/70 font-mono">
                 <div className="grid grid-cols-12 px-3 py-1.5 items-center">
-                  <span className="col-span-5 font-sans text-zinc-200">Quantified Case Study &amp; SOC2</span>
-                  <span className="col-span-2 text-center text-emerald-400 font-bold">1.5× High</span>
-                  <span className="col-span-3 text-center text-zinc-300">1.0× Std</span>
-                  <span className="col-span-2 text-center text-zinc-500">0.5× Low</span>
+                  <span className="col-span-5 font-sans text-zinc-200">ROI Numbers &amp; Security Badges</span>
+                  <span className="col-span-2 text-center text-emerald-400 font-bold">High (1.5×)</span>
+                  <span className="col-span-3 text-center text-zinc-300">Normal</span>
+                  <span className="col-span-2 text-center text-zinc-500">Low (0.5×)</span>
                 </div>
                 <div className="grid grid-cols-12 px-3 py-1.5 items-center">
-                  <span className="col-span-5 font-sans text-zinc-200">Role Workflow Systems (Workday)</span>
-                  <span className="col-span-2 text-center text-zinc-300">1.0× Std</span>
-                  <span className="col-span-3 text-center text-emerald-400 font-bold">1.5× High</span>
-                  <span className="col-span-2 text-center text-zinc-500">0.7× Low</span>
+                  <span className="col-span-5 font-sans text-zinc-200">Naming Daily Tools (Workday)</span>
+                  <span className="col-span-2 text-center text-zinc-300">Normal</span>
+                  <span className="col-span-3 text-center text-emerald-400 font-bold">High (1.5×)</span>
+                  <span className="col-span-2 text-center text-zinc-500">Low (0.7×)</span>
                 </div>
                 <div className="grid grid-cols-12 px-3 py-1.5 items-center">
-                  <span className="col-span-5 font-sans text-zinc-200">Form Simplicity (&le; 3 Fields)</span>
-                  <span className="col-span-2 text-center text-zinc-400">0.8× Tol.</span>
-                  <span className="col-span-3 text-center text-zinc-300">1.0× Std</span>
-                  <span className="col-span-2 text-center text-emerald-400 font-bold">1.6× Strict</span>
+                  <span className="col-span-5 font-sans text-zinc-200">Short Sign-Up Form (&le; 3 Boxes)</span>
+                  <span className="col-span-2 text-center text-zinc-400">Flexible</span>
+                  <span className="col-span-3 text-center text-zinc-300">Normal</span>
+                  <span className="col-span-2 text-center text-emerald-400 font-bold">Strict (1.6×)</span>
                 </div>
               </div>
             </div>
@@ -1014,15 +1014,15 @@ export default function AlgorithmPage() {
                 5. Checked Against Real Leena.ai Data &amp; Biggest Disagreement
               </h2>
               <p className="text-xs text-zinc-400">
-                Why Rubric v1/v2 inflated scores (94, 93, 93) and where Rubric v3 disagrees with raw CVR.
+                How our scores compare against real Leena AI conversion rates.
               </p>
             </div>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden text-xs">
               <div className="grid grid-cols-12 px-3 py-2 bg-zinc-900 border-b border-zinc-800 font-mono text-[10px] text-zinc-400 uppercase">
                 <span className="col-span-5">Leena.ai Page</span>
-                <span className="col-span-2 text-right">Raw CVR</span>
-                <span className="col-span-2 text-right">Rubric v1</span>
+                <span className="col-span-2 text-right">Real CVR</span>
+                <span className="col-span-2 text-right">Old v1</span>
                 <span className="col-span-3 text-right text-emerald-400">Final v3</span>
               </div>
               <div className="divide-y divide-zinc-800/70 font-mono text-[11px]">
@@ -1055,50 +1055,46 @@ export default function AlgorithmPage() {
 
             <div className="p-3.5 rounded-xl bg-zinc-950 border border-amber-500/30 space-y-1.5 text-xs">
               <div className="font-semibold text-amber-300">
-                Biggest Disagreement: Homepage (83 pts, 0.56% CVR) vs. HR Page (80 pts, 0.58% CVR) — Who is wrong?
+                Biggest Disagreement: Homepage (83 pts) vs. HR Page (80 pts) — Who is wrong?
               </div>
               <p className="text-zinc-300 leading-relaxed text-[11.5px]">
-                <strong className="text-white">Raw CVR is misleading because of traffic mix:</strong>{" "}
-                <code>leena.ai/function/hr</code> got <strong>58% high-intent Paid Search</strong>{" "}
-                traffic, while the Homepage got <strong>72% top-of-funnel Direct/Organic</strong>{" "}
-                traffic. When adjusted for channel intent, the Homepage converts at{" "}
-                <strong>0.57× expected</strong> vs. HR&apos;s <strong>0.50×</strong>—proving our
-                grader&apos;s 83 vs. 80 ranking is right.
+                <strong className="text-white">The raw CVR (0.58% vs 0.56%) is misleading because of ad traffic:</strong>{" "}
+                The HR page got <strong>58% high-intent Google Ads</strong> traffic, while the Homepage got{" "}
+                <strong>72% casual browsing</strong> traffic. Once you account for traffic source, the Homepage actually converts better (<strong>0.57× vs 0.50×</strong>)—matching our grader&apos;s 83 vs. 80 score.
               </p>
             </div>
           </div>
         </section>
 
-        {/* 6. One-Page Scoring Note Summary (What Changed After Data Check & What We Left Out on Purpose) */}
+        {/* 6. One-Page Scoring Note Summary (Simple 3-Box Summary) */}
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/35 p-5 space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-white">
-              6. Scoring Note — What Changed After Checking the Data &amp; What We Left Out on Purpose
+              6. Quick Scoring Note — What Changed &amp; What We Left Out on Purpose
             </h2>
             <p className="text-xs text-zinc-400">
-              How our rubric evolved from v1 to v3 against the Leena AI dataset, and what signals we deliberately excluded.
+              Three quick takeaways on how we tuned the scoring against real data.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1.5">
               <div className="font-mono text-[10px] uppercase text-amber-400 font-semibold">
-                1. Why Rubric v1 &amp; v2 Failed
+                1. Why Rubric v1 Failed
               </div>
-              <div className="font-semibold text-white">Binary DOM Checks Compressed Scores</div>
+              <div className="font-semibold text-white">Gave Points Just for Having a Button</div>
               <p className="text-zinc-300 leading-relaxed text-[11.5px]">
-                <strong>Rubric v1</strong> gave points merely for having an H1, a button, and logos—scoring both the Homepage and HR page at <strong>94/100</strong>.{" "}
-                <strong>Rubric v2</strong> added audience profiles but over-rewarded the CHRISTUS Webinar page (<strong>93/100</strong> vs. <strong>0.11% CVR</strong>) because it didn&apos;t penalize high-friction HubSpot demo gates on webinar pages.
+                Our first version only checked if a page <em>had</em> a title, a button, and logos—giving both the Homepage and HR page the exact same <strong>94/100</strong> score.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1.5">
               <div className="font-mono text-[10px] uppercase text-emerald-400 font-semibold">
-                2. What Changed in Final Rubric v3
+                2. What We Changed in Final v3
               </div>
-              <div className="font-semibold text-white">50/35/15 Split + Conversion-Readiness Gates</div>
+              <div className="font-semibold text-white">Added Live Form Checks &amp; Score Caps</div>
               <p className="text-zinc-300 leading-relaxed text-[11.5px]">
-                We rebalanced to <strong>Persuasion (50)</strong> + <strong>Execution (35)</strong> + <strong>Experience (15)</strong>, added live Playwright modal/form verification, and introduced <strong>Conversion-Readiness Gates</strong> (capping Execution at 20%–30% if a CTA or lead form is missing/broken), producing a strict <code>83 &gt; 80 &gt; 77</code> separation aligned with traffic-adjusted conversion performance.
+                We now click the button in a live browser to verify a working sign-up form opens, and cap the Execution score if a page lacks a working form—separating the pages cleanly (<code>83 &gt; 80 &gt; 77</code>).
               </p>
             </div>
 
@@ -1106,9 +1102,9 @@ export default function AlgorithmPage() {
               <div className="font-mono text-[10px] uppercase text-sky-400 font-semibold">
                 3. What We Left Out on Purpose
               </div>
-              <div className="font-semibold text-white">Aesthetic Subjectivity, Keyword Density &amp; Traffic Mix</div>
+              <div className="font-semibold text-white">Design Taste, Word Count &amp; Ad Spend</div>
               <p className="text-zinc-300 leading-relaxed text-[11.5px]">
-                We deliberately excluded: <strong>(a) Subjective visual taste</strong> (color palettes/fonts don&apos;t predict B2B CVR), <strong>(b) SEO keyword stuffing / word-count bloat</strong> (longer pages often convert worse), and <strong>(c) Ad-channel traffic split</strong> inside the page score—because a grader must measure <em>intrinsic landing page quality</em>, not paid media spend.
+                We ignored <strong>subjective colors/fonts</strong>, <strong>long word counts</strong> (shorter pages often convert better), and <strong>ad-channel traffic mix</strong> (because the score should measure the page itself, not ad budget).
               </p>
             </div>
           </div>
