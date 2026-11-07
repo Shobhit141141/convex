@@ -458,7 +458,7 @@ export default function Home() {
   >([]);
   const [openAlgoId, setOpenAlgoId] = useState<string | null>(null);
   const [historyItems, setHistoryItems] = useState<AuditHistoryItem[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [cacheMeta, setCacheMeta] = useState<{
@@ -1066,7 +1066,7 @@ export default function Home() {
               <History className="w-3.5 h-3.5 text-zinc-400" />
               <span>History</span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300">
-                {historyItems.length}
+                {loadingHistory ? "..." : historyItems.length}
               </span>
             </button>
 
@@ -1178,9 +1178,22 @@ export default function Home() {
 
             <div className="overflow-y-auto divide-y divide-zinc-800/70 p-2">
               {loadingHistory ? (
-                <div className="p-8 text-center text-xs text-zinc-400 flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Loading audit records from Supabase...
+                <div className="p-3 space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="p-3 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-center justify-between gap-3 animate-pulse"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-zinc-800 shrink-0" />
+                        <div className="space-y-2 flex-1">
+                          <div className="h-3.5 w-44 bg-zinc-800 rounded" />
+                          <div className="h-2.5 w-56 bg-zinc-800/60 rounded" />
+                        </div>
+                      </div>
+                      <div className="h-7 w-14 bg-zinc-800 rounded-md shrink-0" />
+                    </div>
+                  ))}
                 </div>
               ) : historyItems.length === 0 ? (
                 <div className="p-8 text-center text-xs text-zinc-500">
@@ -1435,87 +1448,131 @@ export default function Home() {
             )}
 
             {/* Saved Website Audit History on Homepage */}
-            {!loading && historyItems.length > 0 && (
-              <div className="pt-6 text-left space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <Database className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-xs font-semibold text-zinc-200">
-                      Saved Website Audits ({historyItems.length})
-                    </span>
-                    <span className="text-[10px] font-mono text-zinc-500">
-                      Instant load from Supabase — no re-fetch required
-                    </span>
+            {!loading && (
+              loadingHistory ? (
+                <div className="pt-6 text-left space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                      <span className="text-xs font-semibold text-zinc-300 flex items-center gap-2">
+                        Saved Website Audits
+                        <span className="inline-block w-8 h-3.5 bg-zinc-800 rounded animate-pulse" />
+                      </span>
+                      <span className="text-[10px] font-mono text-zinc-500 hidden sm:inline">
+                        Loading from Supabase...
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="rounded-xl border border-zinc-800/90 bg-zinc-900/30 divide-y divide-zinc-800/70 overflow-hidden">
-                  {historyItems.slice(0, 8).map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => loadAuditRecordById(item.id)}
-                      className="p-3 hover:bg-zinc-900/70 transition-colors cursor-pointer flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <ScoreRing
-                          value={item.total_score}
-                          max={100}
-                          size={36}
-                          strokeWidth={3.5}
-                          colorClass={
-                            item.total_score >= 80
-                              ? "text-emerald-500"
-                              : item.total_score >= 60
-                              ? "text-amber-500"
-                              : "text-rose-500"
-                          }
-                          label={String(item.total_score)}
-                        />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono font-medium text-white truncate max-w-[240px] sm:max-w-sm">
-                              {item.url}
-                            </span>
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
-                              Grade {item.letter_grade}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-zinc-500 font-mono flex items-center gap-2 mt-0.5">
-                            <span className="uppercase">{item.page_type}</span>
-                            <span>•</span>
-                            <span>
-                              P:{item.persuasion_score} E:{item.execution_score} X:{item.experience_score}
-                            </span>
-                            <span>•</span>
-                            <span>{new Date(item.created_at).toLocaleString()}</span>
+                  <div className="rounded-xl border border-zinc-800/90 bg-zinc-900/30 divide-y divide-zinc-800/70 overflow-hidden">
+                    {[1, 2, 3, 4].map((idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 flex items-center justify-between gap-3 animate-pulse"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-9 h-9 rounded-full bg-zinc-800/90 shrink-0 border border-zinc-700/40" />
+                          <div className="space-y-1.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="h-3.5 bg-zinc-800 rounded"
+                                style={{ width: idx % 2 === 0 ? "50%" : "38%" }}
+                              />
+                              <div className="h-3 w-14 bg-zinc-800/70 rounded" />
+                            </div>
+                            <div className="h-2.5 w-48 bg-zinc-800/40 rounded" />
                           </div>
                         </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="h-6 w-12 bg-zinc-800/80 rounded-md" />
+                          <div className="h-6 w-6 bg-zinc-800/60 rounded-md" />
+                        </div>
                       </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={() => loadAuditRecordById(item.id)}
-                          className="px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-[11px] font-medium transition-colors"
-                        >
-                          Open
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUrl(item.url);
-                            handleGrade(item.url, true);
-                          }}
-                          className="p-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
-                          title="Re-run fresh real-time evaluation"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : historyItems.length > 0 ? (
+                <div className="pt-6 text-left space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-xs font-semibold text-zinc-200">
+                        Saved Website Audits ({historyItems.length})
+                      </span>
+                      <span className="text-[10px] font-mono text-zinc-500">
+                        Instant load from Supabase — no re-fetch required
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-zinc-800/90 bg-zinc-900/30 divide-y divide-zinc-800/70 overflow-hidden">
+                    {historyItems.slice(0, 8).map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => loadAuditRecordById(item.id)}
+                        className="p-3 hover:bg-zinc-900/70 transition-colors cursor-pointer flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <ScoreRing
+                            value={item.total_score}
+                            max={100}
+                            size={36}
+                            strokeWidth={3.5}
+                            colorClass={
+                              item.total_score >= 80
+                                ? "text-emerald-500"
+                                : item.total_score >= 60
+                                ? "text-amber-500"
+                                : "text-rose-500"
+                            }
+                            label={String(item.total_score)}
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono font-medium text-white truncate max-w-[240px] sm:max-w-sm">
+                                {item.url}
+                              </span>
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
+                                Grade {item.letter_grade}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-zinc-500 font-mono flex items-center gap-2 mt-0.5">
+                              <span className="uppercase">{item.page_type}</span>
+                              <span>•</span>
+                              <span>
+                                P:{item.persuasion_score} E:{item.execution_score} X:{item.experience_score}
+                              </span>
+                              <span>•</span>
+                              <span>{new Date(item.created_at).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => loadAuditRecordById(item.id)}
+                            className="px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-[11px] font-medium transition-colors"
+                          >
+                            Open
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUrl(item.url);
+                              handleGrade(item.url, true);
+                            }}
+                            className="p-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                            title="Re-run fresh real-time evaluation"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null
             )}
           </div>
         )}

@@ -1,6 +1,8 @@
 # Scoring Note — Landing Page Grader
 
-**Live Tool:** https://convex-landing-page-grader.feather-motion.workers.dev  
+**Live Tool (Cloudflare Workers):** https://convex-landing-page-grader.familiar-oboe.workers.dev  
+**Interactive Algorithm:** https://convex-landing-page-grader.familiar-oboe.workers.dev/algorithm  
+**Direct App (Vercel):** https://convex-rosy.vercel.app  
 **Code:** https://github.com/Shobhit141141/convex
 
 ## How the Rubric Works (100 Points)

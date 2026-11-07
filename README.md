@@ -1,8 +1,19 @@
 # Convex — Audience-Aware Landing Page Conversion Grader
 
-**Live Production App (Cloudflare Workers):** [https://convex-landing-page-grader.feather-motion.workers.dev](https://convex-landing-page-grader.feather-motion.workers.dev) • **Interactive Algorithm Guide:** [https://convex-landing-page-grader.feather-motion.workers.dev/algorithm](https://convex-landing-page-grader.feather-motion.workers.dev/algorithm) • **One-Page Scoring Note:** [SCORING_NOTE.md](SCORING_NOTE.md)
-
 Convex is an evidence-based Conversion Rate Optimization (CRO) grader that evaluates any landing page across **Conversion Persuasion**, **Conversion Execution**, and **Supporting Experience**. It combines deterministic DOM extraction, AI semantic copy analysis, live headless browser verification, and interactive full-page screenshot hotspot pinning.
+
+---
+
+## 🔗 Quick Links & Deployments
+
+| Resource | Link | Description |
+| :--- | :--- | :--- |
+| **Cloudflare Edge Worker** | [convex-landing-page-grader.familiar-oboe.workers.dev](https://convex-landing-page-grader.familiar-oboe.workers.dev) | Global edge proxy deployment |
+| **Direct Production App** | [convex-rosy.vercel.app](https://convex-rosy.vercel.app) | Production origin deployment (Vercel) |
+| **Interactive Algorithm Guide** | [/algorithm walkthrough](https://convex-landing-page-grader.familiar-oboe.workers.dev/algorithm) | 6-stage pipeline, formula breakdown & live simulator |
+| **One-Page Scoring Note (PDF)** | [SCORING_NOTE.pdf](SCORING_NOTE.pdf) | Print-ready 1-page executive rubric & methodology |
+| **One-Page Scoring Note (MD)** | [SCORING_NOTE.md](SCORING_NOTE.md) | Plain-text breakdown & data disagreement analysis |
+| **GitHub Repository** | [github.com/Shobhit141141/convex](https://github.com/Shobhit141141/convex) | Open-source codebase, test suite, and benchmarks |
 
 ---
 
