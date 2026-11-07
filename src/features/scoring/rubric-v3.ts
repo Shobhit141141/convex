@@ -262,6 +262,7 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
   const persuasionMax = 50;
   const persuasionSummary: V3DimensionSummary = {
     dimension: "persuasion",
+    name: "Conversion Persuasion",
     score: persuasionEarned,
     maxScore: persuasionMax,
     percentage: Math.round((persuasionEarned / persuasionMax) * 100),
@@ -518,6 +519,7 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
   const finalExecutionEarned = Math.round(rawExecutionEarned * 10) / 10;
   const executionSummary: V3DimensionSummary = {
     dimension: "execution",
+    name: "Conversion Execution",
     score: finalExecutionEarned,
     maxScore: executionMax,
     percentage: Math.round((finalExecutionEarned / executionMax) * 100),
@@ -585,6 +587,7 @@ export function calculateRubricV3(input: RubricV3Input): RubricV3Result {
   const experienceMax = 15;
   const experienceSummary: V3DimensionSummary = {
     dimension: "experience",
+    name: "Supporting Experience",
     score: experienceEarned,
     maxScore: experienceMax,
     percentage: Math.round((experienceEarned / experienceMax) * 100),

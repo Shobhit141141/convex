@@ -25,7 +25,7 @@ export type V3CriterionScore = z.infer<typeof V3CriterionScoreSchema>;
 
 export const V3DimensionSummarySchema = z.object({
   dimension: V3DimensionEnum,
-  name: stringName => typeof stringName === "string",
+  name: z.string().optional(),
   score: z.number().min(0),
   maxScore: z.number().min(0),
   percentage: z.number().min(0).max(100),
