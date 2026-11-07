@@ -99,11 +99,24 @@ High persuasive copy cannot convert if the capture mechanism is broken:
 
 ---
 
-## Supabase Caching, Audit History & Report Exports
+## Supabase Caching, Live Re-Run Telemetry, Plain-English UX & Exports
 
 - **Instant URL Cache (`public.landing_page_audits`)**: Stores every evaluation keyed by normalized URL so repeat visits load immediately without re-running Playwright or LLM calls.
-- **Historical Audit Timeline**: Browse all saved website evaluations from the homepage or top **History** drawer, or click **Re-run Live Audit** to capture a fresh snapshot.
+- **Historical Audit Timeline**: Browse all saved website evaluations from the homepage or top **History** drawer.
+- **Live Re-Run Audit Telemetry**: Clicking **Re-run Live Audit** (`forceRefresh: true`) bypasses the Supabase cache, smoothly scrolls to the top, displays a spinning active indicator (`Re-running Live Audit (68%)...`), and opens a live NDJSON server milestone progress banner directly above the report while streaming fresh DOM, AI, and Playwright steps.
+- **Plain-English Tooltips (`?`) Across All Metrics**: Every section—including the 4 Context Strip cards, 4 Core Web Vitals gauges, 3 Dimension Summary Cards (`Message & Copy Persuasion`, `Button & Form Execution`, `Speed & Mobile Experience`), measurement method badges, and all 13 Rubric v3 checks—includes hoverable/clickable **`(?)` Plain-English Tooltips** with everyday explanations and concrete examples alongside the mathematical **`Algo & Why`** formulas.
 - **1-Click Exports**: Export any audit report and its prioritized recommendations as **Markdown (`.md`)**, **Recommendations CSV (`.csv`)**, or **Structured JSON (`.json`)**.
+
+---
+
+## Deployment Architecture
+
+Because Convex runs **live headless Chromium via Playwright** (`playwright` full-page screenshot capture, DOM section coordinate discovery, and interactive CTA click verification) alongside streaming NDJSON responses (`maxDuration = 60s`), deployment can follow either of two paths:
+
+1. **Container / Full-Runtime Hosting (Recommended for Full Live Playwright Support)**:
+   - **Railway / Render / Fly.io / Cloud Run**: Supports standard Node.js + Playwright Chromium binaries out of the box (`npx playwright install --with-deps chromium`), full 60s+ streaming, and zero serverless binary size limits.
+2. **Vercel / Netlify Serverless**:
+   - Works instantaneously for DOM extraction, AI copy evaluation, PageSpeed Insights API, and Supabase caching/history. Note that standard serverless functions have a 50MB/250MB bundle limit where local `playwright` Chromium binaries are unavailable unless paired with `@sparticuz/chromium` or a remote browser WS endpoint (Convex automatically gracefully falls back to static DOM & heuristic verification when local Chromium is unavailable).
 
 ---
 

@@ -686,12 +686,16 @@ export default function Home() {
     const cleanUrl = targetUrl.trim();
     if (!cleanUrl) return;
 
+    setUrl(cleanUrl);
     setLoading(true);
     setError(null);
     setSelectedTagId(null);
     setProgress(4);
     setProgressEvents([]);
     setShowHistoryModal(false);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
 
     try {
       const res = await fetch("/api/grade", {
@@ -1319,17 +1323,22 @@ export default function Home() {
                   type="button"
                   onClick={() => handleGrade(report.url, true)}
                   disabled={loading}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-300 hover:text-white transition-colors"
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-mono transition-colors ${
+                    loading
+                      ? "bg-emerald-950/50 border-emerald-700/80 text-emerald-200 cursor-wait"
+                      : "bg-zinc-950 hover:bg-zinc-800 border-zinc-800 text-zinc-300 hover:text-white"
+                  }`}
                   title="Force a fresh live crawl & evaluation and save a new history snapshot"
                 >
-                  <RefreshCw className="w-3 h-3 text-emerald-400" />
-                  Re-run Live Audit
+                  <RefreshCw className={`w-3 h-3 text-emerald-400 ${loading ? "animate-spin" : ""}`} />
+                  {loading ? `Re-running Live Audit (${progress}%)...` : "Re-run Live Audit"}
                 </button>
 
                 <button
                   type="button"
                   onClick={exportReportMarkdown}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-200 hover:text-white transition-colors"
+                  disabled={loading}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-200 hover:text-white transition-colors disabled:opacity-50"
                 >
                   <FileText className="w-3 h-3 text-emerald-400" />
                   Export .MD
@@ -1338,13 +1347,98 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={exportRecommendationsCsv}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-200 hover:text-white transition-colors"
+                  disabled={loading}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-200 hover:text-white transition-colors disabled:opacity-50"
                 >
                   <Download className="w-3 h-3 text-amber-400" />
                   Export Fixes .CSV
                 </button>
               </div>
             </div>
+
+            {/* Live Re-Run Progress & Telemetry Banner (shown when re-running while a report is open) */}
+            {loading && (
+              <div className="p-5 rounded-2xl border border-emerald-800/60 bg-zinc-900/90 text-left space-y-3.5 shadow-2xl backdrop-blur-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                    </span>
+                    <span className="text-xs font-semibold text-white tracking-tight">
+                      {progressEvents.length > 0
+                        ? `Re-Running Live Audit: ${progressEvents[progressEvents.length - 1].stageLabel}`
+                        : `Bypassing Cache & Starting Fresh Live Audit for ${url}...`}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono font-bold text-emerald-300 bg-zinc-950 border border-emerald-800/70 px-2.5 py-0.5 rounded-md tabular-nums">
+                    {progress}%
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
+                    <div
+                      className="h-full bg-emerald-400 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+                    <span className={progress >= 10 ? "text-zinc-300" : ""}>10% Fetch DOM</span>
+                    <span className={progress >= 28 ? "text-zinc-300" : ""}>28% Signals</span>
+                    <span className={progress >= 48 ? "text-zinc-300" : ""}>68% AI &amp; Browser</span>
+                    <span className={progress >= 96 ? "text-zinc-300" : ""}>96% Rubric v3</span>
+                    <span className={progress >= 100 ? "text-emerald-400" : ""}>100% Done</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 pt-2 border-t border-zinc-800/80 max-h-40 overflow-y-auto font-mono">
+                  {progressEvents.length === 0 ? (
+                    <div className="text-[11px] text-zinc-300 flex items-center gap-2 py-1">
+                      <Loader2 className="w-3 h-3 animate-spin text-emerald-400 shrink-0" />
+                      <span>Launching fresh headless browser &amp; DOM extraction (cache bypassed)...</span>
+                    </div>
+                  ) : (
+                    progressEvents.map((ev, idx) => {
+                      const isLatest = idx === progressEvents.length - 1;
+                      return (
+                        <div
+                          key={`${ev.step}-${idx}`}
+                          className={`flex items-start justify-between gap-3 text-[11px] py-1 px-2 rounded ${
+                            isLatest ? "bg-zinc-950/90 text-zinc-100 border border-zinc-800/80" : "text-zinc-400"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2 min-w-0">
+                            <CheckCircle2
+                              className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+                                isLatest ? "text-emerald-400" : "text-zinc-600"
+                              }`}
+                            />
+                            <div className="min-w-0">
+                              <span className="font-semibold text-zinc-200">{ev.stageLabel}: </span>
+                              <span className="text-zinc-400 break-words">{ev.detail}</span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-zinc-500 shrink-0 tabular-nums">
+                            {(ev.elapsedMs / 1000).toFixed(1)}s
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="p-4 rounded-xl border border-rose-900/60 bg-rose-950/30 text-rose-300 text-xs text-left flex items-start gap-2.5">
+                <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-rose-200 mb-0.5">Re-Evaluation Error</div>
+                  <div>{error}</div>
+                </div>
+              </div>
+            )}
 
             {/* Header: Prominent Overall Score Hero & Context Bar */}
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-5 shadow-xl">
