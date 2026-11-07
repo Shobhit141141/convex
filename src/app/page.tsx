@@ -446,7 +446,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<GraderReport | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "persuasion" | "execution" | "experience">("all");
-  const [issueFilter, setIssueFilter] = useState<"all" | "high" | "persuasion" | "execution">("all");
+  const [issueFilter, setIssueFilter] = useState<"all" | "high" | "persuasion" | "execution" | "strength">("all");
   const [expandedCriteria, setExpandedCriteria] = useState<Record<string, boolean>>({});
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
@@ -516,8 +516,8 @@ export default function Home() {
         recordId: data.recordId,
         cachedAt: data.createdAt
       });
-      if (data.report.screenshotTags && data.report.screenshotTags.length > 0) {
-        setSelectedTagId(data.report.screenshotTags[0].id);
+      if (data.report.recommendations?.length || data.report.screenshotTags?.length) {
+        setSelectedTagId("audit_pin_1");
       }
     } catch (err: any) {
       setError(err.message || "Failed to load saved audit record.");
@@ -754,8 +754,8 @@ export default function Home() {
         recordId: recId,
         cachedAt: cachedTimestamp || finalReport.evaluatedAt
       });
-      if (finalReport.screenshotTags && finalReport.screenshotTags.length > 0) {
-        setSelectedTagId(finalReport.screenshotTags[0].id);
+      if (finalReport.recommendations?.length || finalReport.screenshotTags?.length) {
+        setSelectedTagId("audit_pin_1");
       }
       fetchHistory();
     } catch (err: any) {
@@ -810,15 +810,113 @@ export default function Home() {
     source: "pagespeed_api" as const
   };
 
-  const tags = report?.screenshotTags || [];
-  const activePin = tags.find((t) => t.id === (hoveredTagId || selectedTagId)) || tags[0];
+  // Build a strictly 1-to-1 unified list of visual annotations (Fixes + Verified Strengths)
+  // sorted top-to-bottom by yPercent so Pin #1..#N on the left screenshot ALWAYS matches Card #1..#N on the right.
+  const unifiedAnnotations = React.useMemo(() => {
+    if (!report) return [];
+    const recs = report.recommendations || [];
+    const rawTags = report.screenshotTags || [];
 
-  const filteredRecommendations = (report?.recommendations || []).filter((rec) => {
-    if (issueFilter === "high") return rec.priority === "high";
-    if (issueFilter === "persuasion") return rec.dimension === "persuasion";
-    if (issueFilter === "execution") return rec.dimension === "execution";
+    const draftItems: Array<{
+      rawId: string;
+      kind: "fix" | "strength";
+      priority: "high" | "medium" | "strength";
+      dimension: "persuasion" | "execution" | "experience";
+      type: "issue" | "warning" | "strength";
+      label: string;
+      locationLabel: string;
+      title: string;
+      problem: string;
+      directFix: string;
+      expectedImpact: string;
+      xPercent: number;
+      yPercent: number;
+    }> = [];
+
+    // 1. Include all Actionable CRO Fixes from report.recommendations
+    recs.forEach((rec, idx) => {
+      const matchedTag = rawTags.find((t) => t.recommendationId === rec.id);
+      const sectionLabels: Record<string, string> = {
+        hero: "Hero Value Hook",
+        cta: "Conversion Trigger",
+        social_proof: "Customer Proof",
+        features: "Product Workflow",
+        footer: "Deep Funnel CTA"
+      };
+      draftItems.push({
+        rawId: rec.id,
+        kind: "fix",
+        priority: rec.priority === "high" ? "high" : "medium",
+        dimension: rec.dimension,
+        type: rec.priority === "high" ? "issue" : "warning",
+        label: matchedTag?.label || sectionLabels[rec.section] || "CRO Fix",
+        locationLabel: rec.locationLabel,
+        title: rec.title,
+        problem: rec.problem,
+        directFix: rec.directFix,
+        expectedImpact: rec.expectedImpact,
+        xPercent: matchedTag?.xPercent ?? rec.coordinates?.xPercent ?? 50,
+        yPercent: matchedTag?.yPercent ?? rec.coordinates?.yPercent ?? Math.min(12 + idx * 22, 88)
+      });
+    });
+
+    // 2. Include unlinked Verified Strength pins from report.screenshotTags so every pin on canvas is in the right list
+    rawTags
+      .filter((t) => t.type === "strength" && !t.recommendationId)
+      .slice(0, 2)
+      .forEach((st) => {
+        draftItems.push({
+          rawId: st.id,
+          kind: "strength",
+          priority: "strength",
+          dimension: st.category === "cta" ? "execution" : "persuasion",
+          type: "strength",
+          label: st.label || "Verified Strength",
+          locationLabel: st.locationLabel || "Page Strength",
+          title: st.title,
+          problem: st.description || "Verified conversion strength detected on the live page.",
+          directFix: st.directFix || "Keep this element prominent as visitors scroll.",
+          expectedImpact: "Verified Strength • Supports buyer trust & conversion flow",
+          xPercent: st.xPercent ?? 78,
+          yPercent: st.yPercent ?? 4
+        });
+      });
+
+    // Sort top-to-bottom by vertical position on the page so #1 is at the top and #N is at the bottom
+    draftItems.sort((a, b) => a.yPercent - b.yPercent);
+
+    // Prevent two pins from stacking on identical coordinates
+    const placed: Array<{ x: number; y: number }> = [];
+    return draftItems.map((item, idx) => {
+      let x = item.xPercent;
+      let y = item.yPercent;
+      for (const p of placed) {
+        if (Math.abs(p.y - y) < 4 && Math.abs(p.x - x) < 10) {
+          y = Math.min(y + 5, 94);
+          x = x > 55 ? Math.max(x - 16, 18) : Math.min(x + 16, 82);
+        }
+      }
+      placed.push({ x, y });
+      const pinNumber = idx + 1;
+      return {
+        ...item,
+        id: `audit_pin_${pinNumber}`,
+        pinNumber,
+        xPercent: x,
+        yPercent: y
+      };
+    });
+  }, [report]);
+
+  const filteredAnnotations = unifiedAnnotations.filter((item) => {
+    if (issueFilter === "high") return item.priority === "high";
+    if (issueFilter === "persuasion") return item.dimension === "persuasion";
+    if (issueFilter === "execution") return item.dimension === "execution";
+    if (issueFilter === "strength") return item.kind === "strength";
     return true;
   });
+
+  const tags = filteredAnnotations;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-zinc-800">
@@ -1798,14 +1896,14 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <button
                     onClick={() => setIssueFilter("all")}
                     className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
                       issueFilter === "all" ? "bg-zinc-800 text-white border border-zinc-700" : "text-zinc-400 hover:text-white"
                     }`}
                   >
-                    All ({report.recommendations.length})
+                    All Pins ({unifiedAnnotations.length})
                   </button>
                   <button
                     onClick={() => setIssueFilter("high")}
@@ -1831,6 +1929,16 @@ export default function Home() {
                   >
                     Execution
                   </button>
+                  {unifiedAnnotations.some((a) => a.kind === "strength") && (
+                    <button
+                      onClick={() => setIssueFilter("strength")}
+                      className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                        issueFilter === "strength" ? "bg-emerald-950 text-emerald-300 border border-emerald-800" : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      Strengths
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -2013,34 +2121,31 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Right (6 cols): Direct, Intuitive Issues & Concrete Fix Cards */}
+                {/* Right (6 cols): Strictly 1-to-1 Synchronized Pin Cards (#1..#N matching Left Canvas) */}
                 <div className="lg:col-span-6 space-y-3">
                   <div className="flex items-center justify-between px-1 text-xs">
                     <span className="font-semibold text-zinc-200">
-                      Actionable CRO Fixes ({filteredRecommendations.length})
+                      Pinned Page Annotations &amp; CRO Fixes ({filteredAnnotations.length})
                     </span>
                     <span className="text-[11px] text-zinc-500 font-mono">
-                      Click any card to auto-locate
+                      1-to-1 matched with canvas pins • Click to locate
                     </span>
                   </div>
 
                   <div className="space-y-3">
-                    {filteredRecommendations.map((rec, index) => {
-                      const linkedTag = tags.find((t) => t.recommendationId === rec.id) || tags[index];
-                      const isSelected = selectedTagId === linkedTag?.id;
-                      const isHovered = hoveredTagId === linkedTag?.id;
+                    {filteredAnnotations.map((item) => {
+                      const isSelected = (selectedTagId || tags[0]?.id) === item.id;
+                      const isHovered = hoveredTagId === item.id;
                       const isActive = isSelected || isHovered;
 
                       return (
                         <div
-                          key={rec.id}
+                          key={item.id}
                           onClick={() => {
-                            if (linkedTag) {
-                              setSelectedTagId(linkedTag.id);
-                              scrollToTag(linkedTag.yPercent);
-                            }
+                            setSelectedTagId(item.id);
+                            scrollToTag(item.yPercent);
                           }}
-                          onMouseEnter={() => linkedTag && setHoveredTagId(linkedTag.id)}
+                          onMouseEnter={() => setHoveredTagId(item.id)}
                           onMouseLeave={() => setHoveredTagId(null)}
                           className={`p-4 rounded-xl border transition-all cursor-pointer text-xs space-y-3 ${
                             isActive
@@ -2048,59 +2153,59 @@ export default function Home() {
                               : "border-zinc-800/90 bg-zinc-950/70 hover:border-zinc-700 hover:bg-zinc-900/40"
                           }`}
                         >
-                          {/* Card Header: Location Tag + Priority */}
+                          {/* Card Header: 1-to-1 Pin Badge + Location Tag + Priority/Strength */}
                           <div className="flex items-center justify-between gap-2 border-b border-zinc-800/60 pb-2">
                             <div className="flex items-center gap-2">
-                              {linkedTag && (
-                                <span
-                                  className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
-                                    linkedTag.type === "issue"
-                                      ? "bg-rose-500 text-white"
-                                      : linkedTag.type === "warning"
-                                      ? "bg-amber-500 text-zinc-950"
-                                      : "bg-emerald-500 text-white"
-                                  }`}
-                                >
-                                  {linkedTag.pinNumber}
-                                </span>
-                              )}
+                              <span
+                                className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                                  item.type === "issue"
+                                    ? "bg-rose-500 text-white"
+                                    : item.type === "warning"
+                                    ? "bg-amber-500 text-zinc-950"
+                                    : "bg-emerald-500 text-white"
+                                }`}
+                              >
+                                {item.pinNumber}
+                              </span>
                               <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1">
                                 <MapPin className="w-3 h-3 text-zinc-500" />
-                                {rec.locationLabel}
+                                {item.locationLabel}
                               </span>
                             </div>
 
                             <div className="flex items-center gap-1.5">
                               <span
                                 className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
-                                  rec.priority === "high"
+                                  item.priority === "high"
                                     ? "bg-rose-950 text-rose-300 border border-rose-800"
+                                    : item.priority === "strength"
+                                    ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
                                     : "bg-amber-950 text-amber-300 border border-amber-800"
                                 }`}
                               >
-                                {rec.priority}
+                                {item.priority === "strength" ? "Verified Strength" : item.priority}
                               </span>
                             </div>
                           </div>
 
-                          {/* Issue Title & Problem */}
+                          {/* Annotation Title & Explanation */}
                           <div className="space-y-1">
                             <h3 className="text-sm font-semibold text-white leading-snug">
-                              {rec.title}
+                              {item.title}
                             </h3>
                             <p className="text-[11px] text-zinc-400 leading-relaxed">
-                              {rec.problem}
+                              {item.problem}
                             </p>
                           </div>
 
-                          {/* Concrete Direct Fix Callout Box */}
+                          {/* Concrete Direct Fix / Best Practice Callout Box */}
                           <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] space-y-1.5">
                             <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
                               <Wrench className="w-3.5 h-3.5 shrink-0" />
-                              <span>Direct Fix:</span>
+                              <span>{item.kind === "strength" ? "Why It Works / Keep:" : "Direct Fix:"}</span>
                             </div>
                             <p className="text-zinc-200 pl-5 leading-relaxed font-mono text-[10.5px]">
-                              {rec.directFix}
+                              {item.directFix}
                             </p>
                           </div>
 
@@ -2108,21 +2213,23 @@ export default function Home() {
                           <div className="flex items-center justify-between pt-1 text-[11px]">
                             <div className="text-emerald-400 font-medium flex items-center gap-1 text-[10.5px]">
                               <TrendingUp className="w-3 h-3 shrink-0" />
-                              <span>Expected Lift: {rec.expectedImpact}</span>
+                              <span>
+                                {item.kind === "strength"
+                                  ? item.expectedImpact
+                                  : `Expected Lift: ${item.expectedImpact}`}
+                              </span>
                             </div>
 
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (linkedTag) {
-                                  setSelectedTagId(linkedTag.id);
-                                  scrollToTag(linkedTag.yPercent);
-                                }
+                                setSelectedTagId(item.id);
+                                scrollToTag(item.yPercent);
                               }}
                               className="text-[10px] font-mono text-zinc-400 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors"
                             >
-                              <Crosshair className="w-3 h-3" /> Locate Pin
+                              <Crosshair className="w-3 h-3" /> Locate Pin #{item.pinNumber}
                             </button>
                           </div>
                         </div>
