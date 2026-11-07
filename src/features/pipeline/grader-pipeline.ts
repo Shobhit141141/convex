@@ -392,7 +392,7 @@ export async function gradeLandingPage(
   // Run AI Classification, AI Semantic Evaluation, and Playwright verification in PARALLEL
   const apiKey = process.env.OPENAI_API_KEY;
   const aiClassifier = createOpenAIClassifier(apiKey, "gpt-4o-mini");
-  const semanticEvaluator = apiKey ? new SemanticEvaluator(apiKey, "gpt-4o-mini", "gpt-5-mini", 12000) : null;
+  const semanticEvaluator = apiKey ? new SemanticEvaluator(apiKey, "gpt-4o-mini", "gpt-4o-mini", 10000) : null;
   const shouldRunPlaywright = options.enableLivePlaywright ?? true;
 
   const [classification, semanticEval, verification] = await Promise.all([
