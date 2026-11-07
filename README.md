@@ -9,33 +9,43 @@ Convex is an evidence-based Conversion Rate Optimization (CRO) grader that evalu
 ### 1. Executive Score Hero & Minimal Audience Context Strip
 ![Executive Score Hero & Context Strip](docs/screenshots/01-report-hero-and-context.png)
 - **Overall Conversion Score Pod**: Displays the final `0–100` score (`79 / 100`), letter grade (`Grade B`), mini dimension gauges (`Persuasion 37/50`, `Execution 27/35`, `Experience 15/15`), and the **`Algo & Formula`** popover trigger showing the master Rubric v3 equation.
-- **Minimal 4-Column Context Strip**: Summarizes the classified **Target Audience (ICP)** (`HR Manager • HR Director`), **Primary Conversion Action** (`"Book a demo"` above the fold), **Visitor Journey Intent** (`Consideration`), and **Lead Funnel Engine** (`Verified Form / Modal`).
+- **Minimal 4-Column Context Strip**: Summarizes **Who This Page Is For** (`HR Manager • HR Director`), **Main Action Button (CTA)** (`"Book a demo"` above the fold), **Visitor Buying Stage** (`Consideration`), and **Sign-Up / Lead Form** (`Working On-Page Form`).
 
 ---
 
-### 2. Full-Page Visual Audit Studio & Section Hotspot Pins
+### 2. "In a Nutshell" — 10-Second Plain-English Summary Card
+![In a Nutshell 10-Second Plain-English Summary Card](docs/screenshots/06-plain-english-summary.jpg)
+- **Bottom Line (Plain-English Verdict)**: Translates the entire multi-stage audit into a 2-sentence, jargon-free takeaway explaining who the page targets, its overall readiness, and the primary reason visitors hesitate to convert.
+- **Three Crisp Takeaway Columns**:
+  1. **What's Working Well**: Highlights the strongest passed signals in everyday language (e.g., measurable headline outcome, fast `2.3s` mobile load speed).
+  2. **What's Hurting Sign-Ups**: Pinpoints the exact conversion leaks (e.g., generic headline copy, passive logo walls without customer quotes/ROI metrics).
+  3. **Top 3 Quick Wins (Do First)**: Lists the 3 highest-leverage fixes paired with 1-click **`Pin #N`** jump buttons that scroll directly to that exact hotspot on the full-page screenshot canvas.
+
+---
+
+### 3. Full-Page Visual Audit Studio & 1-to-1 Section Hotspot Pins
 ![Full-Page Visual Audit & Hotspot Annotations](docs/screenshots/02-visual-audit-studio.jpg)
-- **Dynamic Full-Page Canvas (Left)**: Renders the live Playwright full-page capture and overlays numbered, color-coded pins (`#1` green strength, `#2` amber warning, `#3` red high-priority issue) anchored to actual DOM section coordinates (`0%–100% Y`). Hovering or clicking any pin opens an edge-aware diagnostic card on the canvas.
-- **Actionable CRO Fix Cards (Right)**: Lists prioritized issues paired with the exact page zone (`Hero CTA Area ~14%`, `Social Proof Band ~26%`), concrete **Direct Fix** copy/engineering instructions, expected conversion lift, and a **`Locate Pin`** button that auto-scrolls the screenshot canvas to that element.
+- **Dynamic Full-Page Canvas (Left)**: Renders the live Playwright full-page capture and overlays numbered, color-coded pins (`#1..#N`) anchored to actual DOM section coordinates (`0%–100% Y`), sorted top-to-bottom. Hovering or clicking any pin opens an edge-aware diagnostic card on the canvas.
+- **1-to-1 Synchronized Annotation & Fix Cards (Right)**: Every pin `#1..#N` on the screenshot canvas matches Card `#1..#N` on the right with the exact page zone, concrete **Direct Fix** instructions, expected conversion lift, and a **`Locate Pin #N`** button.
 
 ---
 
-### 3. Lighthouse Core Web Vitals & Dimension Summary
+### 4. Lighthouse Core Web Vitals & Dimension Summary
 ![Lighthouse Core Web Vitals & Dimension Overview](docs/screenshots/03-lighthouse-and-dimensions.png)
-- **Core Web Vitals Gauges**: Evaluates mobile **Performance Score** (`75 / 100`), **LCP (Load Speed)** (`2.2s` vs. `< 2.5s` target), **CLS (Visual Shift)** (`0.03` vs. `< 0.10` target), and **FCP (First Paint)** (`1.7s` vs. `< 1.8s` target) using uniform circular SVG rings.
+- **Core Web Vitals Gauges**: Evaluates mobile **Overall Speed** (`75 / 100`), **Main Content Load (LCP)** (`2.2s` vs. `< 2.5s` target), **Layout Stability (CLS)** (`0.03` vs. `< 0.10` target), and **First Visual (FCP)** (`1.7s` vs. `< 1.8s` target) using uniform circular SVG rings and plain-English `(?)` tooltips.
 
 ---
 
-### 4. Three-Pillar Rubric v3 Dimension Cards
+### 5. Three-Pillar Rubric v3 Dimension Cards
 ![Rubric v3 Dimension Summary Cards](docs/screenshots/04-dimension-cards.png)
-- Breaks the `100`-point rubric into its three weighted pillars:
-  1. **Conversion Persuasion (`50 pts max`)**: Audience-problem resonance, quantified value proposition, and verifiable customer proof.
-  2. **Conversion Execution (`35 pts max`)**: Above-the-fold CTA prominence, promise-destination consistency, live lead-capture verification, and form friction.
-  3. **Supporting Experience (`15 pts max`)**: Mobile viewport configuration, LCP rendering speed, layout stability, and readability.
+- Breaks the `100`-point rubric into three intuitive pillars:
+  1. **Message & Copy Persuasion (`50 pts max`)**: *Does the copy convince the buyer?* Checks if the headline names a real problem, promises a clear result, and proves it with customer stats.
+  2. **Button & Form Execution (`35 pts max`)**: *How easy is it to take action?* Checks if the main button is easy to spot at the top and opens a quick, working sign-up form with minimal fields.
+  3. **Speed & Mobile Experience (`15 pts max`)**: *Is it fast & phone-friendly?* Checks if the page loads quickly, stays visually steady, and is formatted cleanly for mobile phones.
 
 ---
 
-### 5. Aligned Score Breakdown & Interactive `Algo & Why` Popovers
+### 6. Aligned Score Breakdown & Interactive `Algo & Why` Popovers
 ![Score Breakdown & Algorithm Tooltip Popovers](docs/screenshots/05-score-breakdown-and-algo.jpg)
 - **Pixel-Aligned 7-Column Grid**: Category headers (`CONVERSION PERSUASION — 37 / 50 pts`) and individual criterion rows share the exact same grid columns for status icons, measurement source tags (`AI copy review`, `Live browser test`, `Page structure check`, `Lighthouse`), **`Category Algo` / `Algo & Why`** triggers, circular percentage rings, and point totals.
 - **Transparent Math & Evidence**: Clicking or hovering **`Algo & Why`** reveals the exact mathematical formula, live point substitution, evaluated sub-check pass/fail inputs, and verbatim evidence extracted from the page.
