@@ -15,22 +15,36 @@ export async function GET(req: NextRequest) {
       if (!record) {
         return NextResponse.json({ error: "Audit record not found" }, { status: 404 });
       }
-      return NextResponse.json({
-        success: true,
-        recordId: record.recordId,
-        createdAt: record.createdAt,
-        report: record.report
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          recordId: record.recordId,
+          createdAt: record.createdAt,
+          report: record.report
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+          }
+        }
+      );
     }
 
     const limit = Math.min(Number(searchParams.get("limit") || 30), 100);
     const filterUrl = searchParams.get("url") || undefined;
     const history = await listAuditHistory(limit, filterUrl);
 
-    return NextResponse.json({
-      success: true,
-      history
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        history
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        }
+      }
+    );
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Failed to fetch audit history" },

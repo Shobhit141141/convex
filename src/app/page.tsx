@@ -156,6 +156,61 @@ function MetricBar({
   );
 }
 
+// Website Logo / Favicon with fallback
+function SiteLogo({
+  url,
+  size = 20,
+  className = ""
+}: {
+  url: string;
+  size?: number;
+  className?: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+  let domain = "";
+  try {
+    const withProto = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    domain = new URL(withProto).hostname.replace(/^www\./, "");
+  } catch {
+    domain = url || "";
+  }
+
+  const faviconUrl = domain
+    ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`
+    : "";
+
+  if (!domain || hasError) {
+    const initial = domain ? domain.charAt(0).toUpperCase() : "W";
+    return (
+      <div
+        className={`rounded-md bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0 text-[10px] font-bold text-zinc-300 font-mono shadow-sm ${className}`}
+        style={{ width: size, height: size }}
+        title={domain}
+      >
+        {initial}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`relative rounded-md overflow-hidden bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 p-0.5 shadow-sm ${className}`}
+      style={{ width: size, height: size }}
+      title={domain}
+    >
+      <img
+        src={faviconUrl}
+        alt={`${domain} logo`}
+        width={size}
+        height={size}
+        className="w-full h-full object-contain rounded-sm"
+        onError={() => setHasError(true)}
+        loading="lazy"
+      />
+    </div>
+  );
+}
+
 // Reusable plain-English tooltip popover for every item across the website
 function SimpleHelpTooltip({
   title,
@@ -472,7 +527,10 @@ export default function Home() {
   const fetchHistory = React.useCallback(async () => {
     setLoadingHistory(true);
     try {
-      const res = await fetch("/api/history?limit=40");
+      const res = await fetch(`/api/history?limit=40&_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" }
+      });
       const data = await res.json();
       if (data.success && Array.isArray(data.history)) {
         setHistoryItems(data.history);
@@ -758,6 +816,30 @@ export default function Home() {
       if (finalReport.recommendations?.length || finalReport.screenshotTags?.length) {
         setSelectedTagId("audit_pin_1");
       }
+
+      // Optimistically prepend newly audited item into historyItems
+      if (finalReport) {
+        setHistoryItems((prev) => {
+          const newItem: AuditHistoryItem = {
+            id: recId || Date.now(),
+            url: finalReport.url,
+            normalized_url: finalReport.url,
+            page_type: finalReport.pageType,
+            total_score: finalReport.totalScore,
+            letter_grade: finalReport.letterGrade,
+            persuasion_score: finalReport.dimensions.persuasion.score,
+            execution_score: finalReport.dimensions.execution.score,
+            experience_score: finalReport.dimensions.experience.score,
+            summary: finalReport.summary,
+            created_at: cachedTimestamp || finalReport.evaluatedAt || new Date().toISOString()
+          };
+          const rest = prev.filter(
+            (p) => p.id !== newItem.id && p.url.trim().toLowerCase() !== newItem.url.trim().toLowerCase()
+          );
+          return [newItem, ...rest];
+        });
+      }
+
       fetchHistory();
     } catch (err: any) {
       setError(err.message || "Failed to analyze page.");
@@ -1072,6 +1154,19 @@ export default function Home() {
 
             {report && (
               <>
+                <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300">
+                  <SiteLogo url={report.url} size={15} />
+                  <span className="truncate max-w-[140px]">
+                    {(() => {
+                      try {
+                        return new URL(report.url.startsWith("http") ? report.url : `https://${report.url}`).hostname.replace(/^www\./, "");
+                      } catch {
+                        return report.url;
+                      }
+                    })()}
+                  </span>
+                </div>
+
                 {/* Export Report & Recommendations Dropdown */}
                 <div className="relative">
                   <button
@@ -1222,6 +1317,7 @@ export default function Home() {
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
+                          <SiteLogo url={item.url} size={18} />
                           <span className="text-xs font-mono font-semibold text-white truncate max-w-xs sm:max-w-md">
                             {item.url}
                           </span>
@@ -1362,23 +1458,27 @@ export default function Home() {
 
             {loading && (
               <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/80 text-left space-y-4 shadow-2xl backdrop-blur-md max-w-xl mx-auto">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-                    </span>
-                    <span className="text-xs font-semibold text-white tracking-tight">
-                      {progressEvents.length > 0
-                        ? progressEvents[progressEvents.length - 1].stageLabel
-                        : "Connecting to Live Evaluation Pipeline..."}
-                    </span>
+                <div className="flex items-center gap-3 pb-3 border-b border-zinc-800/80">
+                  <SiteLogo url={url} size={28} />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-mono font-semibold text-white truncate">
+                      {url}
+                    </div>
+                    <div className="text-[10px] text-zinc-400 font-mono flex items-center gap-1.5 mt-0.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                      </span>
+                      <span>
+                        {progressEvents.length > 0
+                          ? progressEvents[progressEvents.length - 1].stageLabel
+                          : "Connecting to Live Evaluation Pipeline..."}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-bold text-zinc-100 bg-zinc-950 border border-zinc-800 px-2.5 py-0.5 rounded-md tabular-nums">
-                      {progress}%
-                    </span>
-                  </div>
+                  <span className="text-[11px] font-mono font-bold text-zinc-100 bg-zinc-950 border border-zinc-800 px-2.5 py-1 rounded-md tabular-nums shrink-0">
+                    {progress}%
+                  </span>
                 </div>
 
                 {/* Real-Time Server Milestone Progress Bar */}
@@ -1529,7 +1629,8 @@ export default function Home() {
                           />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-mono font-medium text-white truncate max-w-[240px] sm:max-w-sm">
+                              <SiteLogo url={item.url} size={16} />
+                              <span className="text-xs font-mono font-medium text-white truncate max-w-[220px] sm:max-w-sm">
                                 {item.url}
                               </span>
                               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
@@ -1638,19 +1739,25 @@ export default function Home() {
             {/* Live Re-Run Progress & Telemetry Banner (shown when re-running while a report is open) */}
             {loading && (
               <div className="p-5 rounded-2xl border border-emerald-800/60 bg-zinc-900/90 text-left space-y-3.5 shadow-2xl backdrop-blur-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-                    </span>
-                    <span className="text-xs font-semibold text-white tracking-tight">
-                      {progressEvents.length > 0
-                        ? `Re-Running Live Audit: ${progressEvents[progressEvents.length - 1].stageLabel}`
-                        : `Bypassing Cache & Starting Fresh Live Audit for ${url}...`}
-                    </span>
+                <div className="flex items-center gap-3 pb-2.5 border-b border-zinc-800/80">
+                  <SiteLogo url={report.url} size={28} />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-mono font-semibold text-white truncate">
+                      {report.url}
+                    </div>
+                    <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1.5 mt-0.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                      </span>
+                      <span>
+                        {progressEvents.length > 0
+                          ? `Live Audit: ${progressEvents[progressEvents.length - 1].stageLabel}`
+                          : "Bypassing Cache & Starting Fresh Headless Crawl..."}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[11px] font-mono font-bold text-emerald-300 bg-zinc-950 border border-emerald-800/70 px-2.5 py-0.5 rounded-md tabular-nums">
+                  <span className="text-[11px] font-mono font-bold text-emerald-300 bg-zinc-950 border border-emerald-800/70 px-2.5 py-1 rounded-md tabular-nums shrink-0">
                     {progress}%
                   </span>
                 </div>
@@ -1724,11 +1831,12 @@ export default function Home() {
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-zinc-800/80 pb-5">
                 {/* Left: Page Identity & Executive Summary */}
                 <div className="space-y-2.5 max-w-xl">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <SiteLogo url={report.url} size={22} />
                     <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700/70 font-semibold">
                       {report.pageType}
                     </span>
-                    <span className="text-xs text-zinc-400 font-mono truncate max-w-xs sm:max-w-md">
+                    <span className="text-xs text-zinc-300 font-mono font-medium truncate max-w-xs sm:max-w-md">
                       {report.url}
                     </span>
                     <a
