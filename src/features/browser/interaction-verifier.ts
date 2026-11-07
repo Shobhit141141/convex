@@ -12,9 +12,12 @@
 import fs from "node:fs";
 
 export interface ElementPositions {
+  navigation?: { xPercent: number; yPercent: number };
   headline?: { xPercent: number; yPercent: number };
   primaryCta?: { xPercent: number; yPercent: number };
   socialProof?: { xPercent: number; yPercent: number };
+  features?: { xPercent: number; yPercent: number };
+  architecture?: { xPercent: number; yPercent: number };
   caseStudy?: { xPercent: number; yPercent: number };
   bottomFunnel?: { xPercent: number; yPercent: number };
   leadCapture?: { xPercent: number; yPercent: number };
@@ -141,19 +144,35 @@ export async function verifyConversionInteraction(
     const vpWidth = (options.viewport?.width) || 1280;
     const elementPositions: ElementPositions = { scrollHeight };
 
+    // Minute Section 1: Navigation & Header
     try {
-      const h1El = await page.$("h1");
-      if (h1El) {
-        const box = await h1El.boundingBox();
+      const navEl = await page.$("header, nav, [role='banner'], [class*='nav'], [class*='header']");
+      if (navEl) {
+        const box = await navEl.boundingBox();
         if (box) {
-          elementPositions.headline = {
-            xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 260)) / vpWidth) * 100), 8), 85),
-            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 1), 95)
+          elementPositions.navigation = {
+            xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 200)) / vpWidth) * 100), 5), 90),
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 1), 6)
           };
         }
       }
     } catch {}
 
+    // Minute Section 2: Hero Headline & Pain Hook
+    try {
+      const h1El = await page.$("h1, [class*='hero'] h1, [class*='hero'] h2");
+      if (h1El) {
+        const box = await h1El.boundingBox();
+        if (box) {
+          elementPositions.headline = {
+            xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 260)) / vpWidth) * 100), 8), 85),
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 2), 20)
+          };
+        }
+      }
+    } catch {}
+
+    // Minute Section 3: Enterprise Social Proof Band
     try {
       const proofEl = await page.$("[class*='logo'], [class*='proof'], [class*='partner'], [class*='trust'], [class*='client'], [class*='customer']");
       if (proofEl) {
@@ -161,33 +180,49 @@ export async function verifyConversionInteraction(
         if (box) {
           elementPositions.socialProof = {
             xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 300)) / vpWidth) * 100), 12), 85),
-            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 2), 95)
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 15), 40)
           };
         }
       }
     } catch {}
 
+    // Minute Section 4: Product Features & Core Architecture
     try {
-      const caseStudyEl = await page.$("[class*='case'], [class*='testimonial'], [class*='quote'], [class*='review'], [class*='metric']");
+      const featEl = await page.$("[class*='feature'], [class*='product'], [class*='solution'], [class*='grid'], [class*='benefit'], [id*='feature']");
+      if (featEl) {
+        const box = await featEl.boundingBox();
+        if (box) {
+          elementPositions.features = {
+            xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 300)) / vpWidth) * 100), 15), 85),
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 30), 60)
+          };
+        }
+      }
+    } catch {}
+
+    // Minute Section 5: Quantified Outcomes & Customer Case Studies
+    try {
+      const caseStudyEl = await page.$("[class*='case'], [class*='testimonial'], [class*='quote'], [class*='review'], [class*='metric'], [class*='stat']");
       if (caseStudyEl) {
         const box = await caseStudyEl.boundingBox();
         if (box) {
           elementPositions.caseStudy = {
             xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 300)) / vpWidth) * 100), 12), 85),
-            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 2), 95)
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 50), 78)
           };
         }
       }
     } catch {}
 
+    // Minute Section 6: Bottom Funnel Re-engagement & Footer
     try {
-      const footerCta = await page.$("footer, [class*='footer'], [class*='bottom'], form, [class*='form']");
+      const footerCta = await page.$("footer, [class*='footer'], [class*='bottom'], [class*='cta-section']");
       if (footerCta) {
         const box = await footerCta.boundingBox();
         if (box && box.y > 600) {
           elementPositions.bottomFunnel = {
             xPercent: Math.min(Math.max(Math.round(((box.x + Math.min(box.width / 2, 300)) / vpWidth) * 100), 15), 85),
-            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 10), 98)
+            yPercent: Math.min(Math.max(Math.round(((box.y + box.height / 2) / scrollHeight) * 100), 75), 98)
           };
         }
       }

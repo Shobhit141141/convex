@@ -129,16 +129,16 @@ function generateRecommendations(
       id: "rec_missing_cta",
       dimension: "execution",
       priority: "high",
-      section: "hero",
-      locationLabel: "Hero Action Zone (Top 5%)",
+      section: "conversion_path",
+      locationLabel: "Header & Hero Action Zone (Top ~4%)",
       title: "Add a High-Contrast Primary Call-to-Action",
       problem: "No primary conversion action was detected above the fold or in main body sections.",
       action: "Place a clear, single-intent CTA button above the fold (e.g. 'Book a demo' or 'Start free trial') in a prominent accent color.",
-      directFix: "Inject an action-oriented button into the hero container with prominent contrast against the background.",
+      directFix: "Inject an action-oriented button into the navbar and hero with prominent contrast against the dark background.",
       expectedImpact: "Unblocks conversion readiness and prevents complete visitor bounce.",
       coordinates: {
-        xPercent: positions?.primaryCta?.xPercent ?? 50,
-        yPercent: positions?.primaryCta?.yPercent ?? 10
+        xPercent: positions?.primaryCta?.xPercent ?? 82,
+        yPercent: positions?.primaryCta?.yPercent ?? 4
       }
     });
   }
@@ -149,41 +149,20 @@ function generateRecommendations(
       dimension: "execution",
       priority: "high",
       section: "conversion_path",
-      locationLabel: "Lead Form Funnel (Action Area)",
-      title: "Fix or Implement Interactive Lead Capture",
-      problem: "Lead generation is required for the conversion objective, but no interactive form or modal was verified.",
-      action: "Verify that your HubSpot / custom form script renders reliably without JavaScript errors on CTA button click.",
-      directFix: "Ensure form script attaches to DOM and modal trigger handler opens lead capture within 200ms.",
-      expectedImpact: "Directly rescues up to 25 execution points and stops silent lead drop-off.",
+      locationLabel: "Lead Funnel Capture Zone (Action Area ~14%)",
+      title: "Verify Inline Lead Capture or Embed Direct Modal",
+      problem: "The primary CTA requests a demo/lead, but no interactive form or embed script was verified on this URL.",
+      action: "If the CTA redirects to an external scheduler (Typeform, Calendly), embed an inline 2-field form or link direct on-page modal.",
+      directFix: "Attach an inline HubSpot/custom modal trigger directly to the DOM to capture enterprise leads without multi-hop bounce.",
+      expectedImpact: "Directly unblocks execution gate, rescuing up to +24.5 points and eliminating lead drop-off.",
       coordinates: {
-        xPercent: positions?.leadCapture?.xPercent ?? 50,
-        yPercent: positions?.leadCapture?.yPercent ?? 40
+        xPercent: positions?.primaryCta?.xPercent ?? 50,
+        yPercent: positions?.primaryCta?.yPercent ?? 14
       }
     });
   }
 
-  // 1. Social Proof & Customer Attributed Metrics (Mid-page ~25-40%)
-  const credibility = allCriteria.find(c => c.id === "persuasion_credibility");
-  if (!credibility || credibility.status !== "passed" || (signals.trust.logoCount > 0 && !signals.trust.hasQuantifiedCaseStudy)) {
-    recommendations.push({
-      id: "rec_credibility",
-      dimension: "persuasion",
-      priority: "high",
-      section: "social_proof",
-      locationLabel: "Social Proof Band (Mid-page ~28%)",
-      title: "Replace Passive Logo Wall with Customer-Attributed ROI Metrics",
-      problem: "Static company logos lack verifiable customer quotes. Enterprise buyers discount logo walls as unverified claims unless paired with concrete ROI metrics.",
-      action: "Pair customer logos with concrete deflection metrics and named quotes (e.g. '70%+ tickets deflected at Coca-Cola').",
-      directFix: "Embed 1-2 customer metric cards directly beneath the logo carousel highlighting hours saved and time-to-value.",
-      expectedImpact: "+18% to +24% enterprise trust & consideration intent",
-      coordinates: {
-        xPercent: positions?.socialProof?.xPercent ?? 50,
-        yPercent: positions?.socialProof?.yPercent ?? 28
-      }
-    });
-  }
-
-  // 2. CTA Friction & Next-Step Clarity (Top Hero / Nav ~4-10%)
+  // 1. CTA Friction & Next-Step Clarity (Top Hero / Nav ~4-14%)
   const promiseDest = allCriteria.find(c => c.id === "exec_promise_destination");
   if (!promiseDest || promiseDest.status !== "passed" || !signals.conversion.clarityOfNextStep) {
     recommendations.push({
@@ -191,20 +170,20 @@ function generateRecommendations(
       dimension: "execution",
       priority: "high",
       section: "conversion_path",
-      locationLabel: "Primary CTA & Nav Header (Top ~5%)",
+      locationLabel: "Hero CTA Area (Top ~14%)",
       title: "Eliminate Next-Step Friction on Primary Conversion Action",
-      problem: `CTA button "${signals.conversion.primaryCtaText || 'Submit'}" demands high commitment without setting expectations for what happens upon click.`,
-      action: "Add reassuring microcopy directly below or inside the CTA button (e.g. 'Takes 30 seconds • No credit card required').",
-      directFix: "Include immediate expectation setting: 'Interactive Walkthrough • 2 min response' to decrease modal click hesitation.",
+      problem: `CTA button "${signals.conversion.primaryCtaText || 'Submit'}" demands commitment without setting expectations for what happens upon click.`,
+      action: "Add reassuring microcopy directly below the primary CTA button (e.g. 'Takes 30 seconds • No credit card required').",
+      directFix: "Add microcopy below CTA: 'Interactive Walkthrough • 2 min response' to decrease modal click hesitation.",
       expectedImpact: "+14% to +19% primary CTA click-through rate",
       coordinates: {
-        xPercent: positions?.primaryCta?.xPercent ?? 85,
-        yPercent: positions?.primaryCta?.yPercent ?? 4
+        xPercent: positions?.primaryCta?.xPercent ?? 50,
+        yPercent: positions?.primaryCta?.yPercent ?? 14
       }
     });
   }
 
-  // 3. Value Proposition & Timeframe (Hero Banner ~8-15%)
+  // 2. Value Proposition & Timeframe (Hero Banner ~8-15%)
   const valueProp = allCriteria.find(c => c.id === "persuasion_value_prop");
   if (!valueProp || valueProp.status !== "passed" || !signals.clarity.hasConcreteOutcome) {
     recommendations.push({
@@ -212,7 +191,7 @@ function generateRecommendations(
       dimension: "persuasion",
       priority: "medium",
       section: "hero",
-      locationLabel: "Hero Value Proposition (Top ~8%)",
+      locationLabel: "Hero Headline & Hook (Top ~8%)",
       title: "Quantify Time-to-Value in the Hero Headline",
       problem: "Visitors cannot determine within 5 seconds how quickly your solution deploys or what exact outcome it guarantees.",
       action: "Anchor the H1 or subheadline with concrete timeframe and payback metrics (e.g. 'Go Live in 45 Days • 4-10x ROI').",
@@ -225,13 +204,52 @@ function generateRecommendations(
     });
   }
 
-  // 4. Lower-Page Conversion Capture / Sticky Re-engagement (Deep Page ~75-90%)
+  // 3. Social Proof & Customer Attributed Metrics (Mid-page ~24-32%)
+  const credibility = allCriteria.find(c => c.id === "persuasion_credibility");
+  if (!credibility || credibility.status !== "passed" || (signals.trust.logoCount > 0 && !signals.trust.hasQuantifiedCaseStudy)) {
+    recommendations.push({
+      id: "rec_credibility",
+      dimension: "persuasion",
+      priority: "high",
+      section: "social_proof",
+      locationLabel: "Social Proof Band (Mid-page ~26%)",
+      title: "Replace Passive Logo Wall with Customer-Attributed ROI Metrics",
+      problem: "Static company logos lack verifiable customer quotes. Enterprise buyers discount logo walls as unverified claims unless paired with concrete ROI metrics.",
+      action: "Pair customer logos with concrete deflection metrics and named quotes (e.g. '70%+ tickets deflected at Coca-Cola').",
+      directFix: "Embed 1-2 customer metric cards directly beneath the logo carousel highlighting hours saved and time-to-value.",
+      expectedImpact: "+18% to +24% enterprise trust & consideration intent",
+      coordinates: {
+        xPercent: positions?.socialProof?.xPercent ?? 50,
+        yPercent: positions?.socialProof?.yPercent ?? 26
+      }
+    });
+  }
+
+  // 4. Product Workflow & Architecture Clarity (~44-54%)
+  recommendations.push({
+    id: "rec_features_clarity",
+    dimension: "persuasion",
+    priority: "medium",
+    section: "features",
+    locationLabel: "Product Architecture & Workflow Zone (~46%)",
+    title: "Demonstrate Workflow Execution with Interactive Product Previews",
+    problem: "Abstract feature copy risks buyer skepticism without visual evidence of the product in action.",
+    action: "Pair feature cards with interactive diagrams, real UI animations, or step-by-step workflow triggers.",
+    directFix: "Add annotated UI callouts demonstrating exact input-to-output automation steps.",
+    expectedImpact: "+15% longer engaged reading time and technical buyer validation",
+    coordinates: {
+      xPercent: positions?.features?.xPercent ?? 50,
+      yPercent: positions?.features?.yPercent ?? 46
+    }
+  });
+
+  // 5. Lower-Page Conversion Capture / Sticky Re-engagement (Deep Page ~84-92%)
   recommendations.push({
     id: "rec_bottom_funnel",
     dimension: "execution",
     priority: "medium",
     section: "footer",
-    locationLabel: "Bottom Conversion Funnel (Page Base ~85%)",
+    locationLabel: "Bottom Conversion Funnel (Page Base ~88%)",
     title: "Deploy a Sticky Conversion Bridge for Deep-Scroll Visitors",
     problem: "Visitors who scroll past feature sections lose access to a visible conversion trigger unless they scroll back to the top.",
     action: "Introduce a persistent sticky bottom banner or embedded inline inquiry form at the end of feature explanations.",
@@ -243,7 +261,7 @@ function generateRecommendations(
     }
   });
 
-  return recommendations.slice(0, 4);
+  return recommendations.slice(0, 5);
 }
 
 function generateScreenshotTags(
@@ -255,39 +273,125 @@ function generateScreenshotTags(
   const tags: ScreenshotTag[] = [];
   let pin = 1;
 
-  for (const rec of recommendations) {
-    tags.push({
-      id: `tag_${pin}`,
-      pinNumber: pin++,
-      title: rec.title,
-      type: rec.priority === "high" ? "issue" : "warning",
-      category: rec.section === "hero" ? "headline" : rec.section === "social_proof" ? "social_proof" : rec.section === "footer" ? "footer" : "cta",
-      label: rec.section === "social_proof" ? "Proof Gap" : rec.section === "hero" ? "Value Prop" : rec.section === "footer" ? "Scroll Funnel" : "CTA Friction",
-      locationLabel: rec.locationLabel,
-      xPercent: rec.coordinates.xPercent,
-      yPercent: rec.coordinates.yPercent,
-      recommendationId: rec.id,
-      directFix: rec.directFix,
-      description: rec.problem
-    });
-  }
+  // Pin 1: Navigation Bar & Sticky Conversion Action (~2-4%)
+  tags.push({
+    id: `tag_${pin}`,
+    pinNumber: pin++,
+    title: `Navigation Bar & Action Button (${signals.conversion.primaryCtaText || "Primary CTA"})`,
+    type: signals.conversion.hasAboveTheFoldCta ? "strength" : "issue",
+    category: "cta",
+    label: "Sticky Navigation",
+    locationLabel: "Header & Navigation Bar (~3%)",
+    xPercent: positions?.navigation?.xPercent ?? (positions?.primaryCta?.xPercent ?? 85),
+    yPercent: positions?.navigation?.yPercent ?? 3,
+    directFix: "Ensure the primary action button remains pinned in the sticky navbar as visitors scroll.",
+    description: "Header navigation sets immediate context and provides global conversion access."
+  });
 
-  // Add verified strength pin
-  if (signals.conversion.hasAboveTheFoldCta) {
-    tags.push({
-      id: `tag_${pin}`,
-      pinNumber: pin++,
-      title: `Above-the-fold CTA: "${signals.conversion.primaryCtaText}"`,
-      type: "strength",
-      category: "cta",
-      label: "Verified CTA",
-      locationLabel: "Navbar & Initial Viewport",
-      xPercent: positions?.primaryCta?.xPercent ?? 86,
-      yPercent: positions?.primaryCta?.yPercent ?? 3,
-      directFix: "High contrast primary action button is clearly visible in the initial load viewport.",
-      description: "Primary conversion action is clearly positioned above the fold."
-    });
-  }
+  // Pin 2: Hero Headline & Problem Fit (~6-12%)
+  const heroRec = recommendations.find(r => r.section === "hero" || r.id === "rec_value_prop");
+  tags.push({
+    id: `tag_${pin}`,
+    pinNumber: pin++,
+    title: heroRec ? heroRec.title : `Hero Value Proposition: "${signals.headings.h1[0]?.slice(0, 48) || signals.title.slice(0, 48)}..."`,
+    type: heroRec ? "warning" : "strength",
+    category: "headline",
+    label: "Hero Problem Hook",
+    locationLabel: heroRec?.locationLabel || "Hero Headline (~8%)",
+    xPercent: positions?.headline?.xPercent ?? 32,
+    yPercent: positions?.headline?.yPercent ?? 8,
+    recommendationId: heroRec?.id,
+    directFix: heroRec?.directFix || "Value proposition clearly articulates core transformation.",
+    description: heroRec?.problem || "Hero H1 captures audience attention within 3 seconds."
+  });
+
+  // Pin 3: Primary Above-the-Fold Conversion CTA (~12-18%)
+  const ctaRec = recommendations.find(r => r.id === "rec_broken_form" || r.id === "rec_cta_commitment" || r.id === "rec_missing_cta");
+  tags.push({
+    id: `tag_${pin}`,
+    pinNumber: pin++,
+    title: ctaRec ? ctaRec.title : `Primary CTA: "${signals.conversion.primaryCtaText || 'Action'}"`,
+    type: ctaRec ? "issue" : "strength",
+    category: "cta",
+    label: "Conversion Trigger",
+    locationLabel: ctaRec?.locationLabel || "Primary Hero CTA (~14%)",
+    xPercent: positions?.primaryCta?.xPercent ?? 50,
+    yPercent: positions?.primaryCta?.yPercent ?? 14,
+    recommendationId: ctaRec?.id,
+    directFix: ctaRec?.directFix || "Above-the-fold CTA is high-contrast and action-oriented.",
+    description: ctaRec?.problem || "Primary conversion gateway matches visitor intent."
+  });
+
+  // Pin 4: Enterprise Social Proof Band (~22-32%)
+  const proofRec = recommendations.find(r => r.section === "social_proof");
+  tags.push({
+    id: `tag_${pin}`,
+    pinNumber: pin++,
+    title: proofRec ? proofRec.title : `Enterprise Social Proof (${signals.trust.logoCount} Customer Logos Detected)`,
+    type: proofRec ? (proofRec.priority === "high" ? "issue" : "warning") : "strength",
+    category: "social_proof",
+    label: "Social Proof Band",
+    locationLabel: proofRec?.locationLabel || "Client Logos & Badges (~26%)",
+    xPercent: positions?.socialProof?.xPercent ?? 50,
+    yPercent: positions?.socialProof?.yPercent ?? 26,
+    recommendationId: proofRec?.id,
+    directFix: proofRec?.directFix || "Enterprise logos provide early third-party credibility.",
+    description: proofRec?.problem || "Social proof establishes trust before presenting feature complexity."
+  });
+
+  // Pin 5: Product Core Capabilities & Architecture (~42-54%)
+  const featRec = recommendations.find(r => r.section === "features");
+  tags.push({
+    id: `tag_${pin}`,
+    pinNumber: pin++,
+    title: featRec ? featRec.title : "Product Capabilities & Workflow Engine",
+    type: featRec ? "warning" : "strength",
+    category: "features",
+    label: "Feature Architecture",
+    locationLabel: featRec?.locationLabel || "Product Capabilities Zone (~46%)",
+    xPercent: positions?.features?.xPercent ?? 50,
+    yPercent: positions?.features?.yPercent ?? 46,
+    recommendationId: featRec?.id,
+    directFix: featRec?.directFix || "Detailed functional capabilities demonstrate enterprise readiness.",
+    description: featRec?.problem || "Core product workflow visualizes how outcomes are delivered."
+  });
+
+  // Pin 6: Customer Case Studies & Quantified Outcomes (~62-74%)
+  const casePos = positions?.caseStudy ?? { xPercent: 50, yPercent: 66 };
+  tags.push({
+    id: `tag_${pin}`,
+    pinNumber: pin++,
+    title: signals.trust.hasQuantifiedCaseStudy
+      ? `Quantified Outcome: "${signals.trust.quantifiedCaseStudyQuote?.slice(0, 50) || 'Verified ROI'}..."`
+      : "Customer Attributed Impact & Case Studies",
+    type: signals.trust.hasQuantifiedCaseStudy ? "strength" : "warning",
+    category: "social_proof",
+    label: "Customer Proof",
+    locationLabel: "Customer ROI & Case Studies (~66%)",
+    xPercent: casePos.xPercent,
+    yPercent: casePos.yPercent,
+    directFix: "Pair named enterprise leaders with concrete % deflection or ROI metrics.",
+    description: signals.trust.hasQuantifiedCaseStudy
+      ? "Specific customer outcomes reinforce buyer confidence in mid-funnel evaluation."
+      : "Mid-page sections lack customer-attributed ROI metrics."
+  });
+
+  // Pin 7: Bottom-Funnel Funnel & Footer Dock (~84-94%)
+  const funnelRec = recommendations.find(r => r.section === "footer");
+  tags.push({
+    id: `tag_${pin}`,
+    pinNumber: pin++,
+    title: funnelRec ? funnelRec.title : "Deep Funnel Conversion & Footer",
+    type: funnelRec ? "warning" : "strength",
+    category: "footer",
+    label: "Deep Funnel CTA",
+    locationLabel: funnelRec?.locationLabel || "Bottom Conversion Funnel (~88%)",
+    xPercent: positions?.bottomFunnel?.xPercent ?? 50,
+    yPercent: positions?.bottomFunnel?.yPercent ?? 88,
+    recommendationId: funnelRec?.id,
+    directFix: funnelRec?.directFix || "Re-engages visitors who scrolled through the entire page.",
+    description: funnelRec?.problem || "Footer conversion anchor ensures no visitor leaves without a clear next step."
+  });
 
   return tags;
 }

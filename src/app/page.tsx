@@ -146,19 +146,27 @@ export default function Home() {
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
   const [isScreenshotExpanded, setIsScreenshotExpanded] = useState(false);
-  const [loadingPhase, setLoadingPhase] = useState(0);
+  const [progress, setProgress] = useState(0);
 
+  // Dynamic 0% -> 100% realistic progress tracker
   React.useEffect(() => {
     if (!loading) {
-      setLoadingPhase(0);
+      setProgress(0);
       return;
     }
-    const timer1 = setTimeout(() => setLoadingPhase(1), 2200);
-    const timer2 = setTimeout(() => setLoadingPhase(2), 5200);
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
+
+    setProgress(8);
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev < 24) return prev + Math.floor(Math.random() * 4 + 3);
+        if (prev < 55) return prev + Math.floor(Math.random() * 3 + 2);
+        if (prev < 82) return prev + Math.floor(Math.random() * 2 + 1);
+        if (prev < 95) return prev + 1;
+        return 95; // Hold at 95% until response arrives
+      });
+    }, 240);
+
+    return () => clearInterval(interval);
   }, [loading]);
 
   const screenshotContainerRef = useRef<HTMLDivElement>(null);
@@ -195,6 +203,10 @@ export default function Home() {
         throw new Error(data.error || "Failed to analyze page.");
       }
 
+      // Smooth completion to 100%
+      setProgress(100);
+      await new Promise((resolve) => setTimeout(resolve, 320));
+
       setReport(data.report);
       if (data.report.screenshotTags && data.report.screenshotTags.length > 0) {
         setSelectedTagId(data.report.screenshotTags[0].id);
@@ -211,6 +223,7 @@ export default function Home() {
     setError(null);
     setUrl("");
     setSelectedTagId(null);
+    setProgress(0);
   };
 
   const getStatusBadge = (status: string) => {
@@ -358,32 +371,54 @@ export default function Home() {
             </form>
 
             {loading && (
-              <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/60 text-left space-y-4 shadow-xl backdrop-blur-sm">
+              <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/80 text-left space-y-4 shadow-2xl backdrop-blur-md">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-semibold text-white">
-                      Running Multi-Phase Evaluation Pipeline
+                  <div className="flex items-center gap-2.5">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                    </span>
+                    <span className="text-xs font-semibold text-white tracking-tight">
+                      Audience & Conversion Audit in Progress
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700">
-                    Live Processing
-                  </span>
-                </div>
-
-                {/* Animated Horizontal Bar Loader (No Rotating Spinner) */}
-                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden relative">
-                  <div className="h-full w-2/5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 rounded-full animate-bar-loader" />
-                </div>
-
-                <div className="space-y-1.5 pt-0.5">
-                  <div className="text-xs font-medium text-zinc-200">
-                    {loadingPhase === 0 && "Step 1 of 3: Parsing DOM hierarchy, headings, and CTA paths..."}
-                    {loadingPhase === 1 && "Step 2 of 3: Capturing full-page render and verifying dynamic modals..."}
-                    {loadingPhase >= 2 && "Step 3 of 3: Evaluating conversion persuasion rubric and generating hotspot pins..."}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-md">
+                      {progress}%
+                    </span>
                   </div>
-                  <p className="text-[11px] text-zinc-500 leading-relaxed">
-                    Analyzing audience-problem fit, inspecting above-the-fold CTA prominence, and calculating Core Web Vitals across page sections.
+                </div>
+
+                {/* 0% -> 100% Responsive Filling Bar */}
+                <div className="space-y-1.5">
+                  <div className="w-full h-2.5 bg-zinc-950 rounded-full overflow-hidden p-0.5 border border-zinc-800">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 rounded-full transition-all duration-300 ease-out shadow-sm"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+                    <span>0% Init</span>
+                    <span>25% DOM</span>
+                    <span>60% Render</span>
+                    <span>85% Rubric</span>
+                    <span>100% Studio</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1 pt-1 border-t border-zinc-800/80">
+                  <div className="text-xs font-medium text-zinc-200 flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>
+                      {progress < 25 && "Phase 1: Extracting DOM tree, headings, and CTA paths..."}
+                      {progress >= 25 && progress < 60 && "Phase 2: Launching Playwright & capturing full-page screenshot..."}
+                      {progress >= 60 && progress < 85 && "Phase 3: Evaluating conversion persuasion rubric & gates..."}
+                      {progress >= 85 && progress < 100 && "Phase 4: Pinpointing visual section hotspots & Core Web Vitals..."}
+                      {progress >= 100 && "Complete! Assembling Visual Audit Studio..."}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed pl-5.5">
+                    Assessing ICP audience alignment, inspecting interactive lead funnels, and tagging minute page zones across full page height.
                   </p>
                 </div>
               </div>
@@ -444,37 +479,155 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Meta Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div className="p-2.5 rounded-lg bg-zinc-950/60 border border-zinc-800/60">
-                  <span className="text-zinc-500 text-[11px] block mb-0.5">Target Audience:</span>
-                  <span className="text-zinc-200 font-medium">
-                    {report.targetAudience.roles.join(", ") || "Enterprise Decision Makers"}
-                  </span>
+              {/* Audience & Conversion Context Matrix */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                {/* 1. Target Audience */}
+                <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
+                  <div className="flex items-center gap-1.5 text-zinc-400">
+                    <Target className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">
+                      Target Audience (ICP)
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {report.targetAudience.roles.length > 0 ? (
+                      report.targetAudience.roles.slice(0, 3).map((role, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200 text-[11px] font-medium"
+                        >
+                          {role}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-zinc-300 font-medium text-xs">
+                        Enterprise B2B Buyers
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 font-mono">
+                    {report.targetAudience.segments[0] || "B2B Decision Makers"}
+                  </div>
                 </div>
-                <div className="p-2.5 rounded-lg bg-zinc-950/60 border border-zinc-800/60">
-                  <span className="text-zinc-500 text-[11px] block mb-0.5">Primary Conversion Action:</span>
-                  <span className="text-zinc-200 font-medium truncate block">
-                    {report.signalsPreview.primaryCtaText ? `"${report.signalsPreview.primaryCtaText}"` : "None detected"}
-                  </span>
+
+                {/* 2. Primary Conversion Action */}
+                <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
+                  <div className="flex items-center gap-1.5 text-zinc-400">
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">
+                      Primary Conversion Action
+                    </span>
+                  </div>
+                  <div>
+                    {report.signalsPreview.primaryCtaText ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-950/50 border border-amber-800/60 text-amber-300 font-medium text-xs font-mono">
+                        "{report.signalsPreview.primaryCtaText}"
+                        <ArrowRight className="w-3 h-3 text-amber-400" />
+                      </span>
+                    ) : (
+                      <span className="text-zinc-500 text-xs">No CTA Detected</span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 font-mono">
+                    {report.signalsPreview.hasAboveTheFoldCta ? "Positioned Above-the-fold" : "Below-the-fold Placement"}
+                  </div>
                 </div>
-                <div className="p-2.5 rounded-lg bg-zinc-950/60 border border-zinc-800/60">
-                  <span className="text-zinc-500 text-[11px] block mb-0.5">Visitor Intent:</span>
-                  <span className="text-zinc-200 font-medium uppercase font-mono text-[11px]">
-                    {report.visitorIntent}
-                  </span>
+
+                {/* 3. Visitor Journey Intent */}
+                <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
+                  <div className="flex items-center gap-1.5 text-zinc-400">
+                    <Compass className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">
+                      Visitor Journey Intent
+                    </span>
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-950/50 border border-indigo-800/60 text-indigo-300 font-medium text-[11px] font-mono uppercase tracking-wide">
+                      {report.visitorIntent}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-zinc-500 font-mono">
+                    {report.visitorIntent.toLowerCase().includes("discovery")
+                      ? "Evaluating capability fit & proof"
+                      : "Direct acquisition intent"}
+                  </div>
+                </div>
+
+                {/* 4. Lead Capture Funnel */}
+                <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 space-y-2">
+                  <div className="flex items-center gap-1.5 text-zinc-400">
+                    <Layers className="w-3.5 h-3.5 text-sky-400" />
+                    <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">
+                      Lead Funnel Engine
+                    </span>
+                  </div>
+                  <div>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium font-mono truncate max-w-full ${
+                        report.signalsPreview.leadCaptureEngine
+                          ? "bg-sky-950/50 border border-sky-800/60 text-sky-300"
+                          : "bg-rose-950/50 border border-rose-800/60 text-rose-300"
+                      }`}
+                    >
+                      {report.signalsPreview.leadCaptureEngine ? "Verified Form / Modal" : "External Redirect / Script"}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-zinc-500 font-mono">
+                    {report.signalsPreview.leadCaptureEngine
+                      ? "Direct On-Page Funnel Active"
+                      : "Unverified On-Page Capture"}
+                  </div>
                 </div>
               </div>
 
-              {/* Critical Gates Alert if any */}
+              {/* Conversion-Readiness Gate Diagnostic Banner */}
               {report.gatesTriggered.length > 0 && (
-                <div className="p-3 rounded-lg border border-rose-900/80 bg-rose-950/40 text-xs text-rose-300 space-y-1">
-                  <div className="font-semibold text-rose-200 flex items-center gap-1.5">
-                    <ShieldAlert className="w-3.5 h-3.5 text-rose-400" /> Critical Conversion Gate Triggered
+                <div className="rounded-xl border border-rose-500/30 bg-gradient-to-r from-rose-950/40 via-zinc-900/90 to-amber-950/20 p-4.5 space-y-3 shadow-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-rose-900/40 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0">
+                        <ShieldAlert className="w-4 h-4 text-rose-400" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs font-semibold text-rose-200 tracking-tight">
+                            Conversion-Readiness Gate Applied: Missing Inline Lead Capture
+                          </h3>
+                          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-rose-900/60 text-rose-300 border border-rose-700/60 font-semibold">
+                            Rubric v3 Rule
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                          Architectural CRO check: High persuasive copy cannot convert visitors if the capture funnel is missing or unverified.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-rose-900/80 border border-rose-700 text-rose-200 font-mono text-[11px] font-semibold">
+                        Execution Score Capped at 30% (Max 10.5 / 35 pts)
+                      </span>
+                    </div>
                   </div>
-                  {report.gatesTriggered.map((gate, i) => (
-                    <div key={i} className="text-[11px] text-rose-300/90 pl-5">• {gate}</div>
-                  ))}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-0.5">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase text-zinc-400 font-semibold block">
+                        Diagnostic Context:
+                      </span>
+                      <p className="text-[11px] text-zinc-300 leading-relaxed">
+                        The primary action on this page is <strong className="text-white">"{report.signalsPreview.primaryCtaText || 'Demo'}"</strong>, but no interactive form or embedded capture modal was verified in the page DOM. When CTA clicks navigate to external schedulers or external domains without inline fallback, conversion rates drop dramatically.
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono uppercase text-emerald-400 font-semibold block">
+                        Actionable Fix to Unblock Score (+24.5 Pts):
+                      </span>
+                      <p className="text-[11px] text-zinc-300 leading-relaxed">
+                        Embed an inline 2-to-3 field capture form directly into the hero or ensure your modal trigger script attaches to the DOM on page load. Once lead capture is verified, the gate lifts and the full 35 execution points become available.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
