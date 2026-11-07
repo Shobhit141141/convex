@@ -99,7 +99,7 @@ export class OpenAIClassifier implements AIClassifierClient {
   private model: string;
   private timeoutMs: number;
 
-  constructor(apiKey?: string, model = "gpt-5-mini", timeoutMs = 20000) {
+  constructor(apiKey?: string, model = "gpt-4o-mini", timeoutMs = 15000) {
     const resolvedKey = apiKey || process.env.OPENAI_API_KEY;
     if (!resolvedKey) {
       throw new Error("OpenAI API key missing. Set OPENAI_API_KEY environment variable.");

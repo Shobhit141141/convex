@@ -270,21 +270,15 @@ export async function gradeLandingPage(
     }
   }
 
-  // 1. AI Classification
+  // 1 & 2: Run AI Classification and AI Semantic Evaluation in PARALLEL
   const apiKey = process.env.OPENAI_API_KEY;
-  const aiClassifier = createOpenAIClassifier(apiKey);
-  const classification = await classifyPage(rawInput, aiClassifier);
+  const aiClassifier = createOpenAIClassifier(apiKey, "gpt-4o-mini");
+  const semanticEvaluator = apiKey ? new SemanticEvaluator(apiKey, "gpt-4o-mini", "gpt-5-mini", 12000) : null;
 
-  // 2. AI Semantic Evaluator
-  let semanticEval = undefined;
-  if (apiKey) {
-    try {
-      const evaluator = new SemanticEvaluator(apiKey, "gpt-5-mini", "gpt-4o-mini");
-      semanticEval = await evaluator.evaluate(rawInput);
-    } catch {
-      // Handled inside SemanticEvaluator fallback
-    }
-  }
+  const [classification, semanticEval] = await Promise.all([
+    classifyPage(rawInput, aiClassifier),
+    semanticEvaluator ? semanticEvaluator.evaluate(rawInput).catch(() => undefined) : Promise.resolve(undefined)
+  ]);
 
   // 3. Playwright Verification (if requested or enabled)
   let verification = undefined;
