@@ -1978,28 +1978,36 @@ export default function Home() {
               )}
             </div>
 
-            {/* Crisp Plain-English "In a Nutshell" Summary Card */}
+            {/* Crisp Plain-English "In a Nutshell" Summary Card (Subtly Highlighted) */}
             {plainDigest && (
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/45 p-5 sm:p-6 space-y-4 shadow-lg">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80 pb-3.5">
+              <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-zinc-900/75 to-zinc-950/90 p-5 sm:p-6 space-y-4 shadow-[0_0_38px_-12px_rgba(16,185,129,0.22)] ring-1 ring-emerald-500/10">
+                {/* Subtle luminous top-edge highlight line */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/65 to-transparent" />
+
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/15 pb-3.5">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-emerald-500/15 border border-emerald-500/30">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    </span>
                     <h2 className="text-sm font-semibold text-white tracking-tight">
                       In a Nutshell — 10-Second Plain-English Summary
                     </h2>
+                    <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-950/70 text-emerald-300 border border-emerald-800/60">
+                      Quick Read
+                    </span>
                     <SimpleHelpTooltip
                       title="Plain-English Summary"
                       plainEnglish="A jargon-free summary of your entire page audit: what's working, what's costing you sign-ups, and the top 3 changes to make first."
                       align="left"
                     />
                   </div>
-                  <span className="text-[11px] font-mono text-zinc-400 bg-zinc-950 border border-zinc-800 px-2.5 py-0.5 rounded-md">
+                  <span className="text-[11px] font-mono text-zinc-300 bg-zinc-950/90 border border-zinc-800 px-2.5 py-0.5 rounded-md">
                     Simple Takeaway • Score {report.totalScore}/100 (Grade {report.letterGrade})
                   </span>
                 </div>
 
                 {/* Plain-English Verdict */}
-                <div className="p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800/90 text-xs sm:text-[13px] text-zinc-200 leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-zinc-950/85 border border-emerald-500/20 text-xs sm:text-[13px] text-zinc-100 leading-relaxed shadow-inner">
                   <span className="font-semibold text-emerald-400 mr-1.5">Bottom Line:</span>
                   {plainDigest.verdict}
                 </div>
@@ -2007,7 +2015,7 @@ export default function Home() {
                 {/* 3 Simple Columns: Working Well | Hurting Sign-Ups | Top 3 Quick Wins */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                   {/* Col 1: What's Working Well */}
-                  <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2.5">
+                  <div className="p-4 rounded-xl bg-zinc-950/75 border border-emerald-900/40 space-y-2.5">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                       <span>What&apos;s Working Well</span>
@@ -2023,7 +2031,7 @@ export default function Home() {
                   </div>
 
                   {/* Col 2: What's Hurting Sign-Ups */}
-                  <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2.5">
+                  <div className="p-4 rounded-xl bg-zinc-950/75 border border-amber-900/40 space-y-2.5">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>What&apos;s Hurting Sign-Ups</span>
@@ -2039,7 +2047,7 @@ export default function Home() {
                   </div>
 
                   {/* Col 3: Top 3 Quick Wins (Do This First) */}
-                  <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-2.5">
+                  <div className="p-4 rounded-xl bg-zinc-950/75 border border-zinc-700/70 space-y-2.5">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
                       <Wrench className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <span>Top 3 Quick Wins (Do First)</span>
@@ -2048,10 +2056,10 @@ export default function Home() {
                       {plainDigest.quickWins.map((win, i) => (
                         <li key={win.pinId} className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-2 min-w-0">
-                            <span className="w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-mono font-bold text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                            <span className="w-4 h-4 rounded-full bg-emerald-950/80 border border-emerald-700/70 text-[10px] font-mono font-bold text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
                               {i + 1}
                             </span>
-                            <span className="text-[11.5px] text-zinc-300 leading-snug">{win.shortAction}</span>
+                            <span className="text-[11.5px] text-zinc-200 leading-snug">{win.shortAction}</span>
                           </div>
                           <button
                             type="button"
@@ -2059,7 +2067,7 @@ export default function Home() {
                               setSelectedTagId(win.pinId);
                               scrollToTag(win.yPercent);
                             }}
-                            className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                            className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-emerald-300 hover:text-white transition-colors"
                             title="Jump to this pin on the screenshot"
                           >
                             Pin #{win.pinNumber}
